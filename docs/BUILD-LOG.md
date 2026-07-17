@@ -101,6 +101,14 @@ Format per entry:
 - Human decision: Required guided camera crossfades and cuts before environment production.
 - GPT-5.6 technique used: Kept the camera sequence data-driven from semantic station anchors.
 
+### 2026-07-17 - Immersive priority 3 environment
+- What Codex did: Replaced the placeholder terrain with a stylized channel, field plots, shelter,
+  paths, and selected local CC0 vegetation, crop, boat, and bridge glTF assets.
+- Human decision: Required a licensed local paddy-and-channel world before moving existing
+  gameplay into physical stations.
+- GPT-5.6 technique used: Isolated decorative asset failures from the scenario-driven runtime and
+  recorded exact local asset provenance.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
