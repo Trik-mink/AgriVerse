@@ -147,6 +147,14 @@ Format per entry:
 - GPT-5.6 technique used: Bound the visual rail directly to validated simulator JSON rather than
   deriving or inventing projections.
 
+### 2026-07-17 - Immersive priority 9 reflection finale
+- What Codex did: Added a Reflection Pavilion certificate that appears with the existing policy
+  brief and resolves the current player name and intervention labels through live state and scenario data.
+- Human decision: Required the certificate to be additive while the full generated policy brief
+  remains readable and authoritative.
+- GPT-5.6 technique used: Kept generated brief JSON untouched and used scenario IDs for the
+  presentation-only certificate label.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.

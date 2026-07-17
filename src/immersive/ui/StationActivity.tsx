@@ -7,6 +7,8 @@ import { WaterTesting } from '../../components/WaterTesting';
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from '../../types';
 import type { StationId } from '../world/stations';
 import { FutureFieldRail } from './FutureFieldRail';
+import { CertificateFinale } from './CertificateFinale';
+import type { PlayerProfile } from './player';
 
 type InterviewRecord = { question: string; response: string };
 
@@ -21,6 +23,7 @@ type StationActivityProps = {
   feedback?: GraderResult;
   brief?: PolicyBriefResult;
   busy?: string;
+  player: PlayerProfile;
   canOpenProposal: boolean;
   canRunSimulation: boolean;
   onTest: (siteId: string) => void;
@@ -59,7 +62,7 @@ export function StationActivity(props: StationActivityProps) {
     return <><FutureFieldRail simulation={simulation} /><Consequences simulation={simulation} onRequestFeedback={props.onRequestFeedback} isRequestingFeedback={busy === 'feedback'} /></>;
   }
 
-  if (brief) return <PolicyBrief brief={brief} scenario={scenario} />;
+  if (brief) return <><CertificateFinale scenario={scenario} proposal={proposal} player={props.player} /><PolicyBrief brief={brief} scenario={scenario} /></>;
   if (feedback) return <FeedbackPanel feedback={feedback} onRevise={props.onRevise} onCreateBrief={props.onCreateBrief} isCreatingBrief={busy === 'brief'} />;
   if (simulation) return <LockedActivity>Request grounded feedback from the five-year field before entering reflection.</LockedActivity>;
   return <LockedActivity>Complete the investigation, proposal, and five-year model before reflecting on the policy brief.</LockedActivity>;
