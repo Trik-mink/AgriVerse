@@ -1,12 +1,13 @@
 import { Canvas } from '@react-three/fiber';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { Scenario } from '../types';
+import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from '../types';
 import { prefersReducedMotion } from './capabilities';
 import { ImmersiveErrorBoundary } from './ImmersiveErrorBoundary';
 import { getNextStationId, JourneyDirector } from './JourneyDirector';
 import { STATIONS, type StationId } from './world/stations';
+import { StationActivity } from './ui/StationActivity';
 import { ContinuousWorld } from './world/ContinuousWorld';
 import './immersive.css';
 
@@ -14,7 +15,43 @@ function CanvasUnavailable({ onUseClassic }: { onUseClassic: () => void }) {
   return <div className="immersive-canvas-unavailable"><p>3D view is unavailable on this device.</p><button type="button" onClick={onUseClassic}>Open classic investigation</button></div>;
 }
 
-export function ImmersiveExperience({ scenario, onUseClassic }: { scenario: Scenario; onUseClassic: () => void }) {
+type InterviewRecord = { question: string; response: string };
+
+type ImmersiveExperienceProps = {
+  scenario: Scenario;
+  view: string;
+  selectedSiteId?: string;
+  testedSiteIds: string[];
+  interviews: Record<string, InterviewRecord>;
+  proposal: Proposal;
+  simulation?: SimulatorResult;
+  feedback?: GraderResult;
+  brief?: PolicyBriefResult;
+  busy?: string;
+  canOpenProposal: boolean;
+  canRunSimulation: boolean;
+  onUseClassic: () => void;
+  onTest: (siteId: string) => void;
+  onAsk: (stakeholderId: string, question: string) => void;
+  onTargetSiteChange: (siteId: string) => void;
+  onProposalChange: (proposal: Proposal) => void;
+  onSimulate: () => void;
+  onRequestFeedback: () => void;
+  onRevise: () => void;
+  onCreateBrief: () => void;
+};
+
+function stationForView(view: string): StationId | undefined {
+  if (view === 'explore') return 'field';
+  if (view === 'interviews') return 'research';
+  if (view === 'proposal') return 'planning';
+  if (view === 'consequences') return 'future';
+  if (view === 'feedback' || view === 'brief') return 'reflection';
+  return undefined;
+}
+
+export function ImmersiveExperience(props: ImmersiveExperienceProps) {
+  const { scenario, onUseClassic, view } = props;
   const [stationId, setStationId] = useState<StationId>('field');
   const [isTravelling, setIsTravelling] = useState(false);
   const reducedMotion = useMemo(prefersReducedMotion, []);
@@ -22,6 +59,11 @@ export function ImmersiveExperience({ scenario, onUseClassic }: { scenario: Scen
   const currentStation = STATIONS.find((station) => station.id === stationId)!;
   const nextStation = STATIONS.find((station) => station.id === getNextStationId(stationId))!;
   const announceArrival = useCallback(() => stationHeading.current?.focus(), []);
+
+  useEffect(() => {
+    const destination = stationForView(view);
+    if (destination) setStationId(destination);
+  }, [view]);
 
   return (
     <ImmersiveErrorBoundary onCanvasFailure={onUseClassic}>
@@ -38,13 +80,13 @@ export function ImmersiveExperience({ scenario, onUseClassic }: { scenario: Scen
         <section className="immersive-station-directory" aria-labelledby="station-directory-heading">
           <p className="eyebrow">Journey map</p>
           <h2 id="station-directory-heading">Six stations are ready</h2>
-          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><span>{index + 1}</span><div><strong>{station.title}</strong><small>{station.subtitle}</small></div></li>)}</ol>
+          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
         </section>
-        <aside className="immersive-placeholder" aria-live="polite">
+        <aside className="immersive-activity-panel" aria-live="polite">
           <p className="eyebrow">{isTravelling ? 'Moving along the channel' : currentStation.subtitle}</p>
           <h2 ref={stationHeading} tabIndex={-1}>{currentStation.title}</h2>
-          <p>Station activities remain in the classic investigation for this slice. Your existing work and all AI-powered activities are preserved in classic view.</p>
-          <button type="button" className="immersive-primary" disabled={isTravelling} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
+          <StationActivity {...props} stationId={stationId} />
+          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
         </aside>
       </main>
     </ImmersiveErrorBoundary>

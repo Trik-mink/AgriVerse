@@ -109,6 +109,13 @@ Format per entry:
 - GPT-5.6 technique used: Isolated decorative asset failures from the scenario-driven runtime and
   recorded exact local asset provenance.
 
+### 2026-07-17 - Immersive priority 4 station activities
+- What Codex did: Mounted the existing water, interview, proposal, simulation, feedback, and
+  policy-brief components at their physical stations without duplicating their runtime logic.
+- Human decision: Required classic mode to remain a state-preserving fallback for all real gameplay.
+- GPT-5.6 technique used: Reused validated role-agent and structured-output result surfaces through
+  a presentation-only adapter.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.

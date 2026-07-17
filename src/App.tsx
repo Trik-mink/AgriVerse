@@ -58,15 +58,6 @@ export function App() {
 
   const startImmersive = () => setPresentationMode(supportsWebGL() ? 'immersive' : 'classic');
   const useClassic = () => setPresentationMode('classic');
-
-  if (presentationMode === 'landing') {
-    return <ImmersiveLanding scenario={scenario} onStartImmersive={startImmersive} onUseClassic={useClassic} />;
-  }
-
-  if (presentationMode === 'immersive') {
-    return <ImmersiveExperience scenario={scenario} onUseClassic={useClassic} />;
-  }
-
   const selectAndTest = (siteId: string) => { setSelectedSiteId(siteId); setTestedSiteIds((tested) => tested.includes(siteId) ? tested : [...tested, siteId]); };
   const ask = async (stakeholderId: string, question: string) => {
     setBusy(`stakeholder:${stakeholderId}`); setError(undefined);
@@ -95,6 +86,14 @@ export function App() {
     try { const stakeholder_concerns = Object.entries(interviews).map(([stakeholder_id, record]) => ({ stakeholder_id, concern: record.response })); setBrief(await api.createBrief({ target_site_id: currentSiteId, proposal, simulation, stakeholder_concerns })); setView('brief'); }
     catch (requestError) { setError((requestError as Error).message); } finally { setBusy(undefined); }
   };
+
+  if (presentationMode === 'landing') {
+    return <ImmersiveLanding scenario={scenario} onStartImmersive={startImmersive} onUseClassic={useClassic} />;
+  }
+
+  if (presentationMode === 'immersive') {
+    return <ImmersiveExperience scenario={scenario} view={view} selectedSiteId={selectedSiteId} testedSiteIds={testedSiteIds} interviews={interviews} proposal={proposal} simulation={simulation} feedback={feedback} brief={brief} busy={busy} canOpenProposal={proposalUnlocked} canRunSimulation={simulationUnlocked} onUseClassic={useClassic} onTest={selectAndTest} onAsk={ask} onTargetSiteChange={setSelectedSiteId} onProposalChange={setProposal} onSimulate={runSimulation} onRequestFeedback={requestFeedback} onRevise={() => setView('proposal')} onCreateBrief={createBrief} />;
+  }
 
   return <main className="product-shell">
     <header className="topbar"><div><p className="eyebrow">Environmental science simulation</p><h1>AgriVerse</h1></div><div className="crisis-badge"><span>{scenario.location.region}</span><strong>{scenario.crisis.key_metric.label}</strong></div></header>
