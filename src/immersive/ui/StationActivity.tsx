@@ -24,6 +24,7 @@ type StationActivityProps = {
   brief?: PolicyBriefResult;
   busy?: string;
   player: PlayerProfile;
+  canInterview: boolean;
   canOpenProposal: boolean;
   canRunSimulation: boolean;
   onTest: (siteId: string) => void;
@@ -48,7 +49,7 @@ export function StationActivity(props: StationActivityProps) {
   }
 
   if (stationId === 'research' || stationId === 'office') {
-    if (!props.canOpenProposal) return <LockedActivity>Record every water sample before the stakeholder conversations open.</LockedActivity>;
+    if (!props.canInterview) return <LockedActivity>Record every water sample before the stakeholder conversations open.</LockedActivity>;
     return <Interviews stakeholders={scenario.stakeholders} interviews={interviews} busyStakeholderId={busy?.replace('stakeholder:', '')} onAsk={props.onAsk} />;
   }
 

@@ -164,6 +164,15 @@ Format per entry:
 - GPT-5.6 technique used: Preserved all scored systems and student state while isolating a GPU
   presentation failure behind progressive enhancement.
 
+### 2026-07-17 - Immersive portraits and low-poly landscape
+- What Codex did: Added optimized portrait dialogue with name-badge fallback, restored a primitive
+  low-poly paddy/channel scene using instanced plants and lazy active-station props, and fixed the
+  interview gate to open after water testing.
+- Human decision: Kept characters 2D, deferred all 3D people, and required a single-canvas,
+  low-power landscape verified through a real-browser six-station walkthrough.
+- GPT-5.6 technique used: Reused live validated stakeholder text while binding portraits by
+  scenario stakeholder order and keeping all world content presentation-only.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.

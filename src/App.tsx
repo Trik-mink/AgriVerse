@@ -94,7 +94,7 @@ export function App() {
   }
 
   if (presentationMode === 'immersive') {
-    return <ImmersiveExperience scenario={scenario} player={player} view={view} selectedSiteId={selectedSiteId} testedSiteIds={testedSiteIds} interviews={interviews} proposal={proposal} simulation={simulation} feedback={feedback} brief={brief} busy={busy} canOpenProposal={proposalUnlocked} canRunSimulation={simulationUnlocked} onUseClassic={useClassic} onTest={selectAndTest} onAsk={ask} onTargetSiteChange={setSelectedSiteId} onProposalChange={setProposal} onSimulate={runSimulation} onRequestFeedback={requestFeedback} onRevise={() => setView('proposal')} onCreateBrief={createBrief} />;
+    return <ImmersiveExperience scenario={scenario} player={player} view={view} selectedSiteId={selectedSiteId} testedSiteIds={testedSiteIds} interviews={interviews} proposal={proposal} simulation={simulation} feedback={feedback} brief={brief} busy={busy} canInterview={testedSiteIds.length === siteIds.length && siteIds.length > 0} canOpenProposal={proposalUnlocked} canRunSimulation={simulationUnlocked} onUseClassic={useClassic} onTest={selectAndTest} onAsk={ask} onTargetSiteChange={setSelectedSiteId} onProposalChange={setProposal} onSimulate={runSimulation} onRequestFeedback={requestFeedback} onRevise={() => setView('proposal')} onCreateBrief={createBrief} />;
   }
 
   return <main className="product-shell">

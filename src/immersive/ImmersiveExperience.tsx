@@ -33,6 +33,7 @@ type ImmersiveExperienceProps = {
   feedback?: GraderResult;
   brief?: PolicyBriefResult;
   busy?: string;
+  canInterview: boolean;
   canOpenProposal: boolean;
   canRunSimulation: boolean;
   onUseClassic: () => void;
