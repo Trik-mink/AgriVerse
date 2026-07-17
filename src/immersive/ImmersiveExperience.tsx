@@ -16,10 +16,6 @@ import { WebGLContextLossHandler } from './WebGLContextLossHandler';
 import { InitialFrame } from './InitialFrame';
 import './immersive.css';
 
-function CanvasUnavailable({ onUseClassic }: { onUseClassic: () => void }) {
-  return <div className="immersive-canvas-unavailable"><p>3D view is unavailable on this device.</p><button type="button" onClick={onUseClassic}>Open classic investigation</button></div>;
-}
-
 type InterviewRecord = { question: string; response: string };
 
 type ImmersiveExperienceProps = {
@@ -77,7 +73,7 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
   return (
     <ImmersiveErrorBoundary contextLost={contextLost} onCanvasFailure={onUseClassic}>
       <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${isWaking ? 'is-waking' : ''}`}>
-        <Canvas className="immersive-canvas" frameloop="always" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1]} gl={{ antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false, stencil: false }} fallback={<CanvasUnavailable onUseClassic={onUseClassic} />} aria-hidden="true">
+        <Canvas className="immersive-canvas" frameloop="always" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1]} gl={{ antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false, stencil: false }} aria-hidden="true">
           <ContinuousWorld stationId={stationId}>
             <InitialFrame />
             <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
@@ -87,7 +83,6 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
         </Canvas>
         <header className="immersive-header">
           <div><p className="eyebrow">Guided field journey</p><h1>{scenario.title}</h1><p className="immersive-player-name">{player.displayName} · {player.presetId}</p></div>
-          <button type="button" className="immersive-secondary" onClick={onUseClassic}>Use classic view</button>
         </header>
         <section className="immersive-station-directory" aria-labelledby="station-directory-heading">
           <p className="eyebrow">Journey map</p>

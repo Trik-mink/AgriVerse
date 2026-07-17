@@ -185,3 +185,8 @@ Format per entry:
 - What Codex did: Forced an initial WebGL compile and invalidated first frames, strengthened station-panel text contrast, and warmed the low-poly paddy lighting with softer palm silhouettes.
 - Human decision: Required an immediate visible landscape, readable water results, and browser-verified stability without increasing GPU cost.
 - GPT-5.6 technique used: Kept the presentation layer separate from the validated scenario-driven runtime systems.
+
+### 2026-07-17 - Immersive automatic classic fallback
+- What Codex did: Removed the manual classic-view control from the immersive interface while retaining automatic capability, canvas-failure, and context-loss handoff to the classic investigation.
+- Human decision: Kept the safety fallback mandatory but removed the visible manual escape control from the field journey.
+- GPT-5.6 technique used: Preserved the stateful scenario journey while applying progressive enhancement only at the presentation boundary.
