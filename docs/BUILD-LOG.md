@@ -180,3 +180,8 @@ Format per entry:
   contract unchanged, and required an original stylized look grounded in real Mekong references.
 - GPT-5.6 technique used: Preserved role-separated live dialogue, structured simulation output,
   grounded grading, and policy-brief generation behind a new presentation boundary.
+
+### 2026-07-17 - Immersive first-frame and contrast polish
+- What Codex did: Forced an initial WebGL compile and invalidated first frames, strengthened station-panel text contrast, and warmed the low-poly paddy lighting with softer palm silhouettes.
+- Human decision: Required an immediate visible landscape, readable water results, and browser-verified stability without increasing GPU cost.
+- GPT-5.6 technique used: Kept the presentation layer separate from the validated scenario-driven runtime systems.
