@@ -90,7 +90,7 @@ export function App() {
   };
 
   if (presentationMode === 'landing') {
-    return <ImmersiveLanding scenario={scenario} onStartImmersive={startImmersive} onUseClassic={useClassic} />;
+    return <ImmersiveLanding scenario={scenario} onStartImmersive={startImmersive} />;
   }
 
   if (presentationMode === 'immersive') {

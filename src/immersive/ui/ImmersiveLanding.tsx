@@ -1,16 +1,21 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import type { Scenario } from '../../types';
-import { heroSceneSrc } from '../world/sceneAssets';
+import { prefersReducedMotion } from '../capabilities';
+import { heroSceneSrc, heroVideoSrc } from '../world/sceneAssets';
 import { DEFAULT_PLAYER, PLAYER_PRESETS, type PlayerProfile } from './player';
 
-export function ImmersiveLanding({ scenario, onStartImmersive, onUseClassic }: { scenario: Scenario; onStartImmersive: (player: PlayerProfile) => void; onUseClassic: () => void }) {
+export function ImmersiveLanding({ scenario, onStartImmersive }: { scenario: Scenario; onStartImmersive: (player: PlayerProfile) => void }) {
   const [displayName, setDisplayName] = useState(DEFAULT_PLAYER.displayName);
   const [presetId, setPresetId] = useState<PlayerProfile['presetId']>(DEFAULT_PLAYER.presetId);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const heroVideo = useRef<HTMLVideoElement>(null);
+  const reducedMotion = useMemo(prefersReducedMotion, []);
 
   return (
     <main className="immersive-landing">
-      <div className="immersive-landing-art" aria-hidden="true"><img src={heroSceneSrc} alt="" /></div>
+      <div className="immersive-landing-art" aria-hidden="true"><img src={heroSceneSrc} alt="" />{!reducedMotion && !videoFailed ? <video ref={heroVideo} className={`immersive-landing-video ${videoReady ? 'is-ready' : ''}`} src={heroVideoSrc} poster={heroSceneSrc} muted autoPlay loop playsInline preload="metadata" onCanPlay={() => { setVideoReady(true); void heroVideo.current?.play().catch(() => setVideoFailed(true)); }} onError={() => setVideoFailed(true)} /> : null}</div>
       <section className="immersive-landing-copy" aria-labelledby="immersive-title">
         <p className="eyebrow">Field investigation</p>
         <h1 id="immersive-title">{scenario.title}</h1>
@@ -23,7 +28,6 @@ export function ImmersiveLanding({ scenario, onStartImmersive, onUseClassic }: {
         </div></fieldset>
         <div className="immersive-landing-actions">
           <button type="button" className="immersive-primary" onClick={() => onStartImmersive({ displayName: displayName.trim() || DEFAULT_PLAYER.displayName, presetId })}>Enter the field journey</button>
-          <button type="button" className="immersive-secondary" onClick={onUseClassic}>Use classic view</button>
         </div>
       </section>
     </main>

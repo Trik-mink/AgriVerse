@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { stationSceneSrc } from './world/sceneAssets';
+import { stationSceneSrc, stationVideoSrc } from './world/sceneAssets';
 import { STATIONS, type StationId } from './world/stations';
 
-type SceneLayer = { id: StationId; src?: string; title: string };
+type SceneLayer = { id: StationId; posterSrc?: string; videoSrc?: string; title: string };
 
 type PhotoBackdropProps = {
   stationId: StationId;
@@ -14,17 +14,25 @@ type PhotoBackdropProps = {
 
 function layerFor(stationId: StationId): SceneLayer {
   const station = STATIONS.find((candidate) => candidate.id === stationId)!;
-  return { id: stationId, src: stationSceneSrc(stationId), title: station.title };
+  return { id: stationId, posterSrc: stationSceneSrc(stationId), videoSrc: stationVideoSrc(stationId), title: station.title };
 }
 
-function SceneLayerView({ layer, visible, onTransitionEnd }: { layer: SceneLayer; visible: boolean; onTransitionEnd?: () => void }) {
+function SceneLayerView({ layer, visible, playVideo, reducedMotion, onTransitionEnd }: { layer: SceneLayer; visible: boolean; playVideo?: boolean; reducedMotion: boolean; onTransitionEnd?: () => void }) {
   const className = `immersive-photo-layer ${visible ? 'is-visible' : ''}`;
+  const video = useRef<HTMLVideoElement>(null);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
-  if (!layer.src) {
+  useEffect(() => {
+    if (!playVideo || reducedMotion || videoFailed) return;
+    void video.current?.play().catch(() => setVideoFailed(true));
+  }, [playVideo, reducedMotion, videoFailed]);
+
+  if (!layer.posterSrc) {
     return <div className={`${className} is-fallback`} onTransitionEnd={onTransitionEnd}><span>{layer.title}</span></div>;
   }
 
-  return <div className={className} onTransitionEnd={(event) => { if (event.target === event.currentTarget && event.propertyName === 'opacity') onTransitionEnd?.(); }}><img src={layer.src} alt="" /></div>;
+  return <div className={className} onTransitionEnd={(event) => { if (event.target === event.currentTarget && event.propertyName === 'opacity') onTransitionEnd?.(); }}><img src={layer.posterSrc} alt="" />{playVideo && !reducedMotion && !videoFailed ? <video ref={video} className={`immersive-backdrop-video ${videoReady ? 'is-ready' : ''}`} src={layer.videoSrc} poster={layer.posterSrc} muted autoPlay loop playsInline preload="metadata" onCanPlay={() => setVideoReady(true)} onError={() => setVideoFailed(true)} /> : null}</div>;
 }
 
 export function PhotoBackdrop({ stationId, reducedMotion, onFirstFramesReady, onTransitionComplete }: PhotoBackdropProps) {
@@ -80,7 +88,7 @@ export function PhotoBackdrop({ stationId, reducedMotion, onFirstFramesReady, on
   }, [active, finishTransition, onFirstFramesReady, reducedMotion]);
 
   useEffect(() => {
-    if (!pending?.src) return;
+    if (!pending?.posterSrc) return;
 
     let cancelled = false;
     const preloader = new Image();
@@ -92,8 +100,8 @@ export function PhotoBackdrop({ stationId, reducedMotion, onFirstFramesReady, on
     };
 
     preloader.onload = handleLoad;
-    preloader.onerror = () => settle({ ...pending, src: undefined });
-    preloader.src = pending.src;
+    preloader.onerror = () => settle({ ...pending, posterSrc: undefined, videoSrc: undefined });
+    preloader.src = pending.posterSrc;
     if (preloader.complete) {
       if (preloader.naturalWidth > 0) handleLoad();
       else preloader.onerror(new Event('error'));
@@ -105,8 +113,8 @@ export function PhotoBackdrop({ stationId, reducedMotion, onFirstFramesReady, on
   return (
     <div className="immersive-photo-backdrop" aria-hidden="true">
       <div className="immersive-photo-base" />
-      {outgoing ? <SceneLayerView key={`outgoing-${outgoing.id}`} layer={outgoing} visible /> : null}
-      {active ? <SceneLayerView key={`active-${active.id}`} layer={active} visible={activeVisible} onTransitionEnd={finishTransition} /> : null}
+      {outgoing ? <SceneLayerView key={`outgoing-${outgoing.id}`} layer={outgoing} visible reducedMotion={reducedMotion} /> : null}
+      {active ? <SceneLayerView key={`active-${active.id}`} layer={active} visible={activeVisible} playVideo reducedMotion={reducedMotion} onTransitionEnd={finishTransition} /> : null}
       <div className="immersive-photo-grade" />
     </div>
   );

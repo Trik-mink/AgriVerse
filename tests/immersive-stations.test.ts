@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { shouldUseClassic } from '../src/immersive/capabilities.js';
+import { stationSceneSrc, stationVideoSrc } from '../src/immersive/world/sceneAssets.js';
 import { STATIONS } from '../src/immersive/world/stations.js';
 
 describe('immersive presentation foundation', () => {
@@ -20,5 +21,12 @@ describe('immersive presentation foundation', () => {
     expect(shouldUseClassic('classic', true)).toBe(true);
     expect(shouldUseClassic('immersive', false)).toBe(true);
     expect(shouldUseClassic('immersive', true)).toBe(false);
+  });
+
+  it('pairs each station poster with its matching optional video path', () => {
+    for (const station of STATIONS) {
+      expect(stationSceneSrc(station.id)).toMatch(/^\/assets\/scenes\/optimized\/.+\.webp$/);
+      expect(stationVideoSrc(station.id)).toMatch(/^\/assets\/scenes\/.+\.mp4$/);
+    }
   });
 });

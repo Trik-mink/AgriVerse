@@ -200,3 +200,8 @@ Format per entry:
 - What Codex did: Replaced the immersive WebGL world with decoded, optimized Commons-photo layers that cross-fade without unmounting the outgoing backdrop; converted the classic map to DOM as well.
 - Human decision: Chose real photos and no immersive WebGL to eliminate context-loss and blank-transition risk, while retaining automatic classic fallback and all existing journey mechanics.
 - GPT-5.6 technique used: Preserved scenario-driven station state and the scored runtime systems behind a presentation-only media layer.
+
+### 2026-07-17 - Video-capable station backdrops
+- What Codex did: Added active-station-only muted video layers that fade in over decoded poster images, unload on station exit, and fall back to the poster on media failure; removed the remaining manual classic-view control.
+- Human decision: Required no WebGL, no blank media states, reduced-motion posters, and automatic classic fallback only.
+- GPT-5.6 technique used: Kept the presentation layer separate from the scenario-driven, structured-output runtime systems.
