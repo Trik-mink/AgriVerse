@@ -71,3 +71,34 @@ Format per entry:
   intervention proposal, five-year model view, feedback/revision loop, and final policy brief UI.
 - GPT-5.6 technique used: Scenario-driven interaction flow, stakeholder dialogue, simulated
   consequences, grounded grading, and policy-brief synthesis.
+
+### 2026-07-17 - Immersive scope correction
+- What Codex did: Updated the immersive presentation specification to remove Azure speech,
+  visemes, VRM, custom character work, and the presentation speech-token endpoint.
+- Human decision: Initially chose browser-only optional speech and Quaternius CC0 characters used
+  as-is with code-only palette treatment; the later dialogue correction supersedes speech.
+- GPT-5.6 technique used: Preserved the existing role-separated runtime while isolating all
+  presentation decisions from scored systems.
+
+### 2026-07-17 - Immersive dialogue correction
+- What Codex did: Replaced the browser-speech plan with authoritative on-screen dialogue, an
+  optional local CC0 UI cue, and generic character gestures only.
+- Human decision: Removed all speech synthesis in favor of chat-based dialogue that works silently.
+- GPT-5.6 technique used: Kept validated stakeholder text as the sole dialogue source while
+  isolating optional presentation feedback from scored runtime behavior.
+
+### 2026-07-17 - Immersive priority 1 foundation
+- What Codex did: Added the landing choice, persistent full-screen canvas, six semantic station
+  anchors, WebGL error boundary, and a state-preserving classic fallback.
+- Human decision: Required the immersive and classic render paths to be confirmed before camera
+  work begins.
+- GPT-5.6 technique used: Preserved the scenario-driven runtime state while isolating immersive
+  presentation as progressive enhancement.
+
+### 2026-07-16 - Immersive journey presentation plan
+- What Codex did: Specified a six-station continuous first-person journey, persistent guide,
+  camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
+- Human decision: Limited the redesign to presentation, kept every scored GPT-5.6 system and
+  contract unchanged, and required an original stylized look grounded in real Mekong references.
+- GPT-5.6 technique used: Preserved role-separated live dialogue, structured simulation output,
+  grounded grading, and policy-brief generation behind a new presentation boundary.

@@ -9,6 +9,9 @@ import { PolicyBrief } from './components/PolicyBrief';
 import { ProposalBuilder } from './components/ProposalBuilder';
 import { WaterTesting } from './components/WaterTesting';
 import { canOpenProposal, canRunSimulation } from './flow/progress';
+import { supportsWebGL, type PresentationMode } from './immersive/capabilities';
+import { ImmersiveExperience } from './immersive/ImmersiveExperience';
+import { ImmersiveLanding } from './immersive/ui/ImmersiveLanding';
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from './types';
 
 type View = 'explore' | 'interviews' | 'proposal' | 'consequences' | 'feedback' | 'brief';
@@ -28,6 +31,7 @@ export function App() {
   const [feedback, setFeedback] = useState<GraderResult>();
   const [brief, setBrief] = useState<PolicyBriefResult>();
   const [busy, setBusy] = useState<string>();
+  const [presentationMode, setPresentationMode] = useState<PresentationMode>('landing');
 
   useEffect(() => { api.getScenario().then(setScenario).catch((requestError: Error) => setError(requestError.message)); }, []);
 
@@ -51,6 +55,17 @@ export function App() {
 
   if (error) return <main className="app-shell"><p className="eyebrow">Connection problem</p><h1>AgriVerse</h1><p className="status-copy">{error}</p></main>;
   if (!scenario) return <main className="app-shell"><p className="eyebrow">Environmental science simulation</p><h1>AgriVerse</h1><p className="status-copy">Loading field investigation...</p></main>;
+
+  const startImmersive = () => setPresentationMode(supportsWebGL() ? 'immersive' : 'classic');
+  const useClassic = () => setPresentationMode('classic');
+
+  if (presentationMode === 'landing') {
+    return <ImmersiveLanding scenario={scenario} onStartImmersive={startImmersive} onUseClassic={useClassic} />;
+  }
+
+  if (presentationMode === 'immersive') {
+    return <ImmersiveExperience scenario={scenario} onUseClassic={useClassic} />;
+  }
 
   const selectAndTest = (siteId: string) => { setSelectedSiteId(siteId); setTestedSiteIds((tested) => tested.includes(siteId) ? tested : [...tested, siteId]); };
   const ask = async (stakeholderId: string, question: string) => {
