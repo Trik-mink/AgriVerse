@@ -195,3 +195,8 @@ Format per entry:
 - What Codex did: Replaced the timed wake veil with a warm arrival overlay that releases only after two completed WebGL frames, then fades into the existing landscape.
 - Human decision: Required the student to see a warm arrival state rather than a blank render surface while the scene initializes.
 - GPT-5.6 technique used: Kept render-readiness state inside the presentation layer without changing scenario data or scored GPT-5.6 systems.
+
+### 2026-07-17 - Real-photo 2.5D station backdrops
+- What Codex did: Replaced the immersive WebGL world with decoded, optimized Commons-photo layers that cross-fade without unmounting the outgoing backdrop; converted the classic map to DOM as well.
+- Human decision: Chose real photos and no immersive WebGL to eliminate context-loss and blank-transition risk, while retaining automatic classic fallback and all existing journey mechanics.
+- GPT-5.6 technique used: Preserved scenario-driven station state and the scored runtime systems behind a presentation-only media layer.

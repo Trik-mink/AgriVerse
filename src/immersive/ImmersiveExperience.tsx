@@ -1,19 +1,14 @@
-import { Canvas } from '@react-three/fiber';
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from '../types';
 import { prefersReducedMotion } from './capabilities';
 import { ImmersiveErrorBoundary } from './ImmersiveErrorBoundary';
-import { getNextStationId, JourneyDirector } from './JourneyDirector';
+import { getNextStationId } from './journeyNavigation';
 import { STATIONS, type StationId } from './world/stations';
 import { StationActivity } from './ui/StationActivity';
 import type { PlayerProfile } from './ui/player';
-import { WakeUpDirector } from './WakeUpDirector';
 import { DialogueWindow } from './ui/DialogueWindow';
-import { ContinuousWorld } from './world/ContinuousWorld';
-import { WebGLContextLossHandler } from './WebGLContextLossHandler';
-import { InitialFrame } from './InitialFrame';
+import { PhotoBackdrop } from './PhotoBackdrop';
 import './immersive.css';
 
 type InterviewRecord = { question: string; response: string };
@@ -60,46 +55,65 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
   const reducedMotion = useMemo(prefersReducedMotion, []);
   const [sceneReady, setSceneReady] = useState(false);
   const [arrivalComplete, setArrivalComplete] = useState(false);
-  const [contextLost, setContextLost] = useState(false);
   const stationHeading = useRef<HTMLHeadingElement>(null);
+  const shell = useRef<HTMLElement>(null);
+  const parallaxFrame = useRef<number | undefined>(undefined);
+  const pointer = useRef({ x: 0, y: 0 });
+  const previousView = useRef(view);
   const currentStation = STATIONS.find((station) => station.id === stationId)!;
   const nextStation = STATIONS.find((station) => station.id === getNextStationId(stationId))!;
   const announceArrival = useCallback(() => stationHeading.current?.focus(), []);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const travelToStation = useCallback((destination: StationId) => {
+    if (destination === stationId) return;
+    setIsTravelling(true);
+    setStationId(destination);
+  }, [stationId]);
+  const completeTravel = useCallback(() => {
+    setIsTravelling(false);
+    announceArrival();
+  }, [announceArrival]);
 
   useEffect(() => {
+    if (previousView.current === view) return;
+    previousView.current = view;
     const destination = stationForView(view);
-    if (destination) setStationId(destination);
-  }, [view]);
+    if (destination) travelToStation(destination);
+  }, [travelToStation, view]);
 
   useEffect(() => {
     if (sceneReady && reducedMotion) setArrivalComplete(true);
   }, [reducedMotion, sceneReady]);
 
+  useEffect(() => () => {
+    if (parallaxFrame.current !== undefined) cancelAnimationFrame(parallaxFrame.current);
+  }, []);
+
   return (
-    <ImmersiveErrorBoundary contextLost={contextLost} onCanvasFailure={onUseClassic}>
-      <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${!sceneReady ? 'is-arriving' : ''}`}>
-        <Canvas className="immersive-canvas" frameloop="always" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1]} gl={{ antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false, stencil: false }} aria-hidden="true">
-          <ContinuousWorld stationId={stationId}>
-            <InitialFrame onReady={markSceneReady} />
-            <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
-            <WakeUpDirector reducedMotion={reducedMotion} />
-            <WebGLContextLossHandler onContextLost={() => setContextLost(true)} />
-          </ContinuousWorld>
-        </Canvas>
+    <ImmersiveErrorBoundary contextLost={false} onCanvasFailure={onUseClassic}>
+      <main ref={shell} className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${!sceneReady ? 'is-arriving' : ''}`} onPointerMove={(event) => {
+        pointer.current = { x: (event.clientX / window.innerWidth - 0.5) * 12, y: (event.clientY / window.innerHeight - 0.5) * 9 };
+        if (parallaxFrame.current !== undefined) return;
+        parallaxFrame.current = requestAnimationFrame(() => {
+          shell.current?.style.setProperty('--immersive-parallax-x', `${pointer.current.x}px`);
+          shell.current?.style.setProperty('--immersive-parallax-y', `${pointer.current.y}px`);
+          parallaxFrame.current = undefined;
+        });
+      }}>
+        <PhotoBackdrop stationId={stationId} reducedMotion={reducedMotion} onFirstFramesReady={markSceneReady} onTransitionComplete={completeTravel} />
         <header className="immersive-header">
           <div><p className="eyebrow">Guided field journey</p><h1>{scenario.title}</h1><p className="immersive-player-name">{player.displayName} · {player.presetId}</p></div>
         </header>
         <section className="immersive-station-directory" aria-labelledby="station-directory-heading">
           <p className="eyebrow">Journey map</p>
           <h2 id="station-directory-heading">Six stations are ready</h2>
-          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" disabled={!sceneReady} onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
+          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" disabled={!sceneReady || isTravelling} onClick={() => travelToStation(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
         </section>
         <aside className="immersive-activity-panel" aria-live="polite">
           <p className="eyebrow">{isTravelling ? 'Moving along the channel' : currentStation.subtitle}</p>
           <h2 ref={stationHeading} tabIndex={-1}>{currentStation.title}</h2>
           <StationActivity {...props} stationId={stationId} />
-          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || !sceneReady} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
+          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || !sceneReady} onClick={() => travelToStation(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
         </aside>
         <DialogueWindow stationId={stationId} stakeholders={scenario.stakeholders} interviews={props.interviews} />
         {!arrivalComplete ? <div className={`immersive-arrival-overlay ${sceneReady ? 'is-revealing' : ''}`} role="status" aria-live="polite" onTransitionEnd={(event) => { if (event.propertyName === 'opacity') setArrivalComplete(true); }}><div><p className="eyebrow">Field arrival</p><p>Arriving in the Mekong Delta...</p></div></div> : null}

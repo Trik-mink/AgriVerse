@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { Scenario } from '../../types';
+import { heroSceneSrc } from '../world/sceneAssets';
 import { DEFAULT_PLAYER, PLAYER_PRESETS, type PlayerProfile } from './player';
 
 export function ImmersiveLanding({ scenario, onStartImmersive, onUseClassic }: { scenario: Scenario; onStartImmersive: (player: PlayerProfile) => void; onUseClassic: () => void }) {
@@ -9,7 +10,7 @@ export function ImmersiveLanding({ scenario, onStartImmersive, onUseClassic }: {
 
   return (
     <main className="immersive-landing">
-      <div className="immersive-landing-art" aria-hidden="true"><span /><span /><span /></div>
+      <div className="immersive-landing-art" aria-hidden="true"><img src={heroSceneSrc} alt="" /></div>
       <section className="immersive-landing-copy" aria-labelledby="immersive-title">
         <p className="eyebrow">Field investigation</p>
         <h1 id="immersive-title">{scenario.title}</h1>
