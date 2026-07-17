@@ -6,6 +6,7 @@ import { ProposalBuilder } from '../../components/ProposalBuilder';
 import { WaterTesting } from '../../components/WaterTesting';
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from '../../types';
 import type { StationId } from '../world/stations';
+import { FutureFieldRail } from './FutureFieldRail';
 
 type InterviewRecord = { question: string; response: string };
 
@@ -55,7 +56,7 @@ export function StationActivity(props: StationActivityProps) {
 
   if (stationId === 'future') {
     if (!simulation) return <LockedActivity>Run a five-year model at the planning dock to reveal this field.</LockedActivity>;
-    return <Consequences simulation={simulation} onRequestFeedback={props.onRequestFeedback} isRequestingFeedback={busy === 'feedback'} />;
+    return <><FutureFieldRail simulation={simulation} /><Consequences simulation={simulation} onRequestFeedback={props.onRequestFeedback} isRequestingFeedback={busy === 'feedback'} /></>;
   }
 
   if (brief) return <PolicyBrief brief={brief} scenario={scenario} />;

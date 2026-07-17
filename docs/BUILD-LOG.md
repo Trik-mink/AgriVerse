@@ -139,6 +139,14 @@ Format per entry:
 - GPT-5.6 technique used: Rendered only the existing validated stakeholder response as dialogue and
   kept the cue outside runtime scoring and contracts.
 
+### 2026-07-17 - Immersive priority 8 future field rail
+- What Codex did: Added a selectable five-year field rail that visualizes the existing simulator
+  years, measures, scores, and narratives at the Future Fields station.
+- Human decision: Required the exact structured simulation values to remain the authoritative
+  consequence presentation.
+- GPT-5.6 technique used: Bound the visual rail directly to validated simulator JSON rather than
+  deriving or inventing projections.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
