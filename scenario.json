@@ -1,0 +1,916 @@
+{
+  "schema_version": "1.0",
+  "id": "vietnam-mekong-salinity",
+  "title": "Saving a Mekong Delta farming community",
+  "location": {
+    "country": "Vietnam",
+    "region": "Mekong Delta",
+    "env_asset": "mekong_delta_3d"
+  },
+  "crisis": {
+    "type": "saltwater_intrusion",
+    "summary": "Dry-season saltwater intrusion threatens farming and freshwater access in the delta.",
+    "driver_summary": "Reduced dry-season upstream discharge is the principal driver, compounded by sea-level rise and land subsidence.",
+    "driver_fact_ids": [
+      "principal_driver",
+      "subsidence_rate",
+      "delta_elevation"
+    ],
+    "key_metric": {
+      "id": "salinity",
+      "name": "Salinity",
+      "unit": "g/L",
+      "direction_of_harm": "higher",
+      "danger_threshold": {
+        "operator": "greater_than_or_equal",
+        "value": 4,
+        "source_fact_ids": [
+          "rice_killing_salinity_threshold"
+        ]
+      }
+    }
+  },
+  "decision_factors": [
+    "salinity_gL",
+    "season",
+    "freshwater_access",
+    "farmer_capital"
+  ],
+  "factor_definitions": {
+    "salinity_gL": {
+      "type": "number",
+      "unit": "g/L",
+      "description": "Salinity measured by the student at the target plot."
+    },
+    "season": {
+      "type": "seasonal_context",
+      "values": [
+        "dry",
+        "wet"
+      ],
+      "description": "The current season plus whether salinity is seasonal or persistent."
+    },
+    "freshwater_access": {
+      "type": "ordinal",
+      "values": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "Freshwater available for flushing, dilution, or a fresh-season crop."
+    },
+    "farmer_capital": {
+      "type": "ordinal",
+      "values": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "description": "The farmer's ability to fund upfront conversion or adoption costs."
+    }
+  },
+  "authoring_notes": {
+    "numeric_facts": "Numeric crisis and adaptation facts resolve through datasets and sources; exact test readings are authored values inside cited ranges.",
+    "qualitative_levels": "Capital, cost, income, freshwater-access, and sustainability labels are scenario-relative gameplay categories, not published numeric measurements."
+  },
+  "farmer_capital": "low",
+  "support_measure_options": [
+    {
+      "id": "capital_support_plan",
+      "type": "student_proposal_component",
+      "addresses_factor": "farmer_capital",
+      "description": "A student may propose credit, cost sharing, or staged adoption, but must identify who bears the cost and may not invent a budget amount.",
+      "source_fact_ids": [
+        "rice_shrimp_tradeoffs"
+      ]
+    }
+  ],
+  "learning_objectives": [
+    {
+      "id": "multi_factor_fit",
+      "description": "Select and justify an intervention using salinity, seasonality, freshwater access, and farmer capital together."
+    },
+    {
+      "id": "tradeoff_reasoning",
+      "description": "Balance yield, income, cost, scale, and long-term soil and water health."
+    },
+    {
+      "id": "evidence_grounding",
+      "description": "Distinguish cited observations from modeled projections and unsupported claims."
+    }
+  ],
+  "commodities": [
+    {
+      "id": "rice",
+      "label": "Rice",
+      "yield_units": [
+        "t/ha",
+        "t/cycle"
+      ],
+      "source_fact_ids": [
+        "rice_yield_example",
+        "rice_shrimp_yields"
+      ]
+    },
+    {
+      "id": "shrimp",
+      "label": "Shrimp",
+      "yield_units": [
+        "kg/cycle"
+      ],
+      "source_fact_ids": [
+        "rice_shrimp_yields"
+      ]
+    },
+    {
+      "id": "alternative_crop",
+      "label": "Alternative crop",
+      "yield_units": [],
+      "source_fact_ids": [
+        "alternative_crops"
+      ]
+    }
+  ],
+  "test_sites": [
+    {
+      "id": "coastal",
+      "label": "Coastal plot",
+      "salinity_gL": 12,
+      "season": "dry",
+      "salinity_duration": "persistent",
+      "seasonal_pattern": "persistent_brackish",
+      "freshwater_access": "low",
+      "note": "Rice is not viable at this salinity; the plot remains brackish beyond the dry-season peak.",
+      "measurement_grounding": {
+        "type": "authored_value_within_corpus_range",
+        "range": {
+          "min": 10,
+          "max": 15,
+          "unit": "g/L"
+        },
+        "source_ids": [
+          "S1",
+          "S8"
+        ]
+      }
+    },
+    {
+      "id": "mid",
+      "label": "Mid-delta plot",
+      "salinity_gL": 3,
+      "season": "dry",
+      "salinity_duration": "seasonal",
+      "seasonal_pattern": "brackish_dry_fresh_wet",
+      "freshwater_access": "medium",
+      "note": "Rice is marginal in the dry season; the wet season returns fresh water, so the intervention must use the seasonal swing.",
+      "measurement_grounding": {
+        "type": "authored_value_within_corpus_range",
+        "range": {
+          "min": 2,
+          "max": 4,
+          "unit": "g/L"
+        },
+        "source_ids": [
+          "S2"
+        ]
+      }
+    },
+    {
+      "id": "upstream",
+      "label": "Upstream plot",
+      "salinity_gL": 0.5,
+      "season": "wet",
+      "salinity_duration": "persistent",
+      "seasonal_pattern": "fresh_year_round",
+      "freshwater_access": "high",
+      "note": "Salinity is below the cited tolerance level for most crops, so normal rice remains viable.",
+      "measurement_grounding": {
+        "type": "authored_value_within_corpus_range",
+        "range": {
+          "max_exclusive": 1,
+          "unit": "g/L"
+        },
+        "source_ids": [
+          "S1",
+          "S8"
+        ]
+      }
+    }
+  ],
+  "datasets": [
+    {
+      "id": "crop_salinity_tolerance",
+      "label": "Most-crop salinity tolerance",
+      "kind": "threshold",
+      "value": {
+        "operator": "less_than",
+        "amount": 1,
+        "unit": "g/L"
+      },
+      "source_ids": [
+        "S1",
+        "S8"
+      ]
+    },
+    {
+      "id": "rice_killing_salinity_threshold",
+      "label": "Agency rice-damage contour",
+      "kind": "threshold",
+      "value": {
+        "operator": "greater_than_or_equal",
+        "amount": 4,
+        "unit": "g/L"
+      },
+      "source_ids": [
+        "S1",
+        "S8"
+      ]
+    },
+    {
+      "id": "seasonal_salinity_cycle",
+      "label": "Wet/dry salinity cycle",
+      "kind": "finding",
+      "value": {
+        "dry_season": "brackish intrusion",
+        "wet_season": "upstream flow and rainfall push salt back",
+        "decision_implication": "A single salinity reading is incomplete without season and duration."
+      },
+      "source_ids": [
+        "S3",
+        "S5",
+        "S9"
+      ]
+    },
+    {
+      "id": "intrusion_2024_25",
+      "label": "2024-25 dry-season intrusion distance",
+      "kind": "range",
+      "value": {
+        "min": 15,
+        "max": 20,
+        "unit": "km up most river mouths",
+        "salinity_contour": {
+          "value": 4,
+          "unit": "g/L"
+        }
+      },
+      "source_ids": [
+        "S1"
+      ]
+    },
+    {
+      "id": "intrusion_2020",
+      "label": "2020 intrusion extent",
+      "kind": "compound_measurement",
+      "value": {
+        "tien_river_distance_km": 60,
+        "hau_river_distance_km": {
+          "min": 40,
+          "max": 50
+        },
+        "deeper_than_2016_km": {
+          "min": 8,
+          "max": 10
+        },
+        "affected_provinces": 10,
+        "total_delta_provinces": 13,
+        "salinity_contour_gL": 4
+      },
+      "source_ids": [
+        "S3",
+        "S9"
+      ]
+    },
+    {
+      "id": "intrusion_2016",
+      "label": "2016 El Nino crisis",
+      "kind": "compound_measurement",
+      "value": {
+        "inland_distance_km": {
+          "operator": "greater_than",
+          "amount": 90
+        },
+        "rice_area_destroyed_ha": 240000,
+        "loss_usd": 450000000
+      },
+      "source_ids": [
+        "S3",
+        "S9"
+      ]
+    },
+    {
+      "id": "principal_driver",
+      "label": "Principal physical driver",
+      "kind": "finding",
+      "value": {
+        "principal": "reduced dry-season upstream discharge from dams and diversion",
+        "compounding": [
+          "sea-level rise",
+          "land subsidence"
+        ],
+        "comparison": "stronger than ENSO"
+      },
+      "source_ids": [
+        "S10"
+      ]
+    },
+    {
+      "id": "subsidence_rate",
+      "label": "Delta subsidence rate",
+      "kind": "range",
+      "value": {
+        "min": 2,
+        "max": 4,
+        "unit": "cm/year"
+      },
+      "source_ids": [
+        "S6"
+      ]
+    },
+    {
+      "id": "delta_elevation",
+      "label": "Typical delta elevation",
+      "kind": "approximate_measurement",
+      "value": {
+        "amount": 1,
+        "unit": "m above sea level"
+      },
+      "source_ids": [
+        "S6"
+      ]
+    },
+    {
+      "id": "rice_ec_tolerance",
+      "label": "Rice salt-tolerance threshold",
+      "kind": "paired_range",
+      "value": {
+        "conductivity": {
+          "min": 3,
+          "max": 4,
+          "unit": "dS/m"
+        },
+        "corpus_conversion": {
+          "min": 1.9,
+          "max": 2.56,
+          "unit": "g/L"
+        }
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "yield_penalty_ec4",
+      "label": "Rice yield penalty above EC 4 dS/m",
+      "kind": "range",
+      "value": {
+        "min": 10,
+        "max": 15,
+        "unit": "percent yield loss",
+        "above": {
+          "amount": 4,
+          "unit": "dS/m"
+        }
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "yield_penalty_ec6",
+      "label": "Rice yield penalty above EC 6 dS/m",
+      "kind": "range",
+      "value": {
+        "min": 20,
+        "max": 50,
+        "unit": "percent yield loss",
+        "above": {
+          "amount": 6,
+          "unit": "dS/m",
+          "corpus_conversion_gL": 3
+        }
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "observed_yield_loss",
+      "label": "Observed intrusion-year rice yield loss",
+      "kind": "range",
+      "value": {
+        "min": 30,
+        "max": 70,
+        "unit": "percent"
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "absolute_yield_loss",
+      "label": "Annual rice yield lost to intrusion",
+      "kind": "range",
+      "value": {
+        "min": 2.5,
+        "max": 4.05,
+        "unit": "t/ha/year"
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "rice_yield_example",
+      "label": "Grounded farmer yield example",
+      "kind": "scenario_example",
+      "value": {
+        "healthy": 6,
+        "intrusion_affected": 3,
+        "unit": "t/ha"
+      },
+      "source_ids": [
+        "S2"
+      ]
+    },
+    {
+      "id": "salt_tolerant_rice_limit",
+      "label": "Salt-tolerant rice ceiling",
+      "kind": "threshold",
+      "value": {
+        "operator": "less_than_or_equal",
+        "amount": 4,
+        "unit": "g/L",
+        "limitation": "raises the tolerance ceiling but is not a cure"
+      },
+      "source_ids": [
+        "S4",
+        "S8"
+      ]
+    },
+    {
+      "id": "rice_shrimp_seasonal_system",
+      "label": "Integrated rice-shrimp seasonal system",
+      "kind": "operating_pattern",
+      "value": {
+        "dry_season": "shrimp in brackish water",
+        "wet_season": "rice in fresh water",
+        "same_field": true
+      },
+      "source_ids": [
+        "S5"
+      ]
+    },
+    {
+      "id": "rice_shrimp_income",
+      "label": "Reported rice-shrimp income",
+      "kind": "range_with_typical",
+      "value": {
+        "min": 9800,
+        "typical": 20000,
+        "max": 40000,
+        "currency": "USD",
+        "basis": "per_ha"
+      },
+      "source_ids": [
+        "S5"
+      ]
+    },
+    {
+      "id": "rice_shrimp_yields",
+      "label": "Reported rice-shrimp yields per cycle",
+      "kind": "multi_commodity_range",
+      "value": [
+        {
+          "commodity_id": "rice",
+          "min": 5,
+          "max": 8,
+          "unit": "t/cycle"
+        },
+        {
+          "commodity_id": "shrimp",
+          "min": 300,
+          "max": 1000,
+          "unit": "kg/cycle"
+        }
+      ],
+      "source_ids": [
+        "S5"
+      ]
+    },
+    {
+      "id": "rice_shrimp_scale",
+      "label": "Rice-shrimp adoption scale by 2014",
+      "kind": "compound_measurement",
+      "value": {
+        "area_ha": 153000,
+        "share_of_national_brackish_shrimp_area_percent": 28,
+        "year": 2014
+      },
+      "source_ids": [
+        "S5"
+      ]
+    },
+    {
+      "id": "rice_shrimp_tradeoffs",
+      "label": "Rice-shrimp tradeoffs",
+      "kind": "finding",
+      "value": {
+        "benefit": "higher reported income",
+        "risks": [
+          "higher capital need",
+          "higher production risk",
+          "sustainability and regulation concerns at scale"
+        ],
+        "water_need": "brackish dry season and fresh wet season"
+      },
+      "source_ids": [
+        "S5"
+      ]
+    },
+    {
+      "id": "alternative_crops",
+      "label": "Alternative crops under dry-season intrusion",
+      "kind": "finding",
+      "value": {
+        "finding": "Dry-season saline intrusion is driving identification of alternatives to rice.",
+        "numeric_yield_available": false
+      },
+      "source_ids": [
+        "S7"
+      ]
+    },
+    {
+      "id": "household_water_access",
+      "label": "Households with limited freshwater in 2020",
+      "kind": "approximate_measurement",
+      "value": {
+        "amount": 73900,
+        "unit": "households"
+      },
+      "source_ids": [
+        "S11"
+      ]
+    },
+    {
+      "id": "drought_recurrence",
+      "label": "Recent severe drought recurrence",
+      "kind": "timeline",
+      "value": {
+        "severe_events": [
+          2016,
+          2020
+        ],
+        "repeats": [
+          2022,
+          2024
+        ],
+        "framing": "new normal"
+      },
+      "source_ids": [
+        "S6",
+        "S12"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Mekong Delta faces increased saltwater intrusion in 2024-25 dry season",
+      "publisher": "VietnamPlus / Vietnam News",
+      "url": "https://en.vietnamplus.vn/mekong-delta-faces-increased-saltwater-intrusion-in-2024-25-dry-season-post306656.vnp"
+    },
+    {
+      "id": "S2",
+      "title": "Effect of saline intrusion on rice production in the Mekong River Delta",
+      "publisher": "Heliyon",
+      "year": 2023,
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10520798/"
+    },
+    {
+      "id": "S3",
+      "title": "Salinity intrusion threatens Vietnam's rice bowl",
+      "publisher": "East Asia Forum",
+      "year": 2025,
+      "url": "https://eastasiaforum.org/2025/11/22/salinity-intrusion-threatens-vietnams-rice-bowl/"
+    },
+    {
+      "id": "S4",
+      "title": "Salt-tolerant rice variety adoption in the Mekong River Delta",
+      "publisher": "PLOS One",
+      "year": 2020,
+      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0229464"
+    },
+    {
+      "id": "S5",
+      "title": "Future-proofing rice and shrimp farms in the Mekong Delta",
+      "publisher": "The Fish Site",
+      "url": "https://thefishsite.com/articles/future-proofing-rice-and-shrimp-farms-in-the-mekong-delta"
+    },
+    {
+      "id": "S6",
+      "title": "Saline intrusion in Mekong Delta leaves farmers and scientists at odds",
+      "publisher": "Mongabay",
+      "year": 2026,
+      "url": "https://news.mongabay.com/2026/04/saline-intrusion-in-mekong-delta-leaves-farmers-and-scientists-at-odds/"
+    },
+    {
+      "id": "S7",
+      "title": "Inland dry season saline intrusion driving alternative crops to rice",
+      "publisher": "Agricultural Systems",
+      "year": 2023,
+      "url": "https://www.sciencedirect.com/science/article/pii/S0308521X23000379"
+    },
+    {
+      "id": "S8",
+      "title": "Salinity Intrusion in the Vietnamese Mekong Delta, a Threat",
+      "publisher": "Springer",
+      "year": 2022,
+      "url": "https://link.springer.com/chapter/10.1007/978-3-031-07500-1_1"
+    },
+    {
+      "id": "S9",
+      "title": "Drought and salinity intrusion in the Mekong Delta: What are the fundamental solutions?",
+      "publisher": "HAPRI",
+      "url": "https://www.hapri.org/post/drought-and-salinity-intrusion-in-the-mekong-delta-what-are-the-fundamental-solutions"
+    },
+    {
+      "id": "S10",
+      "title": "Freshwater-salinity regime shifts in the Vietnamese Mekong Delta (2000-2024)",
+      "publisher": "PubMed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41642362/"
+    },
+    {
+      "id": "S11",
+      "title": "Vietnam's El Nino-induced drought leaves about 73,900 households with limited access to fresh water",
+      "publisher": "Save the Children / ReliefWeb",
+      "url": "https://reliefweb.int/report/viet-nam/vietnams-el-nino-induced-drought-leaves-about-73900-households-mekong-river-delta-limited-access-fresh-water-save-children"
+    },
+    {
+      "id": "S12",
+      "title": "The Mekong Delta's climate defenses are failing",
+      "publisher": "Mekong Eye",
+      "year": 2025,
+      "url": "https://www.mekongeye.com/2025/05/19/the-mekong-deltas-climate-defenses-are-failing"
+    }
+  ],
+  "stakeholders": [
+    {
+      "id": "farmer",
+      "name": "Mr. Ba",
+      "role": "rice farmer",
+      "prompt_file": "prompts/stakeholder-farmer.md",
+      "hidden_goal": "Protect household income and continuity while avoiding a change that could fail.",
+      "knows": [
+        "rice_killing_salinity_threshold",
+        "rice_yield_example",
+        "salt_tolerant_rice_limit",
+        "rice_shrimp_tradeoffs"
+      ],
+      "persona": "Practical, proud, risk-aware, and focused on whether a plan keeps the household financially viable."
+    },
+    {
+      "id": "researcher",
+      "name": "Dr. Linh",
+      "role": "environmental researcher",
+      "prompt_file": "prompts/stakeholder-researcher.md",
+      "hidden_goal": "Protect long-term soil, water, and ecosystem health.",
+      "knows": [
+        "seasonal_salinity_cycle",
+        "principal_driver",
+        "subsidence_rate",
+        "rice_ec_tolerance",
+        "salt_tolerant_rice_limit",
+        "rice_shrimp_tradeoffs"
+      ],
+      "persona": "Precise, evidence-driven, and focused on mechanisms and multi-season consequences."
+    },
+    {
+      "id": "official",
+      "name": "Ms. Hoa",
+      "role": "district agricultural official",
+      "prompt_file": "prompts/stakeholder-official.md",
+      "hidden_goal": "Find an affordable, fair intervention that can scale across the district.",
+      "knows": [
+        "rice_killing_salinity_threshold",
+        "intrusion_2016",
+        "rice_shrimp_scale",
+        "household_water_access",
+        "rice_shrimp_tradeoffs"
+      ],
+      "persona": "Pragmatic and diplomatic, balancing household needs against cost, scale, and fairness."
+    }
+  ],
+  "interventions": [
+    {
+      "id": "salt_tolerant_rice",
+      "label": "Salt-tolerant rice",
+      "description": "Use salt-tolerant rice while retaining a rice-based livelihood.",
+      "viable_when": {
+        "salinity_gL": {
+          "operator": "less_than_or_equal",
+          "value": 4,
+          "unit": "g/L",
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "salt_tolerant_rice_limit"
+          ]
+        },
+        "season": {
+          "allowed_patterns": [
+            "brackish_dry_fresh_wet",
+            "fresh_year_round"
+          ],
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "seasonal_salinity_cycle",
+            "salt_tolerant_rice_limit"
+          ]
+        },
+        "freshwater_access": {
+          "allowed": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "proposal_must_address": true,
+          "reason": "Some freshwater must be available for dilution or the fresh growing period.",
+          "source_fact_ids": [
+            "seasonal_salinity_cycle"
+          ]
+        },
+        "farmer_capital": {
+          "minimum": "low",
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "salt_tolerant_rice_limit"
+          ]
+        }
+      },
+      "cost": "low",
+      "income": "continuity",
+      "sustainability": "medium",
+      "capital_need": "low",
+      "tradeoff_fact_ids": [
+        "salt_tolerant_rice_limit"
+      ]
+    },
+    {
+      "id": "rice_shrimp",
+      "label": "Integrated rice-shrimp",
+      "description": "Raise shrimp in the brackish dry season and rice in the fresh wet season on the same field.",
+      "viable_when": {
+        "salinity_gL": {
+          "operator": "greater_than",
+          "value": 2.56,
+          "unit": "g/L",
+          "proposal_must_address": true,
+          "reason": "The dry-season reading is above the cited upper rice salt-tolerance threshold.",
+          "source_fact_ids": [
+            "rice_ec_tolerance",
+            "rice_shrimp_tradeoffs"
+          ]
+        },
+        "season": {
+          "allowed_patterns": [
+            "brackish_dry_fresh_wet"
+          ],
+          "required_rotation": "shrimp_dry_rice_wet",
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "seasonal_salinity_cycle",
+            "rice_shrimp_seasonal_system"
+          ]
+        },
+        "freshwater_access": {
+          "allowed": [
+            "medium",
+            "high"
+          ],
+          "proposal_must_address": true,
+          "reason": "The rice phase requires a fresh wet season.",
+          "source_fact_ids": [
+            "seasonal_salinity_cycle",
+            "rice_shrimp_seasonal_system"
+          ]
+        },
+        "farmer_capital": {
+          "minimum": "high",
+          "proposal_must_address": true,
+          "mitigated_by": [
+            "capital_support_plan"
+          ],
+          "source_fact_ids": [
+            "rice_shrimp_tradeoffs"
+          ]
+        }
+      },
+      "cost": "high",
+      "income": "high",
+      "sustainability": "contested",
+      "capital_need": "high",
+      "tradeoff_fact_ids": [
+        "rice_shrimp_income",
+        "rice_shrimp_yields",
+        "rice_shrimp_tradeoffs"
+      ]
+    },
+    {
+      "id": "crop_change",
+      "label": "Change from rice to an alternative crop",
+      "description": "Select a non-rice crop for conditions where dry-season salinity and limited freshwater make rice unreliable.",
+      "viable_when": {
+        "salinity_gL": {
+          "operator": "greater_than",
+          "value": 2,
+          "unit": "g/L",
+          "proposal_must_address": true,
+          "basis": "scenario boundary within the cited marginal 2-4 g/L zone",
+          "source_fact_ids": [
+            "rice_ec_tolerance",
+            "alternative_crops"
+          ]
+        },
+        "season": {
+          "allowed_current_seasons": [
+            "dry"
+          ],
+          "allowed_patterns": [
+            "persistent_brackish",
+            "brackish_dry_fresh_wet"
+          ],
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "seasonal_salinity_cycle",
+            "alternative_crops"
+          ]
+        },
+        "freshwater_access": {
+          "allowed": [
+            "none",
+            "low"
+          ],
+          "proposal_must_address": true,
+          "source_fact_ids": [
+            "alternative_crops",
+            "household_water_access"
+          ]
+        },
+        "farmer_capital": {
+          "minimum": "medium",
+          "proposal_must_address": true,
+          "mitigated_by": [
+            "capital_support_plan"
+          ],
+          "source_fact_ids": [
+            "alternative_crops"
+          ]
+        }
+      },
+      "cost": "medium",
+      "income": "varies",
+      "sustainability": "high",
+      "capital_need": "medium",
+      "tradeoff_fact_ids": [
+        "alternative_crops"
+      ],
+      "numeric_yield_available": false
+    }
+  ],
+  "rubric": {
+    "overall_fit_rule": "All four decision-factor statuses must be fit; any omitted or mismatched factor makes overall fit a mismatch.",
+    "criteria": [
+      {
+        "id": "salinity_fit",
+        "label": "Salinity fit",
+        "question": "Does the intervention fit the measured salinity at the target plot?"
+      },
+      {
+        "id": "seasonality_fit",
+        "label": "Seasonality and duration",
+        "question": "Does the plan use the current season, duration, and wet/dry salinity pattern rather than one reading alone?"
+      },
+      {
+        "id": "freshwater_fit",
+        "label": "Freshwater access",
+        "question": "Does available freshwater meet the intervention's dilution, flushing, or fresh-season needs?"
+      },
+      {
+        "id": "farmer_capital_fit",
+        "label": "Farmer capital and income risk",
+        "question": "Can the farmer fund the intervention, or does the proposal include a credible permitted support measure?"
+      },
+      {
+        "id": "cost_scalability",
+        "label": "Cost and scalability",
+        "question": "Can the intervention's qualitative cost and support model scale beyond one household?"
+      },
+      {
+        "id": "long_term_sustainability",
+        "label": "Long-term sustainability",
+        "question": "Does the proposal protect soil and water across seasons and years?"
+      }
+    ]
+  }
+}
