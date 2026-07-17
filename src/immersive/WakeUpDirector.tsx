@@ -6,7 +6,7 @@ import { STATIONS } from './world/stations';
 
 const WAKE_DURATION_SECONDS = 3;
 
-export function WakeUpDirector({ reducedMotion, onComplete }: { reducedMotion: boolean; onComplete: () => void }) {
+export function WakeUpDirector({ reducedMotion }: { reducedMotion: boolean }) {
   const { camera, clock } = useThree();
   const startedAt = useRef<number | undefined>(undefined);
   const completed = useRef(false);
@@ -19,14 +19,13 @@ export function WakeUpDirector({ reducedMotion, onComplete }: { reducedMotion: b
       camera.position.copy(targetPosition.current);
       camera.lookAt(lookTarget.current);
       completed.current = true;
-      onComplete();
       return;
     }
 
     camera.position.copy(startPosition.current);
     camera.lookAt(lookTarget.current);
     startedAt.current = clock.getElapsedTime();
-  }, [camera, clock, onComplete, reducedMotion]);
+  }, [camera, clock, reducedMotion]);
 
   useFrame(({ clock: frameClock }) => {
     if (reducedMotion || completed.current || startedAt.current === undefined) return;
@@ -38,7 +37,6 @@ export function WakeUpDirector({ reducedMotion, onComplete }: { reducedMotion: b
 
     if (rawProgress === 1) {
       completed.current = true;
-      onComplete();
     }
   });
 

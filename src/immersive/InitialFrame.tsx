@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 
-export function InitialFrame() {
+export function InitialFrame({ onReady }: { onReady: () => void }) {
   const { camera, gl, invalidate, scene } = useThree();
+  const renderedFrames = useRef(0);
+  const hasReportedReady = useRef(false);
 
   useEffect(() => {
     gl.compile(scene, camera);
@@ -20,6 +22,17 @@ export function InitialFrame() {
       }
     };
   }, [camera, gl, invalidate, scene]);
+
+  useFrame(({ gl: renderer }) => {
+    if (hasReportedReady.current || renderer.info.render.frame === 0) return;
+
+    // This callback runs before the current draw, so each count represents a completed prior frame.
+    renderedFrames.current += 1;
+    if (renderedFrames.current < 2) return;
+
+    hasReportedReady.current = true;
+    onReady();
+  });
 
   return null;
 }

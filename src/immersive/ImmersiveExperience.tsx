@@ -58,26 +58,32 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
   const [stationId, setStationId] = useState<StationId>('field');
   const [isTravelling, setIsTravelling] = useState(false);
   const reducedMotion = useMemo(prefersReducedMotion, []);
-  const [isWaking, setIsWaking] = useState(!reducedMotion);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [arrivalComplete, setArrivalComplete] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const stationHeading = useRef<HTMLHeadingElement>(null);
   const currentStation = STATIONS.find((station) => station.id === stationId)!;
   const nextStation = STATIONS.find((station) => station.id === getNextStationId(stationId))!;
   const announceArrival = useCallback(() => stationHeading.current?.focus(), []);
+  const markSceneReady = useCallback(() => setSceneReady(true), []);
 
   useEffect(() => {
     const destination = stationForView(view);
     if (destination) setStationId(destination);
   }, [view]);
 
+  useEffect(() => {
+    if (sceneReady && reducedMotion) setArrivalComplete(true);
+  }, [reducedMotion, sceneReady]);
+
   return (
     <ImmersiveErrorBoundary contextLost={contextLost} onCanvasFailure={onUseClassic}>
-      <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${isWaking ? 'is-waking' : ''}`}>
+      <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${!sceneReady ? 'is-arriving' : ''}`}>
         <Canvas className="immersive-canvas" frameloop="always" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1]} gl={{ antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false, stencil: false }} aria-hidden="true">
           <ContinuousWorld stationId={stationId}>
-            <InitialFrame />
+            <InitialFrame onReady={markSceneReady} />
             <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
-            <WakeUpDirector reducedMotion={reducedMotion} onComplete={() => setIsWaking(false)} />
+            <WakeUpDirector reducedMotion={reducedMotion} />
             <WebGLContextLossHandler onContextLost={() => setContextLost(true)} />
           </ContinuousWorld>
         </Canvas>
@@ -87,16 +93,16 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
         <section className="immersive-station-directory" aria-labelledby="station-directory-heading">
           <p className="eyebrow">Journey map</p>
           <h2 id="station-directory-heading">Six stations are ready</h2>
-          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" disabled={isWaking} onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
+          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" disabled={!sceneReady} onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
         </section>
         <aside className="immersive-activity-panel" aria-live="polite">
           <p className="eyebrow">{isTravelling ? 'Moving along the channel' : currentStation.subtitle}</p>
           <h2 ref={stationHeading} tabIndex={-1}>{currentStation.title}</h2>
           <StationActivity {...props} stationId={stationId} />
-          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || isWaking} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
+          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || !sceneReady} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
         </aside>
         <DialogueWindow stationId={stationId} stakeholders={scenario.stakeholders} interviews={props.interviews} />
-        {isWaking ? <div className="immersive-wake-overlay" aria-hidden="true" /> : null}
+        {!arrivalComplete ? <div className={`immersive-arrival-overlay ${sceneReady ? 'is-revealing' : ''}`} role="status" aria-live="polite" onTransitionEnd={(event) => { if (event.propertyName === 'opacity') setArrivalComplete(true); }}><div><p className="eyebrow">Field arrival</p><p>Arriving in the Mekong Delta...</p></div></div> : null}
       </main>
     </ImmersiveErrorBoundary>
   );

@@ -190,3 +190,8 @@ Format per entry:
 - What Codex did: Removed the manual classic-view control from the immersive interface while retaining automatic capability, canvas-failure, and context-loss handoff to the classic investigation.
 - Human decision: Kept the safety fallback mandatory but removed the visible manual escape control from the field journey.
 - GPT-5.6 technique used: Preserved the stateful scenario journey while applying progressive enhancement only at the presentation boundary.
+
+### 2026-07-17 - Render-confirmed immersive arrival
+- What Codex did: Replaced the timed wake veil with a warm arrival overlay that releases only after two completed WebGL frames, then fades into the existing landscape.
+- Human decision: Required the student to see a warm arrival state rather than a blank render surface while the scene initializes.
+- GPT-5.6 technique used: Kept render-readiness state inside the presentation layer without changing scenario data or scored GPT-5.6 systems.
