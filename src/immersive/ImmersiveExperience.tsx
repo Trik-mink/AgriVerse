@@ -10,10 +10,9 @@ import { STATIONS, type StationId } from './world/stations';
 import { StationActivity } from './ui/StationActivity';
 import type { PlayerProfile } from './ui/player';
 import { WakeUpDirector } from './WakeUpDirector';
-import { Guide } from './guide/Guide';
-import { Stakeholders } from './stakeholders/Stakeholders';
 import { DialogueWindow } from './ui/DialogueWindow';
 import { ContinuousWorld } from './world/ContinuousWorld';
+import { WebGLContextLossHandler } from './WebGLContextLossHandler';
 import './immersive.css';
 
 function CanvasUnavailable({ onUseClassic }: { onUseClassic: () => void }) {
@@ -62,6 +61,7 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
   const [isTravelling, setIsTravelling] = useState(false);
   const reducedMotion = useMemo(prefersReducedMotion, []);
   const [isWaking, setIsWaking] = useState(!reducedMotion);
+  const [contextLost, setContextLost] = useState(false);
   const stationHeading = useRef<HTMLHeadingElement>(null);
   const currentStation = STATIONS.find((station) => station.id === stationId)!;
   const nextStation = STATIONS.find((station) => station.id === getNextStationId(stationId))!;
@@ -73,14 +73,13 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
   }, [view]);
 
   return (
-    <ImmersiveErrorBoundary onCanvasFailure={onUseClassic}>
+    <ImmersiveErrorBoundary contextLost={contextLost} onCanvasFailure={onUseClassic}>
       <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${isWaking ? 'is-waking' : ''}`}>
-        <Canvas className="immersive-canvas" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1.5]} fallback={<CanvasUnavailable onUseClassic={onUseClassic} />} aria-hidden="true">
-          <ContinuousWorld>
+        <Canvas className="immersive-canvas" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1]} gl={{ antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false, stencil: false }} fallback={<CanvasUnavailable onUseClassic={onUseClassic} />} aria-hidden="true">
+          <ContinuousWorld stationId={stationId}>
             <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
             <WakeUpDirector reducedMotion={reducedMotion} onComplete={() => setIsWaking(false)} />
-            <Guide stationId={stationId} presetId={player.presetId} />
-            <Stakeholders stakeholders={scenario.stakeholders} interviews={props.interviews} />
+            <WebGLContextLossHandler onContextLost={() => setContextLost(true)} />
           </ContinuousWorld>
         </Canvas>
         <header className="immersive-header">

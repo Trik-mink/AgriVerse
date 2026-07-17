@@ -155,6 +155,15 @@ Format per entry:
 - GPT-5.6 technique used: Kept generated brief JSON untouched and used scenario IDs for the
   presentation-only certificate label.
 
+### 2026-07-17 - Immersive WebGL context-loss recovery
+- What Codex did: Added a direct `webglcontextlost` listener, stopped the renderer loop, routed
+  loss through the immersive boundary to classic mode, and reduced the world to a single low-power
+  canvas with capped DPR, primitive active-station scenery, and no mounted glTF characters.
+- Human decision: Prioritized runtime stability over character fidelity; deferred all 3D characters
+  and required browser verification of a six-station walkthrough plus forced fallback.
+- GPT-5.6 technique used: Preserved all scored systems and student state while isolating a GPU
+  presentation failure behind progressive enhancement.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
