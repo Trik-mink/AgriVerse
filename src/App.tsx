@@ -12,6 +12,7 @@ import { canOpenProposal, canRunSimulation } from './flow/progress';
 import { supportsWebGL, type PresentationMode } from './immersive/capabilities';
 import { ImmersiveExperience } from './immersive/ImmersiveExperience';
 import { ImmersiveLanding } from './immersive/ui/ImmersiveLanding';
+import { DEFAULT_PLAYER, type PlayerProfile } from './immersive/ui/player';
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from './types';
 
 type View = 'explore' | 'interviews' | 'proposal' | 'consequences' | 'feedback' | 'brief';
@@ -32,6 +33,7 @@ export function App() {
   const [brief, setBrief] = useState<PolicyBriefResult>();
   const [busy, setBusy] = useState<string>();
   const [presentationMode, setPresentationMode] = useState<PresentationMode>('landing');
+  const [player, setPlayer] = useState<PlayerProfile>(DEFAULT_PLAYER);
 
   useEffect(() => { api.getScenario().then(setScenario).catch((requestError: Error) => setError(requestError.message)); }, []);
 
@@ -56,7 +58,7 @@ export function App() {
   if (error) return <main className="app-shell"><p className="eyebrow">Connection problem</p><h1>AgriVerse</h1><p className="status-copy">{error}</p></main>;
   if (!scenario) return <main className="app-shell"><p className="eyebrow">Environmental science simulation</p><h1>AgriVerse</h1><p className="status-copy">Loading field investigation...</p></main>;
 
-  const startImmersive = () => setPresentationMode(supportsWebGL() ? 'immersive' : 'classic');
+  const startImmersive = (nextPlayer: PlayerProfile) => { setPlayer(nextPlayer); setPresentationMode(supportsWebGL() ? 'immersive' : 'classic'); };
   const useClassic = () => setPresentationMode('classic');
   const selectAndTest = (siteId: string) => { setSelectedSiteId(siteId); setTestedSiteIds((tested) => tested.includes(siteId) ? tested : [...tested, siteId]); };
   const ask = async (stakeholderId: string, question: string) => {
@@ -92,7 +94,7 @@ export function App() {
   }
 
   if (presentationMode === 'immersive') {
-    return <ImmersiveExperience scenario={scenario} view={view} selectedSiteId={selectedSiteId} testedSiteIds={testedSiteIds} interviews={interviews} proposal={proposal} simulation={simulation} feedback={feedback} brief={brief} busy={busy} canOpenProposal={proposalUnlocked} canRunSimulation={simulationUnlocked} onUseClassic={useClassic} onTest={selectAndTest} onAsk={ask} onTargetSiteChange={setSelectedSiteId} onProposalChange={setProposal} onSimulate={runSimulation} onRequestFeedback={requestFeedback} onRevise={() => setView('proposal')} onCreateBrief={createBrief} />;
+    return <ImmersiveExperience scenario={scenario} player={player} view={view} selectedSiteId={selectedSiteId} testedSiteIds={testedSiteIds} interviews={interviews} proposal={proposal} simulation={simulation} feedback={feedback} brief={brief} busy={busy} canOpenProposal={proposalUnlocked} canRunSimulation={simulationUnlocked} onUseClassic={useClassic} onTest={selectAndTest} onAsk={ask} onTargetSiteChange={setSelectedSiteId} onProposalChange={setProposal} onSimulate={runSimulation} onRequestFeedback={requestFeedback} onRevise={() => setView('proposal')} onCreateBrief={createBrief} />;
   }
 
   return <main className="product-shell">

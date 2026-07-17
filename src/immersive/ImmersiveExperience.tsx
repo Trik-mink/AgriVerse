@@ -8,6 +8,8 @@ import { ImmersiveErrorBoundary } from './ImmersiveErrorBoundary';
 import { getNextStationId, JourneyDirector } from './JourneyDirector';
 import { STATIONS, type StationId } from './world/stations';
 import { StationActivity } from './ui/StationActivity';
+import type { PlayerProfile } from './ui/player';
+import { WakeUpDirector } from './WakeUpDirector';
 import { ContinuousWorld } from './world/ContinuousWorld';
 import './immersive.css';
 
@@ -19,6 +21,7 @@ type InterviewRecord = { question: string; response: string };
 
 type ImmersiveExperienceProps = {
   scenario: Scenario;
+  player: PlayerProfile;
   view: string;
   selectedSiteId?: string;
   testedSiteIds: string[];
@@ -51,10 +54,11 @@ function stationForView(view: string): StationId | undefined {
 }
 
 export function ImmersiveExperience(props: ImmersiveExperienceProps) {
-  const { scenario, onUseClassic, view } = props;
+  const { scenario, player, onUseClassic, view } = props;
   const [stationId, setStationId] = useState<StationId>('field');
   const [isTravelling, setIsTravelling] = useState(false);
   const reducedMotion = useMemo(prefersReducedMotion, []);
+  const [isWaking, setIsWaking] = useState(!reducedMotion);
   const stationHeading = useRef<HTMLHeadingElement>(null);
   const currentStation = STATIONS.find((station) => station.id === stationId)!;
   const nextStation = STATIONS.find((station) => station.id === getNextStationId(stationId))!;
@@ -67,27 +71,29 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
 
   return (
     <ImmersiveErrorBoundary onCanvasFailure={onUseClassic}>
-      <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''}`}>
+      <main className={`immersive-shell ${isTravelling ? 'is-travelling' : ''} ${isWaking ? 'is-waking' : ''}`}>
         <Canvas className="immersive-canvas" camera={{ position: STATIONS[0].camera, fov: 45 }} dpr={[1, 1.5]} fallback={<CanvasUnavailable onUseClassic={onUseClassic} />} aria-hidden="true">
           <ContinuousWorld>
             <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
+            <WakeUpDirector reducedMotion={reducedMotion} onComplete={() => setIsWaking(false)} />
           </ContinuousWorld>
         </Canvas>
         <header className="immersive-header">
-          <div><p className="eyebrow">Guided field journey</p><h1>{scenario.title}</h1></div>
+          <div><p className="eyebrow">Guided field journey</p><h1>{scenario.title}</h1><p className="immersive-player-name">{player.displayName} · {player.presetId}</p></div>
           <button type="button" className="immersive-secondary" onClick={onUseClassic}>Use classic view</button>
         </header>
         <section className="immersive-station-directory" aria-labelledby="station-directory-heading">
           <p className="eyebrow">Journey map</p>
           <h2 id="station-directory-heading">Six stations are ready</h2>
-          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
+          <ol>{STATIONS.map((station, index) => <li key={station.id} aria-current={station.id === stationId ? 'step' : undefined} className={station.id === stationId ? 'current' : ''}><button type="button" disabled={isWaking} onClick={() => setStationId(station.id)}><span>{index + 1}</span><span><strong>{station.title}</strong><small>{station.subtitle}</small></span></button></li>)}</ol>
         </section>
         <aside className="immersive-activity-panel" aria-live="polite">
           <p className="eyebrow">{isTravelling ? 'Moving along the channel' : currentStation.subtitle}</p>
           <h2 ref={stationHeading} tabIndex={-1}>{currentStation.title}</h2>
           <StationActivity {...props} stationId={stationId} />
-          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
+          <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || isWaking} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
         </aside>
+        {isWaking ? <div className="immersive-wake-overlay" aria-hidden="true" /> : null}
       </main>
     </ImmersiveErrorBoundary>
   );

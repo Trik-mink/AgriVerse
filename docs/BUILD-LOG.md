@@ -116,6 +116,13 @@ Format per entry:
 - GPT-5.6 technique used: Reused validated role-agent and structured-output result surfaces through
   a presentation-only adapter.
 
+### 2026-07-17 - Immersive priority 5 entry sequence
+- What Codex did: Added local display-name entry, four code-only color presets, and a wake-up
+  camera/focus sequence with a reduced-motion-safe cut.
+- Human decision: Requested presets and presentation-only identity state, without custom character
+  modeling or rigging work.
+- GPT-5.6 technique used: Kept all player-selection data local and outside immutable scenario data.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
