@@ -10,6 +10,8 @@ import { STATIONS, type StationId } from './world/stations';
 import { StationActivity } from './ui/StationActivity';
 import type { PlayerProfile } from './ui/player';
 import { WakeUpDirector } from './WakeUpDirector';
+import { Guide } from './guide/Guide';
+import { GUIDE_CUES } from './content/journey-copy';
 import { ContinuousWorld } from './world/ContinuousWorld';
 import './immersive.css';
 
@@ -76,6 +78,7 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
           <ContinuousWorld>
             <JourneyDirector stationId={stationId} reducedMotion={reducedMotion} onTravelChange={setIsTravelling} onArrival={announceArrival} />
             <WakeUpDirector reducedMotion={reducedMotion} onComplete={() => setIsWaking(false)} />
+            <Guide stationId={stationId} presetId={player.presetId} />
           </ContinuousWorld>
         </Canvas>
         <header className="immersive-header">
@@ -93,6 +96,7 @@ export function ImmersiveExperience(props: ImmersiveExperienceProps) {
           <StationActivity {...props} stationId={stationId} />
           <button type="button" className="immersive-primary immersive-continue" disabled={isTravelling || isWaking} onClick={() => setStationId(nextStation.id)}>{isTravelling ? 'Travelling...' : `Continue to ${nextStation.title}`}</button>
         </aside>
+        <aside className="immersive-guide-cue" aria-live="polite"><p className="eyebrow">Field guide</p><p>{GUIDE_CUES[stationId]}</p></aside>
         {isWaking ? <div className="immersive-wake-overlay" aria-hidden="true" /> : null}
       </main>
     </ImmersiveErrorBoundary>

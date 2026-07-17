@@ -13,3 +13,5 @@ export const ENVIRONMENT_ASSET_ATTRIBUTION = {
   license: 'CC0 1.0',
   source: 'https://kenney.nl/assets/nature-kit',
 } as const;
+
+export const CHARACTER_ASSET = '/assets/quaternius-characters/Superhero_Female_FullBody.gltf';

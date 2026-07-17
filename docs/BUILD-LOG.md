@@ -123,6 +123,14 @@ Format per entry:
   modeling or rigging work.
 - GPT-5.6 technique used: Kept all player-selection data local and outside immutable scenario data.
 
+### 2026-07-17 - Immersive priority 6 field guide
+- What Codex did: Added a persistent local Quaternius CC0 guide, station-aware guide cues, and
+  root-level idle/lead motion with a primitive fallback when the decorative model cannot load.
+- Human decision: Required an as-is Quaternius character with code-only palette treatment and no
+  speech, lip-sync, custom modeling, or rigging work.
+- GPT-5.6 technique used: Kept guide cues generic and scenario-safe while isolating all character
+  presentation from the scored runtime.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
