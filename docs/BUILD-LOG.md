@@ -95,6 +95,12 @@ Format per entry:
 - GPT-5.6 technique used: Preserved the scenario-driven runtime state while isolating immersive
   presentation as progressive enhancement.
 
+### 2026-07-17 - Immersive priority 2 camera direction
+- What Codex did: Added a six-stop guided camera rail with eased travel, station focus changes,
+  and reduced-motion cuts while retaining the classic fallback.
+- Human decision: Required guided camera crossfades and cuts before environment production.
+- GPT-5.6 technique used: Kept the camera sequence data-driven from semantic station anchors.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.

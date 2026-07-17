@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { STATIONS } from './stations';
 
 function StationMarker({ position, index }: { position: [number, number, number]; index: number }) {
@@ -17,7 +19,7 @@ function StationMarker({ position, index }: { position: [number, number, number]
   );
 }
 
-export function ContinuousWorld() {
+export function ContinuousWorld({ children }: { children?: ReactNode }) {
   return (
     <>
       <color attach="background" args={['#a9cfda']} />
@@ -37,6 +39,7 @@ export function ContinuousWorld() {
         <meshStandardMaterial color="#d7b77a" roughness={0.98} />
       </mesh>
       {STATIONS.map((station, index) => <StationMarker key={station.id} position={station.position} index={index} />)}
+      {children}
     </>
   );
 }
