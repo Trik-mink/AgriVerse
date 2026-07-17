@@ -23,3 +23,12 @@
   and root-level idle/lead motion only; no character or rig asset was authored.
 - Optimization: Selected one standard character and only its required glTF resources; no raw pack
   or paid source files are included.
+
+## Kenney Interface Sounds
+
+- Local file: `public/assets/audio/dialogue-pop.ogg`.
+- Original title and creator: `confirmation_001.ogg` from Interface Sounds by Kenney.
+- Source: https://kenney.nl/assets/interface-sounds
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+- Modification: Renamed for its dialogue-cue use; audio content is unmodified.
+- Optimization: Selected one 8.8 KB Ogg file from the original kit.

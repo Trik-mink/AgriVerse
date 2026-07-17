@@ -131,6 +131,14 @@ Format per entry:
 - GPT-5.6 technique used: Kept guide cues generic and scenario-safe while isolating all character
   presentation from the scored runtime.
 
+### 2026-07-17 - Immersive priority 7 stakeholder dialogue
+- What Codex did: Added three local stakeholder character instances, an authoritative dialogue
+  window driven by existing live agent replies, text reveal, and an optional CC0 local cue.
+- Human decision: Required chat-only dialogue with no speech synthesis, browser voice, lip-sync,
+  or mouth animation; audio failure must leave dialogue fully usable.
+- GPT-5.6 technique used: Rendered only the existing validated stakeholder response as dialogue and
+  kept the cue outside runtime scoring and contracts.
+
 ### 2026-07-16 - Immersive journey presentation plan
 - What Codex did: Specified a six-station continuous first-person journey, persistent guide,
   camera and speech pipeline, licensed asset path, state-preserving fallback, and July 21 cut order.
