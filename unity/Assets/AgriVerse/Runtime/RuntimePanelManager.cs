@@ -17,6 +17,7 @@ namespace AgriVerse.Client
         private static RuntimePanelManager instance;
         private readonly Dictionary<RuntimeActivityStage, GameObject> panels = new Dictionary<RuntimeActivityStage, GameObject>();
         private Text instructionText;
+        private Canvas instructionCanvas;
 
         public RuntimeActivityStage? ActiveStage { get; private set; }
         public int ActivePanelCount
@@ -58,6 +59,13 @@ namespace AgriVerse.Client
             {
                 if (entry.Value != null) entry.Value.SetActive(entry.Key == stage);
             }
+            SetCinematicMode(stage == RuntimeActivityStage.Interviews);
+        }
+
+        /// <summary>The cinematic interview shell owns its own compact HUD and status slot.</summary>
+        public void SetCinematicMode(bool active)
+        {
+            if (instructionCanvas != null) instructionCanvas.enabled = !active;
         }
 
         public bool IsShowing(RuntimeActivityStage stage) => ActiveStage.HasValue && ActiveStage.Value == stage;
@@ -75,6 +83,7 @@ namespace AgriVerse.Client
             canvasObject.transform.SetParent(transform, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            instructionCanvas = canvas;
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);

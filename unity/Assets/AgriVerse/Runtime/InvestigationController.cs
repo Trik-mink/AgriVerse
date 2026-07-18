@@ -55,6 +55,8 @@ namespace AgriVerse.Client
         private Button notebookToggleButton;
         private GameObject interviewGateObject;
         private GameObject investigationStage;
+        private GameObject markerRoot;
+        private Canvas runtimeCanvas;
         private bool notebookOpen;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
@@ -194,7 +196,19 @@ namespace AgriVerse.Client
 
         public void ShowInterviewActivity()
         {
+            EnterInterviewPresentation();
             RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Interviews);
+        }
+
+        /// <summary>Preserves marker IDs/colliders while removing investigation-only geometry and UI.</summary>
+        public void EnterInterviewPresentation()
+        {
+            if (markerRoot != null)
+            {
+                foreach (MeshRenderer renderer in markerRoot.GetComponentsInChildren<MeshRenderer>(true)) renderer.enabled = false;
+                foreach (TextMesh label in markerRoot.GetComponentsInChildren<TextMesh>(true)) label.gameObject.SetActive(false);
+            }
+            if (runtimeCanvas != null) runtimeCanvas.enabled = false;
         }
 
         public void ConfigureEndpointsForTesting(string editorBaseUrl, string webBaseUrl)
@@ -205,7 +219,7 @@ namespace AgriVerse.Client
 
         private void CreateMarkers()
         {
-            var markerRoot = new GameObject("TestSiteMarkers");
+            markerRoot = new GameObject("TestSiteMarkers");
             markerRoot.transform.SetParent(transform, false);
 
             if (FindFirstObjectByType<MekongEnvironmentController>() == null)
@@ -264,6 +278,7 @@ namespace AgriVerse.Client
 
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            runtimeCanvas = canvas;
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);

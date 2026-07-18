@@ -22,6 +22,17 @@ namespace AgriVerse.Client
         public bool PhotoPresentationActive { get; private set; }
         public bool ProceduralFallbackActive => proceduralRoot == null || proceduralRoot.activeSelf;
 
+        /// <summary>Interview UI replaces interaction remnants with the unobstructed arrival view.</summary>
+        public void SetCinematicInterviewActive(bool active)
+        {
+            foreach (Transform glint in waterGlints)
+            {
+                if (glint == null) continue;
+                MeshRenderer renderer = glint.GetComponent<MeshRenderer>();
+                if (renderer != null) renderer.enabled = !active;
+            }
+        }
+
         private IEnumerator Start()
         {
             // Let the procedural controller establish its dependable scene before deciding whether

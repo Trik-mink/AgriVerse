@@ -51,6 +51,8 @@ namespace AgriVerse.Client
         private string lastFailedQuestion;
         private string lastFailedStakeholderId;
         private GameObject interviewStage;
+        private CinematicInterviewPresentation presentation;
+        private string statusMessage;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
         public ScenarioDto Scenario => scenario;
@@ -115,8 +117,9 @@ namespace AgriVerse.Client
             {
                 if (scenario.stakeholders[index].id == stakeholderId)
                 {
+                    bool changedSelection = selected == null || selected.id != scenario.stakeholders[index].id;
                     selected = scenario.stakeholders[index];
-                    StartCoroutine(LoadPortrait(selected));
+                    if (changedSelection) StartCoroutine(LoadPortrait(selected));
                     SetStatus($"{selected.name} selected. Ask one focused question.");
                     Refresh();
                     return;
@@ -232,38 +235,34 @@ namespace AgriVerse.Client
                 markerObject.transform.SetParent(root.transform, false);
                 markerObject.transform.localPosition = new Vector3((index - ((scenario.stakeholders.Length - 1) * .5f)) * 3f, .5f, 4f);
                 RuntimePrimitiveMaterial.Apply(markerObject.GetComponent<MeshRenderer>(), new Color(.5f, .5f, .5f));
+                // Cards are the visible selection affordance. The logical marker remains intact
+                // for IDs, colliders, regression coverage, and non-cinematic fallback behavior.
+                markerObject.GetComponent<MeshRenderer>().enabled = false;
                 TestSiteMarker marker = markerObject.AddComponent<TestSiteMarker>(); marker.Configure(stakeholder.id); markers.Add(marker);
                 var label = new GameObject("StakeholderLabel", typeof(TextMesh)).GetComponent<TextMesh>();
                 label.transform.SetParent(markerObject.transform, false); label.transform.localPosition = Vector3.up;
                 label.text = stakeholder.name; label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
                 label.fontSize = 38; label.characterSize = .08f; label.anchor = TextAnchor.LowerCenter; label.alignment = TextAlignment.Center; label.color = Color.white;
+                label.gameObject.SetActive(false);
             }
         }
 
         private void CreateInterface()
         {
-            var canvasObject = new GameObject("InterviewCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvasObject.transform.SetParent(interviewStage.transform, false);
-            Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280, 720);
             EnsureInputSystemEventSystem();
-            portrait = new GameObject("Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>(); portrait.transform.SetParent(canvas.transform, false); portrait.raycastTarget = false; Stretch(portrait.rectTransform, new Vector2(.03f, .68f), new Vector2(.15f, .82f));
-            portraitBadge = Text(canvas.transform, "PortraitFallback", 16); Stretch(portraitBadge.rectTransform, new Vector2(.03f, .68f), new Vector2(.15f, .82f)); portraitBadge.alignment = TextAnchor.MiddleCenter;
-            portrait.gameObject.SetActive(false); portraitBadge.gameObject.SetActive(false);
-            selectedText = Text(canvas.transform, "Stakeholder", 18); Stretch(selectedText.rectTransform, new Vector2(.17f, .68f), new Vector2(.62f, .82f));
-            conversationText = RuntimeScrollableContent.Create(canvas.transform, "Conversation", new Vector2(.03f, .27f), new Vector2(.62f, .65f), 15);
-            questionInput = Input(canvas.transform); Stretch(questionInput.GetComponent<RectTransform>(), new Vector2(.03f, .12f), new Vector2(.62f, .23f));
-            askButton = Button(canvas.transform, "AskButton", "Ask stakeholder"); askButtonLabel = askButton.GetComponentInChildren<Text>(); Stretch(askButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.3f, .1f)); askButton.onClick.AddListener(AskSelectedStakeholder);
-            retryButton = Button(canvas.transform, "RetryButton", "Retry"); Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.33f, .04f), new Vector2(.62f, .1f)); retryButton.onClick.AddListener(RetryLastQuestion);
-            gateText = Text(canvas.transform, "PlanGate", 16); Stretch(gateText.rectTransform, new Vector2(.66f, .84f), new Vector2(.97f, .9f));
+            presentation = new GameObject("CinematicInterviewPresentation").AddComponent<CinematicInterviewPresentation>();
+            presentation.transform.SetParent(interviewStage.transform, false);
+            presentation.Build(interviewStage.transform, scenario, SelectStakeholder, AskSelectedStakeholder, RetryLastQuestion, null);
+            questionInput = presentation.QuestionInput;
+            portrait = presentation.SelectedPortrait;
+            portraitBadge = presentation.PortraitFallback;
+            for (int index = 0; index < scenario.stakeholders.Length; index++) StartCoroutine(LoadCardPortrait(scenario.stakeholders[index]));
         }
 
         private IEnumerator LoadPortrait(StakeholderDto stakeholder)
         {
-            portrait.texture = null; portrait.gameObject.SetActive(false); portraitBadge.gameObject.SetActive(true); portraitBadge.text = stakeholder.name + "\n" + stakeholder.role;
-            string baseUrl = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/');
-            string assetName = stakeholder.name.ToLowerInvariant().Replace(".", string.Empty).Replace(" ", "-");
-            string[] urls = { $"{baseUrl}/assets/characters/optimized/{assetName}.webp", $"{baseUrl}/assets/characters/optimized/{assetName}.jpg" };
+            presentation.SetSelectedPortrait(null, stakeholder.name);
+            string[] urls = PortraitUrls(stakeholder);
             for (int index = 0; index < urls.Length; index++)
             {
                 using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(urls[index]))
@@ -271,23 +270,62 @@ namespace AgriVerse.Client
                     yield return request.SendWebRequest();
                     if (request.result == UnityWebRequest.Result.Success)
                     {
-                        portrait.texture = DownloadHandlerTexture.GetContent(request); portrait.gameObject.SetActive(true); portraitBadge.gameObject.SetActive(false); yield break;
+                        if (selected != null && selected.id == stakeholder.id)
+                            presentation.SetSelectedPortrait(DownloadHandlerTexture.GetContent(request), stakeholder.name);
+                        yield break;
                     }
                 }
             }
             SetStatus($"Portrait unavailable for {stakeholder.name}; showing the name badge instead.");
         }
 
+        private IEnumerator LoadCardPortrait(StakeholderDto stakeholder)
+        {
+            string[] urls = PortraitUrls(stakeholder);
+            for (int index = 0; index < urls.Length; index++)
+            {
+                using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(urls[index]))
+                {
+                    yield return request.SendWebRequest();
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        presentation.SetCardPortrait(stakeholder.id, DownloadHandlerTexture.GetContent(request));
+                        yield break;
+                    }
+                }
+            }
+        }
+
+        private string[] PortraitUrls(StakeholderDto stakeholder)
+        {
+            string baseUrl = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/');
+            string assetName = stakeholder.name.ToLowerInvariant().Replace(".", string.Empty).Replace(" ", "-");
+            return new[] { $"{baseUrl}/assets/characters/optimized/{assetName}.webp", $"{baseUrl}/assets/characters/optimized/{assetName}.jpg" };
+        }
+
         private void Refresh()
         {
-            if (selectedText == null) return;
-            selectedText.text = selected == null ? "Select a gray stakeholder marker." : $"{selected.name}\n{selected.role}\n{selected.persona}";
-            RuntimeScrollableContent.SetText(conversationText, FormatConversation());
-            askButtonLabel.text = PlanUnlocked ? "Continue to planning" : "Ask stakeholder";
-            askButton.interactable = !busy && (PlanUnlocked || selected != null);
-            questionInput.interactable = !busy && !PlanUnlocked;
-            retryButton.interactable = selected != null && !busy && selected.id == lastFailedStakeholderId && !string.IsNullOrWhiteSpace(lastFailedQuestion);
-            gateText.text = PlanUnlocked ? string.Empty : $"Plan locked — {RespondedCount()}/{scenario.stakeholders.Length} stakeholders have replied.";
+            if (presentation == null) return;
+            EvidenceNotebookSession evidenceSession = EvidenceNotebookSession.GetOrCreate();
+            int evidenceCount = evidenceSession.Notebook?.RecordedReadings.Count ?? 0;
+            presentation.Refresh(selected, FormatConversation(), FormatEvidence(), statusMessage,
+                evidenceCount, scenario.test_sites?.Length ?? 0, RespondedCount(), scenario.stakeholders.Length, busy,
+                selected != null && selected.id == lastFailedStakeholderId && !string.IsNullOrWhiteSpace(lastFailedQuestion), PlanUnlocked);
+        }
+
+        private string FormatEvidence()
+        {
+            EvidenceNotebookSession evidenceSession = EvidenceNotebookSession.GetOrCreate();
+            if (evidenceSession.Notebook == null || evidenceSession.Notebook.RecordedReadings.Count == 0) return "No samples recorded yet.";
+            StringBuilder text = new StringBuilder();
+            string unit = scenario.units == null ? string.Empty : scenario.units.salinity;
+            foreach (RecordedReading reading in evidenceSession.Notebook.RecordedReadings)
+            {
+                text.Append(reading.label).Append('\n').Append("Salinity: ").Append(reading.salinity_gL.ToString("0.##")).Append(' ').Append(unit)
+                    .Append('\n').Append("Season: ").Append(reading.season).Append('\n').Append("Freshwater: ").Append(reading.freshwater_access)
+                    .Append('\n').Append(reading.note).Append('\n').Append("Source IDs: ").Append(string.Join(", ", reading.source_ids)).Append("\n\n");
+            }
+            return text.ToString();
         }
 
         private string FormatConversation()
@@ -308,12 +346,17 @@ namespace AgriVerse.Client
         }
         private void ActivateInterviewStage()
         {
+            InvestigationController investigation = FindAnyObjectByType<InvestigationController>();
+            if (investigation != null) investigation.EnterInterviewPresentation();
+            AnGiangRealitySpikeController spike = FindAnyObjectByType<AnGiangRealitySpikeController>();
+            if (spike != null) spike.SetCinematicInterviewActive(true);
             RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Interviews);
-            SetStatus("Investigation complete. Select a gray stakeholder marker to begin an interview.");
+            RuntimePanelManager.GetOrCreate().SetCinematicMode(true);
+            SetStatus("Choose a stakeholder perspective.");
             Refresh();
         }
         private static string ReadableError(UnityWebRequest request) => request.responseCode > 0 ? $"server returned {request.responseCode}" : request.error;
-        private void SetStatus(string message) { RuntimePanelManager.GetOrCreate().SetInstruction(message); }
+        private void SetStatus(string message) { statusMessage = message; RuntimePanelManager.GetOrCreate().SetInstruction(message); }
         private void Fail(string userMessage, string diagnostic) { LoadState = InvestigationLoadState.Failed; SetStatus(userMessage); Debug.LogError(diagnostic, this); }
         private static bool IsWebBuild
         {

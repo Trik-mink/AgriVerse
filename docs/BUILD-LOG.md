@@ -283,3 +283,8 @@ Format per entry:
 - What Codex did: Added a licensed An Giang canal photo-led arrival view, compact at-rest Investigation UI, subtle camera/water motion, automatic procedural fallback, and raycast/fallback tests.
 - Human decision: Approved the spike as a technical baseline, preserving the licensed-photo attribution and fallback while deferring final embedded landscape art to Reality Spike 2.
 - GPT-5.6 technique used: Kept the geographic presentation distinct from scenario evidence and runtime GPT-backed learning behavior.
+
+### 2026-07-18 - Unity cinematic stakeholder interviews
+- What Codex did: Added a photo-first stakeholder selection and interview shell with compact progress HUD, portrait cards, bounded dialogue, retry states, and a focused Evidence Notebook drawer.
+- Human decision: Approved the corrected cinematic direction after requiring one readable response region, a distraction-free evidence overlay, hidden world-marker remnants, and simplified identity cards.
+- GPT-5.6 technique used: Rendered validated role-separated stakeholder replies verbatim while keeping live requests, conversation state, evidence, and progression in the existing Unity controllers.
