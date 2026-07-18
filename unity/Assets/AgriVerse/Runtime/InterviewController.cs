@@ -231,7 +231,7 @@ namespace AgriVerse.Client
                 markerObject.name = $"StakeholderMarker_{stakeholder.id}";
                 markerObject.transform.SetParent(root.transform, false);
                 markerObject.transform.localPosition = new Vector3((index - ((scenario.stakeholders.Length - 1) * .5f)) * 3f, .5f, 4f);
-                markerObject.GetComponent<MeshRenderer>().material.color = new Color(.5f, .5f, .5f);
+                RuntimePrimitiveMaterial.Apply(markerObject.GetComponent<MeshRenderer>(), new Color(.5f, .5f, .5f));
                 TestSiteMarker marker = markerObject.AddComponent<TestSiteMarker>(); marker.Configure(stakeholder.id); markers.Add(marker);
                 var label = new GameObject("StakeholderLabel", typeof(TextMesh)).GetComponent<TextMesh>();
                 label.transform.SetParent(markerObject.transform, false); label.transform.localPosition = Vector3.up;

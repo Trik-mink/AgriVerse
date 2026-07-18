@@ -268,3 +268,8 @@ Format per entry:
 - What Codex did: Corrected the shared scroll content's vertical anchor and added a stable top-left gutter so placeholder and long-form text render inside, rather than clipped by, the card mask.
 - Human decision: Flagged the chat-history placeholder as visibly clipped in live play.
 - GPT-5.6 technique used: Reused one runtime UI primitive so the correction applies consistently across every long-form result view.
+
+### 2026-07-18 - macOS URP runtime primitive material
+- What Codex did: Added a serialized Resources-backed URP Unlit material and applied clones to the runtime ground, cubes, and stakeholder cylinders so the standalone retains its required surface shader while preserving gray marker colors and colliders.
+- Human decision: Required a narrow material-reference fix for macOS magenta primitives, without changing URP, runtime data, API behavior, or learning flow.
+- GPT-5.6 technique used: Kept the presentation fix isolated from the scenario-driven and GPT-backed learning systems.

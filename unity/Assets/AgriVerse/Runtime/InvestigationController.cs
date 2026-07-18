@@ -440,7 +440,7 @@ namespace AgriVerse.Client
             MeshRenderer renderer = primitive.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
-                renderer.material.color = color;
+                RuntimePrimitiveMaterial.Apply(renderer, color);
             }
         }
 
