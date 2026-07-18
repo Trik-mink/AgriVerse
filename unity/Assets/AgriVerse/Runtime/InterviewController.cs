@@ -42,6 +42,9 @@ namespace AgriVerse.Client
         private Text gateText;
         private Text portraitBadge;
         private RawImage portrait;
+
+        public string SelectedStakeholderId =>
+            selected == null ? string.Empty : selected.id;
         private InputField questionInput;
         private Button askButton;
         private Text askButtonLabel;

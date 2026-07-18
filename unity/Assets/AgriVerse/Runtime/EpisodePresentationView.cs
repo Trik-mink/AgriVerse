@@ -14,32 +14,53 @@ namespace AgriVerse.Client
         private GameObject landing;
         private GameObject guide;
         private GameObject glossary;
+        private GameObject judge;
+        private GameObject certificate;
         private Button glossaryButton;
+        private Button judgeButton;
+        private Button certificateButton;
         private Text guideText;
         private Text glossaryText;
+        private Text judgeText;
+        private Text certificateText;
         private Text landingError;
         private Action beginMission;
         private Action dismissGuide;
         private Action toggleGlossary;
+        private Action toggleJudge;
+        private Action openCertificate;
+        private Action<EpisodeEndingChoice> chooseEnding;
         private Action<string> selectAvatar;
 
         internal InputField NameInput { get; private set; }
         internal bool LandingVisible => landing != null && landing.activeSelf;
         internal bool GuideVisible => guide != null && guide.activeSelf;
         internal bool GlossaryVisible => glossary != null && glossary.activeSelf;
+        internal bool JudgeVisible => judge != null && judge.activeSelf;
+        internal bool CertificateVisible =>
+            certificate != null && certificate.activeSelf;
         internal string GuideText => guideText == null ? string.Empty : guideText.text;
         internal string GlossaryText =>
             glossaryText == null ? string.Empty : glossaryText.text;
+        internal string JudgeText => judgeText == null ? string.Empty : judgeText.text;
+        internal string CertificateText =>
+            certificateText == null ? string.Empty : certificateText.text;
 
         internal void Build(
             Action onBegin,
             Action onDismissGuide,
             Action onToggleGlossary,
+            Action onToggleJudge,
+            Action onOpenCertificate,
+            Action<EpisodeEndingChoice> onChooseEnding,
             Action<string> onSelectAvatar)
         {
             beginMission = onBegin;
             dismissGuide = onDismissGuide;
             toggleGlossary = onToggleGlossary;
+            toggleJudge = onToggleJudge;
+            openCertificate = onOpenCertificate;
+            chooseEnding = onChooseEnding;
             selectAvatar = onSelectAvatar;
             EpisodeUiFactory.EnsureEventSystem();
 
@@ -60,6 +81,8 @@ namespace AgriVerse.Client
             BuildLanding(canvas.transform);
             BuildGuide(canvas.transform);
             BuildGlossary(canvas.transform);
+            BuildJudge(canvas.transform);
+            BuildCertificate(canvas.transform);
         }
 
         internal void SetSelectedAvatar(string avatarId)
@@ -77,6 +100,7 @@ namespace AgriVerse.Client
         {
             landing.SetActive(false);
             glossaryButton.gameObject.SetActive(true);
+            judgeButton.gameObject.SetActive(true);
         }
 
         internal void ShowLandingError(string value)
@@ -99,6 +123,38 @@ namespace AgriVerse.Client
         {
             glossary.SetActive(visible);
             glossaryButton.gameObject.SetActive(!visible && !LandingVisible);
+        }
+
+        internal void SetJudgeText(string value)
+        {
+            RuntimeScrollableContent.SetText(judgeText, value ?? string.Empty);
+        }
+
+        internal void SetJudgeVisible(bool visible)
+        {
+            judge.SetActive(visible);
+            judgeButton.gameObject.SetActive(!visible && !LandingVisible);
+        }
+
+        internal void SetCertificateAvailable(bool available)
+        {
+            certificateButton.gameObject.SetActive(available && !LandingVisible);
+        }
+
+        internal void ShowCertificate(string value)
+        {
+            RuntimeScrollableContent.SetText(
+                certificateText,
+                value ?? string.Empty);
+            certificate.SetActive(true);
+            certificateButton.gameObject.SetActive(false);
+        }
+
+        internal void HideCertificate(bool remainsAvailable)
+        {
+            certificate.SetActive(false);
+            certificateButton.gameObject.SetActive(
+                remainsAvailable && !LandingVisible);
         }
 
         private void BuildLanding(Transform root)
@@ -354,6 +410,150 @@ namespace AgriVerse.Client
             }
             RuntimeScrollableContent.SetText(glossaryText, content.ToString());
             glossary.SetActive(false);
+        }
+
+        private void BuildJudge(Transform root)
+        {
+            judgeButton = EpisodeUiFactory.Button(
+                root,
+                "JudgeViewButton",
+                "JUDGE VIEW",
+                EpisodeUiFactory.RiverTeal,
+                12);
+            EpisodeUiFactory.Stretch(
+                judgeButton.GetComponent<RectTransform>(),
+                new Vector2(.015f, .80f),
+                new Vector2(.125f, .852f));
+            judgeButton.onClick.AddListener(() => toggleJudge?.Invoke());
+            judgeButton.gameObject.SetActive(false);
+
+            judge = EpisodeUiFactory.Panel(
+                root,
+                "JudgeViewBlocker",
+                new Color(0f, .025f, .03f, .78f),
+                true).gameObject;
+            EpisodeUiFactory.Stretch(
+                judge.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one);
+            Image drawer = EpisodeUiFactory.Panel(
+                judge.transform,
+                "JudgeViewDrawer",
+                EpisodeUiFactory.DeepTeal,
+                true);
+            EpisodeUiFactory.Stretch(
+                drawer.rectTransform,
+                new Vector2(.10f, .07f),
+                new Vector2(.90f, .93f));
+            Text title = EpisodeUiFactory.Text(
+                drawer.transform,
+                "JudgeViewTitle",
+                22,
+                TextAnchor.MiddleLeft,
+                EpisodeUiFactory.OffWhite);
+            title.text = "JUDGE VIEW";
+            EpisodeUiFactory.Stretch(
+                title.rectTransform,
+                new Vector2(.05f, .91f),
+                new Vector2(.75f, .98f));
+            Button close = EpisodeUiFactory.Button(
+                drawer.transform,
+                "CloseJudgeView",
+                "CLOSE",
+                EpisodeUiFactory.RiverTeal,
+                13);
+            EpisodeUiFactory.Stretch(
+                close.GetComponent<RectTransform>(),
+                new Vector2(.82f, .915f),
+                new Vector2(.95f, .98f));
+            close.onClick.AddListener(() => toggleJudge?.Invoke());
+            judgeText = RuntimeScrollableContent.Create(
+                drawer.transform,
+                "JudgeViewContent",
+                new Vector2(.05f, .06f),
+                new Vector2(.95f, .88f),
+                14);
+            judge.SetActive(false);
+        }
+
+        private void BuildCertificate(Transform root)
+        {
+            certificateButton = EpisodeUiFactory.Button(
+                root,
+                "CertificateButton",
+                "CERTIFICATE",
+                EpisodeUiFactory.Amber,
+                12);
+            EpisodeUiFactory.Stretch(
+                certificateButton.GetComponent<RectTransform>(),
+                new Vector2(.015f, .735f),
+                new Vector2(.14f, .787f));
+            certificateButton.onClick.AddListener(
+                () => openCertificate?.Invoke());
+            certificateButton.gameObject.SetActive(false);
+
+            certificate = EpisodeUiFactory.Panel(
+                root,
+                "CertificateBlocker",
+                new Color(0f, .025f, .03f, .82f),
+                true).gameObject;
+            EpisodeUiFactory.Stretch(
+                certificate.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one);
+            Image card = EpisodeUiFactory.Panel(
+                certificate.transform,
+                "CertificateCard",
+                new Color(.07f, .15f, .15f, .99f),
+                true);
+            EpisodeUiFactory.Stretch(
+                card.rectTransform,
+                new Vector2(.14f, .07f),
+                new Vector2(.86f, .93f));
+            Text title = EpisodeUiFactory.Text(
+                card.transform,
+                "CertificateHeading",
+                25,
+                TextAnchor.MiddleCenter,
+                EpisodeUiFactory.Amber);
+            title.text = SaltLineNarrative.CertificateHeading;
+            EpisodeUiFactory.Stretch(
+                title.rectTransform,
+                new Vector2(.06f, .89f),
+                new Vector2(.94f, .97f));
+            certificateText = RuntimeScrollableContent.Create(
+                card.transform,
+                "CertificateContent",
+                new Vector2(.08f, .20f),
+                new Vector2(.92f, .87f),
+                17);
+
+            Button home = EpisodeUiFactory.Button(
+                card.transform,
+                "ReturnHome",
+                SaltLineNarrative.ReturnHome,
+                EpisodeUiFactory.RiverTeal,
+                14);
+            EpisodeUiFactory.Stretch(
+                home.GetComponent<RectTransform>(),
+                new Vector2(.08f, .07f),
+                new Vector2(.48f, .16f));
+            home.onClick.AddListener(
+                () => chooseEnding?.Invoke(EpisodeEndingChoice.ReturnHome));
+            Button stay = EpisodeUiFactory.Button(
+                card.transform,
+                "StayAnotherSeason",
+                SaltLineNarrative.StayAnotherSeason,
+                EpisodeUiFactory.Amber,
+                14);
+            EpisodeUiFactory.Stretch(
+                stay.GetComponent<RectTransform>(),
+                new Vector2(.52f, .07f),
+                new Vector2(.92f, .16f));
+            stay.onClick.AddListener(
+                () => chooseEnding?.Invoke(
+                    EpisodeEndingChoice.StayAnotherSeason));
+            certificate.SetActive(false);
         }
     }
 }

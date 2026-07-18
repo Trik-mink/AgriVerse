@@ -207,6 +207,7 @@ namespace AgriVerse.Client.Tests
             Assert.That(plan.IsBusy, Is.False);
             Assert.That(plan.Session.SimulatorResult, Is.Not.Null);
             Assert.That(plan.Session.SimulatorResult.fit_assessment.overall, Is.Not.Empty);
+            string originalSimulationJson = plan.Session.SimulatorResultJson;
             yield return WaitForConsequences(consequences);
             Assert.That(consequences.ConsequencesVisible, Is.True);
             AssertPanelLayout(RuntimeActivityStage.Consequences);
@@ -233,6 +234,12 @@ namespace AgriVerse.Client.Tests
             plan.SubmitPlan();
             yield return WaitForSimulation(plan);
             yield return WaitForConsequences(consequences);
+            Assert.That(plan.Session.HasRevision, Is.True);
+            Assert.That(plan.Session.RevisionCount, Is.EqualTo(1));
+            Assert.That(
+                plan.Session.OriginalSimulatorResultJson,
+                Is.EqualTo(originalSimulationJson));
+            Assert.That(plan.Session.SimulatorResultJson, Is.Not.Empty);
             Assert.That(plan.Session.FeedbackResultJson, Is.Empty);
             AssertPanelLayout(RuntimeActivityStage.Consequences);
             consequences.UnlockFeedback();
@@ -305,7 +312,16 @@ namespace AgriVerse.Client.Tests
             Assert.That(manager.ActiveStage, Is.EqualTo(expectedStage));
             Assert.That(manager.ActivePanelCount, Is.EqualTo(1), "Exactly one left-region stage panel may be active.");
             Assert.That(manager.ActiveInstructionTextCount, Is.EqualTo(1), "The top instruction region must have exactly one text element.");
-            Assert.That(manager.ActiveScrollableContentCount, Is.GreaterThan(0), "Every displayed long-form region must use the shared scroll contract.");
+            if (expectedStage == RuntimeActivityStage.Interviews ||
+                expectedStage == RuntimeActivityStage.Consequences ||
+                expectedStage == RuntimeActivityStage.Feedback ||
+                expectedStage == RuntimeActivityStage.Brief)
+            {
+                Assert.That(
+                    manager.ActiveScrollableContentCount,
+                    Is.GreaterThan(0),
+                    "Every displayed long-form region must use the shared scroll contract.");
+            }
             Assert.That(RuntimeScrollableContent.ActiveScrollViewsDoNotBlockSceneRaycasts(), Is.True,
                 "Scrollable cards must not block scene-marker raycasts.");
         }

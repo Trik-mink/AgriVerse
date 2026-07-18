@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace AgriVerse.Client
@@ -21,8 +23,13 @@ namespace AgriVerse.Client
         public bool LandingVisible => view != null && view.LandingVisible;
         public bool GuideVisible => view != null && view.GuideVisible;
         public bool GlossaryVisible => view != null && view.GlossaryVisible;
+        public bool CertificateAvailable { get; private set; }
+        public bool CertificateVisible =>
+            view != null && view.CertificateVisible;
         public string GuideTextForTesting => view?.GuideText ?? string.Empty;
         public string GlossaryTextForTesting => view?.GlossaryText ?? string.Empty;
+        public string CertificateTextForTesting =>
+            view?.CertificateText ?? string.Empty;
 
         private IEnumerator Start()
         {
@@ -44,6 +51,7 @@ namespace AgriVerse.Client
         private void Update()
         {
             if (!missionStarted || scenario == null) return;
+            RefreshPresentationState();
             RuntimePanelManager manager =
                 FindFirstObjectByType<RuntimePanelManager>();
             if (manager == null || !manager.ActiveStage.HasValue) return;
@@ -65,13 +73,29 @@ namespace AgriVerse.Client
             }
             else if (stage == RuntimeActivityStage.Plan)
             {
-                QueueCue("planning-intro", SaltLineNarrative.PlanningIntro);
+                PlanSession plan = PlanSession.GetOrCreate();
+                if (!string.IsNullOrWhiteSpace(plan.FeedbackResultJson))
+                {
+                    QueueCue(
+                        "revision-intro-" + plan.RevisionCount,
+                        SaltLineNarrative.RevisionIntro);
+                }
+                else
+                {
+                    QueueCue("planning-intro", SaltLineNarrative.PlanningIntro);
+                }
             }
             else if (stage == RuntimeActivityStage.Consequences)
             {
                 QueueCue(
                     "consequences-intro",
                     SaltLineNarrative.ConsequencesIntro);
+                if (PlanSession.GetOrCreate().HasRevision)
+                {
+                    QueueCue(
+                        "improved-result",
+                        SaltLineNarrative.ImprovedResult);
+                }
             }
             else if (stage == RuntimeActivityStage.Feedback)
             {
@@ -107,7 +131,34 @@ namespace AgriVerse.Client
         public void ToggleGlossary()
         {
             if (view == null || !missionStarted) return;
+            if (!view.GlossaryVisible)
+            {
+                view.SetJudgeVisible(false);
+                view.HideCertificate(CertificateAvailable);
+            }
             view.SetGlossaryVisible(!view.GlossaryVisible);
+        }
+
+        public void RefreshForTesting()
+        {
+            RefreshPresentationState();
+        }
+
+        public void OpenCertificate()
+        {
+            if (!CertificateAvailable || view == null || session?.Progress == null)
+            {
+                return;
+            }
+
+            view.SetGlossaryVisible(false);
+            view.SetJudgeVisible(false);
+            view.ShowCertificate(BuildCertificateText());
+        }
+
+        public void ChooseEndingForTesting(EpisodeEndingChoice choice)
+        {
+            ChooseEnding(choice);
         }
 
         private void EnsureView()
@@ -120,6 +171,9 @@ namespace AgriVerse.Client
                 () => BeginMission(),
                 DismissGuide,
                 ToggleGlossary,
+                ToggleJudge,
+                OpenCertificate,
+                ChooseEnding,
                 SelectAvatar);
         }
 
@@ -157,6 +211,7 @@ namespace AgriVerse.Client
 
             missionStarted = true;
             view.HideLanding();
+            RefreshPresentationState();
             QueueCue(
                 "arrival",
                 SaltLineNarrative.Arrival(session.Progress.PlayerName));
@@ -193,6 +248,121 @@ namespace AgriVerse.Client
             {
                 view.ShowGuide(guideQueue.Dequeue());
             }
+        }
+
+        private void ToggleJudge()
+        {
+            if (view == null || !missionStarted) return;
+            bool show = !view.JudgeVisible;
+            if (show)
+            {
+                view.SetGlossaryVisible(false);
+                view.HideCertificate(CertificateAvailable);
+                view.SetJudgeText(BuildJudgeText());
+            }
+            view.SetJudgeVisible(show);
+        }
+
+        private void RefreshPresentationState()
+        {
+            if (view == null) return;
+            PlanSession plan = PlanSession.GetOrCreate();
+            CertificateAvailable =
+                missionStarted &&
+                !string.IsNullOrWhiteSpace(plan.PolicyBriefResultJson);
+            view.SetCertificateAvailable(
+                CertificateAvailable && !view.CertificateVisible);
+        }
+
+        private string BuildJudgeText()
+        {
+            InterviewController interview =
+                FindFirstObjectByType<InterviewController>();
+            AnGiangRealitySpikeController reality =
+                FindFirstObjectByType<AnGiangRealitySpikeController>();
+            EvidenceNotebookSession evidenceSession =
+                EvidenceNotebookSession.GetOrCreate();
+            return JudgeViewFormatter.Format(
+                scenario,
+                interview?.SelectedStakeholderId ?? string.Empty,
+                reality != null && reality.ProceduralFallbackActive,
+                evidenceSession.Notebook,
+                PlanSession.GetOrCreate());
+        }
+
+        private string BuildCertificateText()
+        {
+            PlanSession plan = PlanSession.GetOrCreate();
+            var interventionLabels = new List<string>();
+            foreach (string interventionId in
+                     plan.InterventionIds ?? Array.Empty<string>())
+            {
+                string label = interventionId;
+                foreach (InterventionDto intervention in
+                         scenario.interventions ?? Array.Empty<InterventionDto>())
+                {
+                    if (intervention != null &&
+                        intervention.id == interventionId)
+                    {
+                        label = intervention.label;
+                        break;
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(label))
+                {
+                    interventionLabels.Add(label);
+                }
+            }
+
+            string location = JoinNonEmpty(
+                scenario.location?.region,
+                scenario.location?.country);
+            var text = new StringBuilder();
+            text.Append(session.Progress.PlayerName)
+                .Append("\n\n")
+                .Append(SaltLineNarrative.CertificateCompletion)
+                .Append("\n\n")
+                .Append(SaltLineNarrative.Episode);
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                text.Append(" - ").Append(location);
+            }
+            text.Append("\n\n")
+                .Append(SaltLineNarrative.CertificateRecommendation)
+                .Append(": ")
+                .Append(interventionLabels.Count == 0
+                    ? "Recorded in the attached policy brief"
+                    : string.Join(", ", interventionLabels))
+                .Append("\n\n")
+                .Append(SaltLineNarrative.CertificateEvidence)
+                .Append("\n\n")
+                .Append(DateTime.Now.ToString("MMMM d, yyyy"));
+            return text.ToString();
+        }
+
+        private void ChooseEnding(EpisodeEndingChoice choice)
+        {
+            if (session?.Progress == null ||
+                choice == EpisodeEndingChoice.None)
+            {
+                return;
+            }
+
+            session.Progress.ChooseEnding(choice);
+            view.HideCertificate(CertificateAvailable);
+            if (choice == EpisodeEndingChoice.ReturnHome)
+            {
+                QueueCue(
+                    "return-home",
+                    SaltLineNarrative.Ending(session.Progress.PlayerName));
+            }
+        }
+
+        private static string JoinNonEmpty(string first, string second)
+        {
+            if (string.IsNullOrWhiteSpace(first)) return second ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(second)) return first;
+            return first + ", " + second;
         }
     }
 }

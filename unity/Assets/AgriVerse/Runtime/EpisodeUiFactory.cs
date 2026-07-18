@@ -48,6 +48,7 @@ namespace AgriVerse.Client
             text.transform.SetParent(parent, false);
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
+            text.supportRichText = false;
             text.alignment = alignment;
             text.color = color;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;

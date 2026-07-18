@@ -68,8 +68,38 @@ namespace AgriVerse.Client
             Array.Empty<FutureYearPresentation>();
     }
 
+    public sealed class FutureWalkComparison
+    {
+        public FutureWalkResult Original { get; set; }
+        public FutureWalkResult Revised { get; set; }
+        public bool HasRevision => Original != null && Revised != null;
+    }
+
     public static class FutureWalkMapper
     {
+        public static FutureWalkComparison MapComparison(PlanSession session)
+        {
+            if (session == null)
+            {
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            FutureWalkResult original =
+                string.IsNullOrWhiteSpace(session.OriginalSimulatorResultJson)
+                    ? null
+                    : Map(session.OriginalSimulatorResultJson);
+            FutureWalkResult revised =
+                session.HasRevision &&
+                !string.IsNullOrWhiteSpace(session.SimulatorResultJson)
+                    ? Map(session.SimulatorResultJson)
+                    : null;
+            return new FutureWalkComparison
+            {
+                Original = original,
+                Revised = revised
+            };
+        }
+
         public static FutureWalkResult Map(string simulatorJson)
         {
             CanonicalJsonValue root = CanonicalJsonParser.Parse(simulatorJson);

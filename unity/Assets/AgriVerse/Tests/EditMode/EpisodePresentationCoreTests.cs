@@ -91,6 +91,65 @@ namespace AgriVerse.Client.Tests
             Assert.That(result.Years[4].EvidenceSourceIds, Is.EqualTo(new[] { "S1", "S5" }));
         }
 
+        [Test]
+        public void PlanSessionRetainsTheOriginalFutureWhenARevisionReplacesTheCurrentOne()
+        {
+            GameObject root = new GameObject("PlanSessionHistoryTest");
+            PlanSession session = root.AddComponent<PlanSession>();
+            session.ConfigureScenario("scenario-1");
+            var original = new SimulatorResultSummaryDto
+            {
+                scenario_id = "scenario-1",
+                fit_assessment = new FitAssessmentDto { overall = "mismatch" }
+            };
+            var revised = new SimulatorResultSummaryDto
+            {
+                scenario_id = "scenario-1",
+                fit_assessment = new FitAssessmentDto { overall = "fit" }
+            };
+
+            session.StoreSimulatorResult("original-json", original);
+            session.StoreSimulatorResult("revised-json", revised);
+
+            Assert.That(session.OriginalSimulatorResultJson, Is.EqualTo("original-json"));
+            Assert.That(session.SimulatorResultJson, Is.EqualTo("revised-json"));
+            Assert.That(session.OriginalSimulatorResult.fit_assessment.overall, Is.EqualTo("mismatch"));
+            Assert.That(session.RevisionCount, Is.EqualTo(1));
+            Assert.That(session.HasRevision, Is.True);
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void FutureWalkComparisonMapsOriginalAndRevisedWithoutRecomputing()
+        {
+            GameObject root = new GameObject("FutureWalkComparisonTest");
+            PlanSession session = root.AddComponent<PlanSession>();
+            session.ConfigureScenario("scenario-1");
+            string originalJson = SimulatorJson().Replace(
+                "\"headline\":\"Headline\"",
+                "\"headline\":\"Original future\"");
+            string revisedJson = SimulatorJson().Replace(
+                "\"headline\":\"Headline\"",
+                "\"headline\":\"Revised future\"");
+            session.StoreSimulatorResult(
+                originalJson,
+                new SimulatorResultSummaryDto());
+            session.StoreSimulatorResult(
+                revisedJson,
+                new SimulatorResultSummaryDto());
+
+            FutureWalkComparison comparison =
+                FutureWalkMapper.MapComparison(session);
+
+            Assert.That(comparison.HasRevision, Is.True);
+            Assert.That(comparison.Original.Headline, Is.EqualTo("Original future"));
+            Assert.That(comparison.Revised.Headline, Is.EqualTo("Revised future"));
+            Assert.That(
+                comparison.Original.Years[0].SalinityValue,
+                Is.EqualTo("1.2300"));
+            Object.DestroyImmediate(root);
+        }
+
         private static string SimulatorJson()
         {
             var years = new StringBuilder();

@@ -65,6 +65,13 @@ namespace AgriVerse.Client
 
         public const string ReturnHome = "Return home";
         public const string StayAnotherSeason = "Stay another season (free exploration)";
+        public const string CertificateHeading = "CERTIFICATE OF FIELD SERVICE";
+        public const string CertificateCompletion =
+            "completed the AgriVerse field investigation";
+        public const string CertificateRecommendation =
+            "Recommended intervention";
+        public const string CertificateEvidence =
+            "Evidence gathered: three water tests, three stakeholder interviews, a five-year simulation, grounded feedback, and a revised policy brief.";
 
         public static readonly string[] PredictionPrompts =
         {

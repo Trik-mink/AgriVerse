@@ -293,3 +293,8 @@ Format per entry:
 - What Codex did: Wired local player naming, four portrait presets, authored Mai guidance, predict-before-reveal water testing, the inline glossary, scenario presentation fields, and exact five-year visual mappings.
 - Human decision: Declared the Salt Line script final, required local identity to stay outside scored requests, and required predictions to carry no penalty before authoritative readings appear.
 - GPT-5.6 technique used: Kept the four live GPT systems and validated JSON untouched while preparing presentation directly from sanitized scenario data and canonical simulator tokens.
+
+### 2026-07-18 - Unity revision comparison and mission completion
+- What Codex did: Preserved original and revised simulator results, added authoritative Future Walk comparison mappings, a citation-audited Judge View, named field-service certificate, and respectful ending choices.
+- Human decision: Required revision to represent responsible professional practice, retained exact backend values, and kept player identity outside scored requests.
+- GPT-5.6 technique used: Exposed role-separated agent state and raw validated structured outputs without changing them, then audited every result document against the sanitized source registry.

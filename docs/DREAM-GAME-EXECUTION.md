@@ -5,7 +5,7 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Phase 2 - Art-independent Episode 1 features.
+Phase 3 - Separate quality-lab scaffolding before external asset handoff.
 
 ## Completed tasks
 
@@ -18,6 +18,9 @@ Phase 2 - Art-independent Episode 1 features.
 - Phase 2 slice 1 implemented: local name and portrait choice, authored Mai guidance,
   predict-before-reveal water testing, inline glossary, scenario presentation DTOs, and
   authoritative Future Walk data mappings.
+- Phase 2 completed: original and revised simulation histories remain separately available;
+  Judge View audits raw validated outputs and source IDs; the named certificate and both
+  respectful ending choices are wired without entering scored request data.
 
 ## Current blockers
 
@@ -80,8 +83,21 @@ Asset Store content that cannot be redistributed.
 - macOS Metal player: non-development build succeeded at 1280x720.
 - Player log: Apple M4 Metal initialized with no runtime, shader, rendering, or crash errors.
 
+### Episode revision, Judge View, and completion checkpoint
+
+- EditMode: 34 passed, 0 failed, 1 existing connectivity test ignored.
+- Live PlayMode full-loop regression: passed in 186.7 seconds against the real backend,
+  including interviews, simulation, feedback, revision, resimulation, and policy brief.
+- Revision assertion: the first simulator JSON remained byte-for-byte available after the
+  second validated result replaced the active future.
+- macOS Metal player: non-development 1280x720 checkpoint build succeeded at
+  `unity/Builds/macOS/AgriVerseCheckpoint.app`.
+- Player log: Apple M4 Metal initialized with no runtime, shader, rendering, or crash errors.
+
 ## Checkpoint commits
 
 - `87ae13b11266325ad9a608c9efdbec21ded65c9` - Reality Spike 1 technical baseline.
 - `9eead89` - Cinematic stakeholder interview presentation.
 - `1ea9ad5` - Dream Game execution tracker initialized.
+- `27b900b` - Repeatable macOS checkpoint build helper.
+- `4894384` - Salt Line identity, authored guidance, glossary, and prediction flow.

@@ -34,6 +34,11 @@ namespace AgriVerse.Client
         public string Rationale { get; set; } = string.Empty;
         public string SimulatorResultJson { get; private set; } = string.Empty;
         public SimulatorResultSummaryDto SimulatorResult { get; private set; }
+        public string OriginalSimulatorResultJson { get; private set; } = string.Empty;
+        public SimulatorResultSummaryDto OriginalSimulatorResult { get; private set; }
+        public string PreviousSimulatorResultJson { get; private set; } = string.Empty;
+        public int RevisionCount { get; private set; }
+        public bool HasRevision => RevisionCount > 0;
         public string FeedbackResultJson { get; private set; } = string.Empty;
         public string PolicyBriefResultJson { get; private set; } = string.Empty;
 
@@ -50,11 +55,23 @@ namespace AgriVerse.Client
             ScenarioId = scenarioId;
             TargetSiteId = string.Empty; InterventionIds = Array.Empty<string>(); SupportMeasures = Array.Empty<string>();
             ParametersText = string.Empty; Rationale = string.Empty; SimulatorResultJson = string.Empty; SimulatorResult = null;
+            OriginalSimulatorResultJson = string.Empty; OriginalSimulatorResult = null;
+            PreviousSimulatorResultJson = string.Empty; RevisionCount = 0;
             FeedbackResultJson = string.Empty; PolicyBriefResultJson = string.Empty;
         }
 
         public void StoreSimulatorResult(string rawJson, SimulatorResultSummaryDto result)
         {
+            if (string.IsNullOrWhiteSpace(OriginalSimulatorResultJson))
+            {
+                OriginalSimulatorResultJson = rawJson;
+                OriginalSimulatorResult = result;
+            }
+            else
+            {
+                PreviousSimulatorResultJson = SimulatorResultJson;
+                RevisionCount++;
+            }
             SimulatorResultJson = rawJson;
             SimulatorResult = result;
             FeedbackResultJson = string.Empty;

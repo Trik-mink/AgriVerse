@@ -13,6 +13,11 @@ namespace AgriVerse.Client.Tests
             {
                 Object.DestroyImmediate(session.gameObject);
             }
+            foreach (PlanSession session in
+                     Object.FindObjectsByType<PlanSession>(FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(session.gameObject);
+            }
         }
 
         [Test]
@@ -42,6 +47,59 @@ namespace AgriVerse.Client.Tests
             controller.ToggleGlossary();
             Assert.That(controller.GlossaryVisible, Is.False);
 
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void CompletedBriefOffersNamedCertificateAndBothRespectfulEndingChoices()
+        {
+            GameObject root = new GameObject("EpisodePresentationTest");
+            EpisodePresentationController controller =
+                root.AddComponent<EpisodePresentationController>();
+            ScenarioDto scenario = new ScenarioDto
+            {
+                id = "scenario-1",
+                title = "Scenario title",
+                location = new LocationDto
+                {
+                    country = "Vietnam",
+                    region = "Mekong Delta"
+                },
+                interventions = new[]
+                {
+                    new InterventionDto
+                    {
+                        id = "rice",
+                        label = "Salt-tolerant rice"
+                    }
+                }
+            };
+            controller.BuildForTesting(scenario);
+            Assert.That(
+                controller.BeginMissionForTesting("Lan", "rice-green"),
+                Is.True);
+            PlanSession plan = PlanSession.GetOrCreate();
+            plan.ConfigureScenario(scenario.id);
+            plan.InterventionIds = new[] { "rice" };
+            plan.StorePolicyBriefResult("{\"title\":\"Brief\"}");
+
+            controller.RefreshForTesting();
+            Assert.That(controller.CertificateAvailable, Is.True);
+            controller.OpenCertificate();
+            Assert.That(controller.CertificateVisible, Is.True);
+            Assert.That(controller.CertificateTextForTesting, Does.Contain("Lan"));
+            Assert.That(
+                controller.CertificateTextForTesting,
+                Does.Contain("Salt-tolerant rice"));
+            Assert.That(
+                controller.CertificateTextForTesting,
+                Does.Contain("Mekong Delta, Vietnam"));
+
+            controller.ChooseEndingForTesting(EpisodeEndingChoice.StayAnotherSeason);
+            Assert.That(controller.CertificateVisible, Is.False);
+            Assert.That(
+                EpisodeSession.GetOrCreate().Progress.EndingChoice,
+                Is.EqualTo(EpisodeEndingChoice.StayAnotherSeason));
             Object.DestroyImmediate(root);
         }
 
