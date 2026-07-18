@@ -5,7 +5,8 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Phase 3 - Separate quality-lab scaffolding before external asset handoff.
+Human Gate A - external character, environment, and audio assets required before the
+CharacterLab and AnGiangWorldLab can meet the approved non-blockout quality bar.
 
 ## Completed tasks
 
@@ -25,7 +26,8 @@ Phase 3 - Separate quality-lab scaffolding before external asset handoff.
 ## Current blockers
 
 - The true-3D world and animated Mai require the consolidated external assets below.
-- Art-independent implementation continues before Human Gate A.
+- Art-independent Episode 1 implementation is complete. Phase 3 can resume as soon as the
+  required local, redistributable asset bundle below is available.
 
 ## External assets required
 
@@ -101,3 +103,4 @@ Asset Store content that cannot be redistributed.
 - `1ea9ad5` - Dream Game execution tracker initialized.
 - `27b900b` - Repeatable macOS checkpoint build helper.
 - `4894384` - Salt Line identity, authored guidance, glossary, and prediction flow.
+- `adc011b` - Original/revised futures, Judge View, certificate, and ending choices.
