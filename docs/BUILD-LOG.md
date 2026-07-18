@@ -278,3 +278,8 @@ Format per entry:
 - What Codex did: Added a procedural URP-lit Mekong field with paddy rows, water channel, paths, dock, shelter, palms, horizon, and warm lighting; guarded marker raycasts and channel-ripple bounds with Unity tests.
 - Human decision: Approved Environment Pass 1 after visual review, while requiring gray markers, existing learning flow, and data systems to remain unchanged.
 - GPT-5.6 technique used: Kept the presentation layer data-neutral and isolated from the scenario-driven, GPT-backed learning loop.
+
+### 2026-07-18 - Unity Reality Spike 1
+- What Codex did: Added a licensed An Giang canal photo-led arrival view, compact at-rest Investigation UI, subtle camera/water motion, automatic procedural fallback, and raycast/fallback tests.
+- Human decision: Approved the spike as a technical baseline, preserving the licensed-photo attribution and fallback while deferring final embedded landscape art to Reality Spike 2.
+- GPT-5.6 technique used: Kept the geographic presentation distinct from scenario evidence and runtime GPT-backed learning behavior.

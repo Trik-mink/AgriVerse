@@ -51,8 +51,11 @@ namespace AgriVerse.Client
         private Text gateText;
         private Button collectButton;
         private GameObject readingPanelObject;
+        private GameObject notebookPanelObject;
+        private Button notebookToggleButton;
         private GameObject interviewGateObject;
         private GameObject investigationStage;
+        private bool notebookOpen;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
         public ScenarioDto Scenario => scenario;
@@ -166,6 +169,7 @@ namespace AgriVerse.Client
                 if (scenario.test_sites[index].id == siteId)
                 {
                     selectedSite = scenario.test_sites[index];
+                    notebookOpen = true;
                     SetStatus($"{selectedSite.label} selected. Collect the sample to record it.");
                     RefreshInterface();
                     return;
@@ -284,8 +288,12 @@ namespace AgriVerse.Client
             collectButton.onClick.AddListener(() => CollectSelectedSample());
 
             Image notebookPanel = CreatePanel(canvas.transform, "EvidenceNotebook");
+            notebookPanelObject = notebookPanel.gameObject;
             Stretch(notebookPanel.rectTransform, new Vector2(0.66f, 0.12f), new Vector2(0.97f, 0.82f));
             notebookText = RuntimeScrollableContent.Create(notebookPanel.transform, "NotebookReadings", new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.94f), 15);
+            notebookToggleButton = CreateButton(canvas.transform, "NotebookToggle", "Evidence notebook");
+            Stretch(notebookToggleButton.GetComponent<RectTransform>(), new Vector2(.78f, .05f), new Vector2(.97f, .1f));
+            notebookToggleButton.onClick.AddListener(ToggleNotebook);
 
             gateText = CreateText(investigationStage.transform, "InterviewGate", 20, TextAnchor.UpperLeft);
             interviewGateObject = gateText.gameObject;
@@ -293,6 +301,12 @@ namespace AgriVerse.Client
             RuntimePanelManager panels = RuntimePanelManager.GetOrCreate();
             panels.Register(RuntimeActivityStage.Investigation, investigationStage);
             panels.Show(RuntimeActivityStage.Investigation);
+        }
+
+        private void ToggleNotebook()
+        {
+            notebookOpen = !notebookOpen;
+            RefreshInterface();
         }
 
         private static void EnsureInputSystemEventSystem()
@@ -337,6 +351,9 @@ namespace AgriVerse.Client
                 collectButton.interactable = !notebookSession.Notebook.HasRecorded(selectedSite.id);
             }
 
+            readingPanelObject.SetActive(selectedSite != null);
+            notebookPanelObject.SetActive(notebookOpen);
+            notebookToggleButton.GetComponentInChildren<Text>().text = notebookOpen ? "Hide notebook" : "Evidence notebook";
             RuntimeScrollableContent.SetText(notebookText, FormatNotebook());
             gateText.text = InterviewsUnlocked
                 ? "Interviews unlocked — all test sites are recorded."
