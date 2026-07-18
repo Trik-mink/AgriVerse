@@ -288,3 +288,8 @@ Format per entry:
 - What Codex did: Added a photo-first stakeholder selection and interview shell with compact progress HUD, portrait cards, bounded dialogue, retry states, and a focused Evidence Notebook drawer.
 - Human decision: Approved the corrected cinematic direction after requiring one readable response region, a distraction-free evidence overlay, hidden world-marker remnants, and simplified identity cards.
 - GPT-5.6 technique used: Rendered validated role-separated stakeholder replies verbatim while keeping live requests, conversation state, evidence, and progression in the existing Unity controllers.
+
+### 2026-07-18 - Unity Salt Line identity and investigation framing
+- What Codex did: Wired local player naming, four portrait presets, authored Mai guidance, predict-before-reveal water testing, the inline glossary, scenario presentation fields, and exact five-year visual mappings.
+- Human decision: Declared the Salt Line script final, required local identity to stay outside scored requests, and required predictions to carry no penalty before authoritative readings appear.
+- GPT-5.6 technique used: Kept the four live GPT systems and validated JSON untouched while preparing presentation directly from sanitized scenario data and canonical simulator tokens.

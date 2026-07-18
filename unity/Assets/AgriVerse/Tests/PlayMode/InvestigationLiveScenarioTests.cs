@@ -15,6 +15,7 @@ namespace AgriVerse.Client.Tests
             foreach (EvidenceNotebookSession session in Object.FindObjectsByType<EvidenceNotebookSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
             foreach (InterviewNotebookSession session in Object.FindObjectsByType<InterviewNotebookSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
             foreach (PlanSession session in Object.FindObjectsByType<PlanSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
+            foreach (EpisodeSession session in Object.FindObjectsByType<EpisodeSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
             foreach (RuntimePanelManager manager in Object.FindObjectsByType<RuntimePanelManager>(FindObjectsSortMode.None)) Object.Destroy(manager.gameObject);
             yield return null;
         }
@@ -36,6 +37,9 @@ namespace AgriVerse.Client.Tests
             foreach (TestSiteDto site in controller.Scenario.test_sites)
             {
                 controller.SelectSite(site.id);
+                Assert.That(controller.CollectSelectedSample(), Is.False,
+                    "A reading must stay hidden until the learner predicts.");
+                Assert.That(controller.PredictSelectedSite(0), Is.True);
                 Assert.That(controller.CollectSelectedSample(), Is.True);
             }
 
@@ -100,6 +104,7 @@ namespace AgriVerse.Client.Tests
             foreach (TestSiteDto site in investigation.Scenario.test_sites)
             {
                 investigation.SelectSite(site.id);
+                Assert.That(investigation.PredictSelectedSite(0), Is.True);
                 Assert.That(investigation.CollectSelectedSample(), Is.True);
             }
 
@@ -143,6 +148,7 @@ namespace AgriVerse.Client.Tests
             foreach (TestSiteDto site in investigation.Scenario.test_sites)
             {
                 investigation.SelectSite(site.id);
+                Assert.That(investigation.PredictSelectedSite(0), Is.True);
                 Assert.That(investigation.CollectSelectedSample(), Is.True);
             }
             yield return null;
@@ -186,7 +192,7 @@ namespace AgriVerse.Client.Tests
             brief.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
             yield return WaitForScenario(investigation); yield return WaitForScenario(interviews); yield return WaitForPlan(plan);
             AssertPanelLayout(RuntimeActivityStage.Investigation);
-            foreach (TestSiteDto site in investigation.Scenario.test_sites) { investigation.SelectSite(site.id); Assert.That(investigation.CollectSelectedSample(), Is.True); }
+            foreach (TestSiteDto site in investigation.Scenario.test_sites) { investigation.SelectSite(site.id); Assert.That(investigation.PredictSelectedSite(0), Is.True); Assert.That(investigation.CollectSelectedSample(), Is.True); }
             yield return null;
             AssertPanelLayout(RuntimeActivityStage.Interviews);
             foreach (StakeholderDto stakeholder in interviews.Scenario.stakeholders) { interviews.AskForTesting(stakeholder.id, "What condition must a workable response meet?"); yield return WaitForReply(interviews); }

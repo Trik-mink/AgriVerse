@@ -45,11 +45,14 @@ namespace AgriVerse.Client
         private readonly List<TestSiteMarker> markers = new List<TestSiteMarker>();
         private ScenarioDto scenario;
         private EvidenceNotebookSession notebookSession;
+        private EpisodeSession episodeSession;
         private TestSiteDto selectedSite;
+        private int selectedSiteIndex = -1;
         private Text selectionText;
         private Text notebookText;
         private Text gateText;
         private Button collectButton;
+        private readonly Button[] predictionButtons = new Button[2];
         private GameObject readingPanelObject;
         private GameObject notebookPanelObject;
         private Button notebookToggleButton;
@@ -63,6 +66,10 @@ namespace AgriVerse.Client
         public ScenarioDto Scenario => scenario;
         public int MarkerCount => markers.Count;
         public int RecordedReadingCount => notebookSession?.Notebook?.RecordedReadings.Count ?? 0;
+        public bool SelectedReadingRevealed =>
+            selectedSite != null &&
+            episodeSession?.Progress != null &&
+            episodeSession.Progress.HasPrediction(selectedSite.id);
         public bool InterviewsUnlocked => scenario != null &&
                                         notebookSession?.Notebook != null &&
                                         notebookSession.Notebook.AreAllSitesRecorded(scenario.test_sites);
@@ -148,6 +155,8 @@ namespace AgriVerse.Client
 
             notebookSession = EvidenceNotebookSession.GetOrCreate();
             notebookSession.ConfigureScenario(scenario.id);
+            episodeSession = EpisodeSession.GetOrCreate();
+            episodeSession.ConfigureScenario(scenario.id);
             CreateMarkers();
             if (createRuntimeUi)
             {
@@ -171,18 +180,52 @@ namespace AgriVerse.Client
                 if (scenario.test_sites[index].id == siteId)
                 {
                     selectedSite = scenario.test_sites[index];
+                    selectedSiteIndex = index;
                     notebookOpen = true;
-                    SetStatus($"{selectedSite.label} selected. Collect the sample to record it.");
+                    SetStatus(SelectedReadingRevealed
+                        ? $"{selectedSite.label} selected. Its recorded prediction allows the reading to be reviewed."
+                        : $"{selectedSite.label} selected. Predict the reading before revealing it.");
                     RefreshInterface();
                     return;
                 }
             }
         }
 
+        public bool PredictSelectedSite(int choiceIndex)
+        {
+            if (selectedSite == null || selectedSiteIndex < 0 ||
+                episodeSession?.Progress == null)
+            {
+                return false;
+            }
+
+            string[] ids = SaltLineNarrative.PredictionIds(selectedSiteIndex);
+            if (choiceIndex < 0 || choiceIndex >= ids.Length)
+            {
+                return false;
+            }
+
+            bool recorded = episodeSession.Progress.RecordPrediction(
+                selectedSite.id,
+                ids[choiceIndex]);
+            if (recorded)
+            {
+                SetStatus(SaltLineNarrative.AfterReading);
+                RefreshInterface();
+            }
+            return recorded;
+        }
+
         public bool CollectSelectedSample()
         {
             if (selectedSite == null || notebookSession?.Notebook == null)
             {
+                return false;
+            }
+            if (!SelectedReadingRevealed)
+            {
+                SetStatus("Make a prediction before collecting this sample.");
+                RefreshInterface();
                 return false;
             }
 
@@ -301,6 +344,20 @@ namespace AgriVerse.Client
             collectButton = CreateButton(selectionPanel.transform, "CollectSampleButton", "Collect sample");
             Stretch(collectButton.GetComponent<RectTransform>(), new Vector2(0.06f, 0.05f), new Vector2(0.94f, 0.14f));
             collectButton.onClick.AddListener(() => CollectSelectedSample());
+            for (int index = 0; index < predictionButtons.Length; index++)
+            {
+                int captured = index;
+                predictionButtons[index] = CreateButton(
+                    selectionPanel.transform,
+                    "PredictionChoice" + index,
+                    "Prediction");
+                Stretch(
+                    predictionButtons[index].GetComponent<RectTransform>(),
+                    index == 0 ? new Vector2(.06f, .05f) : new Vector2(.52f, .05f),
+                    index == 0 ? new Vector2(.48f, .14f) : new Vector2(.94f, .14f));
+                predictionButtons[index].onClick.AddListener(
+                    () => PredictSelectedSite(captured));
+            }
 
             Image notebookPanel = CreatePanel(canvas.transform, "EvidenceNotebook");
             notebookPanelObject = notebookPanel.gameObject;
@@ -362,11 +419,38 @@ namespace AgriVerse.Client
             }
             else
             {
-                selectionText.text = FormatSiteReading(selectedSite);
-                collectButton.interactable = !notebookSession.Notebook.HasRecorded(selectedSite.id);
+                if (SelectedReadingRevealed)
+                {
+                    selectionText.text =
+                        FormatSiteReading(selectedSite) +
+                        "\n\nYour prediction: " +
+                        PredictionLabelForSelectedSite();
+                    collectButton.interactable =
+                        !notebookSession.Notebook.HasRecorded(selectedSite.id);
+                }
+                else
+                {
+                    selectionText.text =
+                        "Predict before revealing the reading\n\n" +
+                        SaltLineNarrative.PredictionPrompt(selectedSiteIndex);
+                }
             }
 
             readingPanelObject.SetActive(selectedSite != null);
+            collectButton.gameObject.SetActive(
+                selectedSite != null && SelectedReadingRevealed);
+            string[] predictionLabels =
+                SaltLineNarrative.PredictionLabels(selectedSiteIndex);
+            for (int index = 0; index < predictionButtons.Length; index++)
+            {
+                bool visible = selectedSite != null && !SelectedReadingRevealed;
+                predictionButtons[index].gameObject.SetActive(visible);
+                if (index < predictionLabels.Length)
+                {
+                    predictionButtons[index].GetComponentInChildren<Text>().text =
+                        predictionLabels[index];
+                }
+            }
             notebookPanelObject.SetActive(notebookOpen);
             notebookToggleButton.GetComponentInChildren<Text>().text = notebookOpen ? "Hide notebook" : "Evidence notebook";
             RuntimeScrollableContent.SetText(notebookText, FormatNotebook());
@@ -420,6 +504,28 @@ namespace AgriVerse.Client
             }
 
             return text.ToString();
+        }
+
+        private string PredictionLabelForSelectedSite()
+        {
+            if (selectedSite == null || episodeSession?.Progress == null)
+            {
+                return string.Empty;
+            }
+
+            string predictionId =
+                episodeSession.Progress.PredictionFor(selectedSite.id);
+            string[] ids = SaltLineNarrative.PredictionIds(selectedSiteIndex);
+            string[] labels =
+                SaltLineNarrative.PredictionLabels(selectedSiteIndex);
+            for (int index = 0; index < ids.Length && index < labels.Length; index++)
+            {
+                if (ids[index] == predictionId)
+                {
+                    return labels[index];
+                }
+            }
+            return predictionId;
         }
 
         private static Image CreatePanel(Transform parent, string name)
