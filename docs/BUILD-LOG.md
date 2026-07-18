@@ -20,8 +20,11 @@ Format per entry:
   retrieval-grounded grader.
 
 ## Codex session IDs (verify/refresh before submitting)
-- **Builder session (SUBMIT THIS - majority of core functionality):** `019f6d16-cb05-7582-8c12-26b61f7b292a`
+- **Web Builder session (submit this IF the web app ships):** `019f6d16-cb05-7582-8c12-26b61f7b292a`
+- **Uni-Builder session (submit this IF the Unity client ships):** `019f71fd-f4b9-7991-bdda-1c1f42203916`
+  - gpt-5.6-terra, reasoning high. Started 2026-07-17 17:31. Unity phase core functionality.
 - Architect session (planning, not submitted): `019f6d16-ffa3-7d42-afa6-c53f0490fa4e`
+- DECISION AT SUBMISSION TIME: pick the ID matching the product actually submitted.
 - Codex v0.144.5. AGENTS.md loaded in both sessions.
 - NOTE: restarting a session assigns a NEW id. Re-grab the builder id with `/status` after the
   main build is complete, and confirm it's the thread where most core functionality was built.
@@ -205,3 +208,38 @@ Format per entry:
 - What Codex did: Added active-station-only muted video layers that fade in over decoded poster images, unload on station exit, and fall back to the poster on media failure; removed the remaining manual classic-view control.
 - Human decision: Required no WebGL, no blank media states, reduced-motion posters, and automatic classic fallback only.
 - GPT-5.6 technique used: Kept the presentation layer separate from the scenario-driven, structured-output runtime systems.
+
+### 2026-07-17 - Unity scenario connectivity checkpoint
+- What Codex did: Added Unity-safe Git/LFS rules, a tested scenario DTO and title presenter, exact-origin Express CORS, Editor/Web connectivity checks, and a successful Unity Web build.
+- Human decision: Required reuse of the existing server and assets, server-only OpenAI credentials, a primitives-first checkpoint, and the locked investigation-to-brief implementation order.
+- GPT-5.6 technique used: Preserved the scenario-driven sanitized data boundary while leaving all runtime GPT systems server-side and unchanged.
+
+### 2026-07-17 - Unity Investigation water testing
+- What Codex did: Added scenario-driven gray test-site markers, explicit sample collection, a persistent Evidence Notebook, and an all-sites-recorded interview gate; verified the live three-site flow in Unity Play Mode.
+- Human decision: Required Investigation only, existing sanitized backend data, no polish, and manual Unity setup instructions before Interviews begins.
+- GPT-5.6 technique used: Kept evidence structured and copied only sanitized scenario readings and source IDs for later citation.
+
+### 2026-07-17 - Unity stakeholder interviews
+- What Codex did: Added scenario-driven stakeholder markers, session-persistent Q&A histories, live GPT-backed chat with retry handling, served portrait assets with a name-badge fallback, and the all-stakeholders-replied plan gate.
+- Human decision: Required the existing stakeholder endpoint and assets, primitives only, and Play Mode verification with one real question per stakeholder before the plan stage.
+- GPT-5.6 technique used: Preserved role-separated stakeholder prompting and recorded only the returned public dialogue for later-stage evidence.
+
+### 2026-07-17 - Unity Investigation/Interviews input handoff
+- What Codex did: Hid and deactivated the entire Interviews stage until all water readings are recorded, disabled raycast targets on passive UI graphics, and added a combined full-loop Play Mode regression test.
+- Human decision: Required water-test cubes to remain clickable with both bootstraps present and prohibited overlapping stage panels.
+- GPT-5.6 technique used: Kept the stage gate deterministic from the session notebook before allowing live stakeholder dialogue.
+
+### 2026-07-17 - Unity readable layout and Plan Builder
+- What Codex did: Organized the runtime into stable top, left, right, and bottom regions; added a scenario-driven plan form, persisted the complete simulator response, and displayed the overall fit confirmation.
+- Human decision: Required usability before polish, one active activity panel at a time, no consequence display yet, and a real simulation round trip in Play Mode.
+- GPT-5.6 technique used: Sent the existing structured simulation contract unchanged and retained its validated response for later stages.
+
+### 2026-07-17 - Unity Consequences display
+- What Codex did: Added a read-only, navigable five-year simulator-result display with all fit fields, outcome fields, tradeoffs, source IDs, and a local feedback-stage unlock.
+- Human decision: Required the stored simulator JSON to remain authoritative, primitive readable regions, and no feedback request at this stage.
+- GPT-5.6 technique used: Preserved the validated structured simulator response as canonical data and rendered numeric JSON tokens without recomputation or rounding.
+
+### 2026-07-17 - Unity feedback, revision, and policy brief
+- What Codex did: Added live feedback and policy-brief requests using the existing contracts, scrollable read-only result panels, retry handling, and a revision path that preserves the plan while replacing downstream results after resimulation.
+- Human decision: Required the full primitive Unity loop, authoritative structured outputs, retained evidence/interviews, and a final `Investigation complete` state before the Sunday gate.
+- GPT-5.6 technique used: Used the retrieval-grounded grader and policy-brief generator as separate validated runtime systems, carrying the complete simulator JSON and recorded stakeholder dialogue forward.

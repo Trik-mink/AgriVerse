@@ -1,0 +1,32 @@
+# Unity generated directories - never commit
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Bb]uild/
+[Bb]uilds/
+[Dd]ata/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# Unity crash/session artifacts
+sysinfo.txt
+*.stacktrace
+crashlytics-build.properties
+
+# IDE / OS noise
+.vs/
+.idea/
+.DS_Store
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.mdb
+*.opendb
+*.VC.db

@@ -2,6 +2,16 @@
 
 Context for AI coding agents (Codex / GPT-5.6) working in this repo.
 
+## Session roles (hackathon requirement - respect these)
+This project runs three Codex sessions. The hackathon submission requires the ID of the thread
+where the majority of core functionality was built - that is the BUILDER session.
+- **Builder**: implements ALL product code (web app, Unity client, backend changes). If you are
+  asked to implement a feature that ships in the product, you are acting as Builder.
+- **Architect**: specs, schemas, contracts, eval design only. No app code.
+- **Throwaway**: environment setup, install help, debugging aid. Must NOT implement product
+  features - if asked to, note that this belongs in the Builder session.
+If you receive an implementation request in a non-Builder session, say so before proceeding.
+
 ## What this project is
 AgriVerse is a 3D educational simulation for high-school environmental science students.
 A student investigates a real agricultural crisis - **saltwater intrusion in Vietnam's

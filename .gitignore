@@ -7,3 +7,14 @@ coverage/
 *.log
 .DS_Store
 assets/source/
+.codegraph/
+
+# Unity-generated directories (keep Assets and their .meta files tracked).
+/unity/[Ll]ibrary/
+/unity/[Tt]emp/
+/unity/[Oo]bj/
+/unity/[Ll]ogs/
+/unity/[Bb]uild/
+/unity/[Bb]uilds/
+/unity/[Dd]ata/
+/unity/[Uu]ser[Ss]ettings/

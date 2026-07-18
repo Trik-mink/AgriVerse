@@ -1,0 +1,19 @@
+{
+  "name": "AgriVerse.PlayModeTests",
+  "rootNamespace": "AgriVerse.Client.Tests",
+  "references": [
+    "AgriVerse.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
