@@ -154,12 +154,18 @@ only to the existing Express stakeholder endpoint.
 
 ## Runtime layout contract
 
-The runtime keeps one active activity panel at a time. The title and current
-instruction share the top bar; the current activity uses the left column; the
-Evidence Notebook remains in the right column; chat input is the bottom row.
-When Interviews starts, the water-reading panel hides. When Plan starts, the
-chat panel hides. Passive panel, text, and portrait graphics do not intercept
-world-marker clicks.
+The runtime panel manager keeps exactly one activity panel active at a time.
+The title and the single current-instruction slot share the top bar; the current
+activity uses the left column; the Evidence Notebook remains in the right
+column; chat input is the bottom row. Each stage replaces the preceding one;
+Feedback includes a **Back** action to return to Consequences. Portrait frames
+remain hidden until a stakeholder is selected, and passive graphics do not
+intercept world-marker clicks. Every long-form content region (Notebook, chat,
+Consequences, Feedback, and policy brief) uses the shared scroll contract:
+mouse wheel and trackpad scrolling, dragging, and a scrollbar visible whenever
+content overflows. Scroll input is bounded to each visible card and is handled
+without UI raycast targets, so it never blocks the scene clicks used for gray
+test-site and stakeholder markers.
 
 ## Plan Builder manual Unity Editor setup
 

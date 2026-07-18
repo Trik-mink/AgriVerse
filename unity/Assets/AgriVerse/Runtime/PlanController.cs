@@ -29,7 +29,6 @@ namespace AgriVerse.Client
         private Dropdown siteDropdown;
         private InputField parametersInput;
         private InputField rationaleInput;
-        private Text statusText;
         private Text resultText;
         private Button submitButton;
         private Button retryButton;
@@ -41,7 +40,7 @@ namespace AgriVerse.Client
         private bool revisionRequested;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
-        public bool PlanVisible => planStage != null && planStage.activeSelf;
+        public bool PlanVisible => RuntimePanelManager.GetOrCreate().IsShowing(RuntimeActivityStage.Plan);
         public PlanSession Session => session;
         public bool IsBusy => busy;
 
@@ -62,7 +61,7 @@ namespace AgriVerse.Client
             }
             session = PlanSession.GetOrCreate(); session.ConfigureScenario(scenario.id);
             planStage = new GameObject("PlanStage"); planStage.transform.SetParent(transform, false);
-            CreateInterface(); planStage.SetActive(false); LoadState = InvestigationLoadState.Ready;
+            CreateInterface(); RuntimePanelManager.GetOrCreate().Register(RuntimeActivityStage.Plan, planStage); LoadState = InvestigationLoadState.Ready;
         }
 
         public void ConfigureEndpointsForTesting(string editorBaseUrl, string webBaseUrl) { editorApiBaseUrl = editorBaseUrl; webApiBaseUrl = webBaseUrl; }
@@ -111,7 +110,6 @@ namespace AgriVerse.Client
             var canvasObject = new GameObject("PlanCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); canvasObject.transform.SetParent(planStage.transform, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280, 720);
-            statusText = Text(canvas.transform, "PlanStatus", 18); Stretch(statusText.rectTransform, new Vector2(.03f,.86f), new Vector2(.97f,.91f));
             Text heading = Text(canvas.transform, "PlanHeading", 21); heading.text = "Design a proposal"; Stretch(heading.rectTransform, new Vector2(.03f,.77f), new Vector2(.62f,.83f));
             siteDropdown = Dropdown(canvas.transform, "TargetSite"); siteDropdown.options.Add(new Dropdown.OptionData("Select target site")); foreach (TestSiteDto site in scenario.test_sites) siteDropdown.options.Add(new Dropdown.OptionData(site.label)); siteDropdown.gameObject.SetActive(false);
             for (int index=0; index<scenario.test_sites.Length; index++) { int captured=index; Button button=Button(canvas.transform,"TargetSite_"+scenario.test_sites[index].id,scenario.test_sites[index].label); Stretch(button.GetComponent<RectTransform>(),new Vector2(.03f+index*.2f,.7f),new Vector2(.21f+index*.2f,.75f)); button.onClick.AddListener(()=>SelectSite(captured)); siteButtons.Add(button); }
@@ -123,7 +121,7 @@ namespace AgriVerse.Client
             rationaleInput=Input(canvas.transform,"RationaleInput","Evidence-based rationale"); Stretch(rationaleInput.GetComponent<RectTransform>(),new Vector2(.32f,.14f),new Vector2(.62f,.22f));
             submitButton=Button(canvas.transform,"SimulateButton","Run simulation"); Stretch(submitButton.GetComponent<RectTransform>(),new Vector2(.03f,.04f),new Vector2(.31f,.1f)); submitButton.onClick.AddListener(SubmitPlan);
             retryButton=Button(canvas.transform,"RetrySimulation","Retry"); Stretch(retryButton.GetComponent<RectTransform>(),new Vector2(.33f,.04f),new Vector2(.62f,.1f)); retryButton.onClick.AddListener(RetrySimulation);
-            resultText=Text(canvas.transform,"SimulationConfirmation",18); Stretch(resultText.rectTransform,new Vector2(.66f,.72f),new Vector2(.97f,.82f));
+            resultText=Text(canvas.transform,"SimulationConfirmation",18); Stretch(resultText.rectTransform,new Vector2(.03f,.10f),new Vector2(.62f,.13f));
         }
 
         private void ToggleIntervention(int index) { session.InterventionIds = Toggle(session.InterventionIds,scenario.interventions[index].id); RefreshButtons(); }
@@ -132,12 +130,12 @@ namespace AgriVerse.Client
         private static string[] Toggle(string[] values,string value){var list=new List<string>(values);if(list.Contains(value))list.Remove(value);else list.Add(value);return list.ToArray();}
         private bool InterviewsComplete(){InterviewNotebookSession interviews=InterviewNotebookSession.GetOrCreate();return interviews.Notebook!=null&&interviews.Notebook.AreAllStakeholdersInterviewed(scenario.stakeholders);}
         private bool CanSubmit(){return siteDropdown!=null&&siteDropdown.value>0&&session.InterventionIds.Length>0&&!string.IsNullOrWhiteSpace(rationaleInput.text);}
-        private void ActivatePlanStage(){planStage.SetActive(true); SetStatus(revisionRequested ? "Revise the saved proposal, then run a new simulation." : "Interviews complete. Build a proposal, then run the model."); RefreshButtons();}
+        private void ActivatePlanStage(){RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Plan); SetStatus(revisionRequested ? "Revise the saved proposal, then run a new simulation." : "Interviews complete. Build a proposal, then run the model."); RefreshButtons();}
         public bool BeginPlanning(){if(LoadState!=InvestigationLoadState.Ready||!InterviewsComplete())return false;revisionRequested=false;ActivatePlanStage();return true;}
-        public void ShowConsequencesActivity(){if(planStage!=null)planStage.SetActive(false);}
-        public void BeginRevision(){if(LoadState!=InvestigationLoadState.Ready)return;revisionRequested=true;planStage.SetActive(true);FindFirstObjectByType<FeedbackController>()?.ShowPlanActivity();SetStatus("Revise the saved proposal, then run a new simulation.");RefreshButtons();}
+        public void ShowConsequencesActivity() { }
+        public void BeginRevision(){if(LoadState!=InvestigationLoadState.Ready)return;revisionRequested=true;RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Plan);SetStatus("Revise the saved proposal, then run a new simulation.");RefreshButtons();}
         private void RefreshButtons(){if(submitButton==null)return;submitButton.interactable=!busy;retryButton.interactable=!busy&&retryAvailable;for(int i=0;i<siteButtons.Count;i++)siteButtons[i].GetComponent<Image>().color=siteDropdown.value==i+1?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);for(int i=0;i<interventionButtons.Count;i++)interventionButtons[i].GetComponent<Image>().color=Array.IndexOf(session.InterventionIds,scenario.interventions[i].id)>=0?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);for(int i=0;i<supportButtons.Count;i++)supportButtons[i].GetComponent<Image>().color=Array.IndexOf(session.SupportMeasures,scenario.support_measure_options[i].id)>=0?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);}
-        private void SetStatus(string message){if(statusText!=null)statusText.text=message;}
+        private void SetStatus(string message){RuntimePanelManager.GetOrCreate().SetInstruction(message);}
         private void Fail(string message,string diagnostic){LoadState=InvestigationLoadState.Failed;SetStatus(message);Debug.LogError(diagnostic,this);}
         private static Text Text(Transform parent,string name,int size){Text text=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Text)).GetComponent<Text>();text.transform.SetParent(parent,false);text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");text.fontSize=size;text.color=Color.white;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;}
         private static InputField Input(Transform parent,string name,string placeholderText){InputField input=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(InputField)).GetComponent<InputField>();input.transform.SetParent(parent,false);input.GetComponent<Image>().color=new Color(.2f,.2f,.2f,.95f);Text text=Text(input.transform,"Text",14);Stretch(text.rectTransform,new Vector2(.04f,.05f),new Vector2(.96f,.95f));input.textComponent=text;Text placeholder=Text(input.transform,"Placeholder",14);placeholder.text=placeholderText;placeholder.color=Color.gray;Stretch(placeholder.rectTransform,new Vector2(.04f,.05f),new Vector2(.96f,.95f));input.placeholder=placeholder;input.lineType=InputField.LineType.MultiLineNewline;return input;}

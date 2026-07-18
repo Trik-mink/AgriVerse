@@ -49,10 +49,10 @@ namespace AgriVerse.Client
         private Text selectionText;
         private Text notebookText;
         private Text gateText;
-        private Text statusText;
         private Button collectButton;
         private GameObject readingPanelObject;
         private GameObject interviewGateObject;
+        private GameObject investigationStage;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
         public ScenarioDto Scenario => scenario;
@@ -190,9 +190,7 @@ namespace AgriVerse.Client
 
         public void ShowInterviewActivity()
         {
-            if (readingPanelObject != null) readingPanelObject.SetActive(false);
-            if (interviewGateObject != null) interviewGateObject.SetActive(false);
-            if (statusText != null) statusText.gameObject.SetActive(false);
+            RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Interviews);
         }
 
         public void ConfigureEndpointsForTesting(string editorBaseUrl, string webBaseUrl)
@@ -268,10 +266,12 @@ namespace AgriVerse.Client
             Stretch(title.rectTransform, new Vector2(0.03f, 0.93f), new Vector2(0.97f, 0.98f));
             title.text = scenario.title;
 
-            statusText = CreateText(canvas.transform, "Status", 18, TextAnchor.UpperLeft);
-            Stretch(statusText.rectTransform, new Vector2(0.03f, 0.86f), new Vector2(0.97f, 0.91f));
+            investigationStage = new GameObject("InvestigationStage", typeof(RectTransform));
+            investigationStage.transform.SetParent(canvas.transform, false);
+            RectTransform stageRect = investigationStage.GetComponent<RectTransform>();
+            Stretch(stageRect, Vector2.zero, Vector2.one);
 
-            Image selectionPanel = CreatePanel(canvas.transform, "ReadingPanel");
+            Image selectionPanel = CreatePanel(investigationStage.transform, "ReadingPanel");
             readingPanelObject = selectionPanel.gameObject;
             Stretch(selectionPanel.rectTransform, new Vector2(0.03f, 0.18f), new Vector2(0.62f, 0.82f));
             selectionText = CreateText(selectionPanel.transform, "SelectedReading", 17, TextAnchor.UpperLeft);
@@ -282,12 +282,14 @@ namespace AgriVerse.Client
 
             Image notebookPanel = CreatePanel(canvas.transform, "EvidenceNotebook");
             Stretch(notebookPanel.rectTransform, new Vector2(0.66f, 0.12f), new Vector2(0.97f, 0.82f));
-            notebookText = CreateText(notebookPanel.transform, "NotebookReadings", 15, TextAnchor.UpperLeft);
-            Stretch(notebookText.rectTransform, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.94f));
+            notebookText = RuntimeScrollableContent.Create(notebookPanel.transform, "NotebookReadings", new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.94f), 15);
 
-            gateText = CreateText(canvas.transform, "InterviewGate", 20, TextAnchor.UpperLeft);
+            gateText = CreateText(investigationStage.transform, "InterviewGate", 20, TextAnchor.UpperLeft);
             interviewGateObject = gateText.gameObject;
             Stretch(gateText.rectTransform, new Vector2(0.03f, 0.1f), new Vector2(0.62f, 0.16f));
+            RuntimePanelManager panels = RuntimePanelManager.GetOrCreate();
+            panels.Register(RuntimeActivityStage.Investigation, investigationStage);
+            panels.Show(RuntimeActivityStage.Investigation);
         }
 
         private static void EnsureInputSystemEventSystem()
@@ -332,7 +334,7 @@ namespace AgriVerse.Client
                 collectButton.interactable = !notebookSession.Notebook.HasRecorded(selectedSite.id);
             }
 
-            notebookText.text = FormatNotebook();
+            RuntimeScrollableContent.SetText(notebookText, FormatNotebook());
             gateText.text = InterviewsUnlocked
                 ? "Interviews unlocked — all test sites are recorded."
                 : $"Interviews locked — {RecordedReadingCount}/{scenario.test_sites.Length} test sites recorded.";
@@ -444,10 +446,7 @@ namespace AgriVerse.Client
 
         private void SetStatus(string message)
         {
-            if (statusText != null)
-            {
-                statusText.text = message;
-            }
+            RuntimePanelManager.GetOrCreate().SetInstruction(message);
         }
 
         private void Fail(string studentMessage, string diagnostic)

@@ -39,7 +39,6 @@ namespace AgriVerse.Client
         private readonly List<TestSiteMarker> markers = new List<TestSiteMarker>();
         private Text selectedText;
         private Text conversationText;
-        private Text statusText;
         private Text gateText;
         private Text portraitBadge;
         private RawImage portrait;
@@ -57,7 +56,7 @@ namespace AgriVerse.Client
         public ScenarioDto Scenario => scenario;
         public int MarkerCount => markers.Count;
         public bool IsBusy => busy;
-        public bool InterviewsVisible => interviewStage != null && interviewStage.activeSelf;
+        public bool InterviewsVisible => RuntimePanelManager.GetOrCreate().IsShowing(RuntimeActivityStage.Interviews);
         public bool PlanUnlocked => scenario != null && notebookSession?.Notebook != null &&
                                   notebookSession.Notebook.AreAllStakeholdersInterviewed(scenario.stakeholders);
 
@@ -105,7 +104,7 @@ namespace AgriVerse.Client
             interviewStage.transform.SetParent(transform, false);
             CreateMarkers();
             CreateInterface();
-            interviewStage.SetActive(false);
+            RuntimePanelManager.GetOrCreate().Register(RuntimeActivityStage.Interviews, interviewStage);
             LoadState = InvestigationLoadState.Ready;
         }
 
@@ -167,7 +166,6 @@ namespace AgriVerse.Client
         public void ShowPlanActivity()
         {
             planningHandoffCompleted = true;
-            if (interviewStage != null) interviewStage.SetActive(false);
         }
 
         public void ConfigureEndpointsForTesting(string editorBaseUrl, string webBaseUrl)
@@ -249,11 +247,11 @@ namespace AgriVerse.Client
             Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280, 720);
             EnsureInputSystemEventSystem();
-            statusText = Text(canvas.transform, "Status", 18); Stretch(statusText.rectTransform, new Vector2(.03f, .86f), new Vector2(.97f, .91f));
             portrait = new GameObject("Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>(); portrait.transform.SetParent(canvas.transform, false); portrait.raycastTarget = false; Stretch(portrait.rectTransform, new Vector2(.03f, .68f), new Vector2(.15f, .82f));
             portraitBadge = Text(canvas.transform, "PortraitFallback", 16); Stretch(portraitBadge.rectTransform, new Vector2(.03f, .68f), new Vector2(.15f, .82f)); portraitBadge.alignment = TextAnchor.MiddleCenter;
+            portrait.gameObject.SetActive(false); portraitBadge.gameObject.SetActive(false);
             selectedText = Text(canvas.transform, "Stakeholder", 18); Stretch(selectedText.rectTransform, new Vector2(.17f, .68f), new Vector2(.62f, .82f));
-            conversationText = Text(canvas.transform, "Conversation", 15); Stretch(conversationText.rectTransform, new Vector2(.03f, .27f), new Vector2(.62f, .65f));
+            conversationText = RuntimeScrollableContent.Create(canvas.transform, "Conversation", new Vector2(.03f, .27f), new Vector2(.62f, .65f), 15);
             questionInput = Input(canvas.transform); Stretch(questionInput.GetComponent<RectTransform>(), new Vector2(.03f, .12f), new Vector2(.62f, .23f));
             askButton = Button(canvas.transform, "AskButton", "Ask stakeholder"); askButtonLabel = askButton.GetComponentInChildren<Text>(); Stretch(askButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.3f, .1f)); askButton.onClick.AddListener(AskSelectedStakeholder);
             retryButton = Button(canvas.transform, "RetryButton", "Retry"); Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.33f, .04f), new Vector2(.62f, .1f)); retryButton.onClick.AddListener(RetryLastQuestion);
@@ -262,7 +260,7 @@ namespace AgriVerse.Client
 
         private IEnumerator LoadPortrait(StakeholderDto stakeholder)
         {
-            portrait.texture = null; portraitBadge.text = stakeholder.name + "\n" + stakeholder.role;
+            portrait.texture = null; portrait.gameObject.SetActive(false); portraitBadge.gameObject.SetActive(true); portraitBadge.text = stakeholder.name + "\n" + stakeholder.role;
             string baseUrl = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/');
             string assetName = stakeholder.name.ToLowerInvariant().Replace(".", string.Empty).Replace(" ", "-");
             string[] urls = { $"{baseUrl}/assets/characters/optimized/{assetName}.webp", $"{baseUrl}/assets/characters/optimized/{assetName}.jpg" };
@@ -273,7 +271,7 @@ namespace AgriVerse.Client
                     yield return request.SendWebRequest();
                     if (request.result == UnityWebRequest.Result.Success)
                     {
-                        portrait.texture = DownloadHandlerTexture.GetContent(request); portraitBadge.text = ""; yield break;
+                        portrait.texture = DownloadHandlerTexture.GetContent(request); portrait.gameObject.SetActive(true); portraitBadge.gameObject.SetActive(false); yield break;
                     }
                 }
             }
@@ -284,7 +282,7 @@ namespace AgriVerse.Client
         {
             if (selectedText == null) return;
             selectedText.text = selected == null ? "Select a gray stakeholder marker." : $"{selected.name}\n{selected.role}\n{selected.persona}";
-            conversationText.text = FormatConversation();
+            RuntimeScrollableContent.SetText(conversationText, FormatConversation());
             askButtonLabel.text = PlanUnlocked ? "Continue to planning" : "Ask stakeholder";
             askButton.interactable = !busy && (PlanUnlocked || selected != null);
             questionInput.interactable = !busy && !PlanUnlocked;
@@ -310,13 +308,12 @@ namespace AgriVerse.Client
         }
         private void ActivateInterviewStage()
         {
-            interviewStage.SetActive(true);
-            FindFirstObjectByType<InvestigationController>()?.ShowInterviewActivity();
+            RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Interviews);
             SetStatus("Investigation complete. Select a gray stakeholder marker to begin an interview.");
             Refresh();
         }
         private static string ReadableError(UnityWebRequest request) => request.responseCode > 0 ? $"server returned {request.responseCode}" : request.error;
-        private void SetStatus(string message) { if (statusText != null) statusText.text = message; }
+        private void SetStatus(string message) { RuntimePanelManager.GetOrCreate().SetInstruction(message); }
         private void Fail(string userMessage, string diagnostic) { LoadState = InvestigationLoadState.Failed; SetStatus(userMessage); Debug.LogError(diagnostic, this); }
         private static bool IsWebBuild
         {

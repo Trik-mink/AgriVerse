@@ -15,6 +15,7 @@ namespace AgriVerse.Client.Tests
             foreach (EvidenceNotebookSession session in Object.FindObjectsByType<EvidenceNotebookSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
             foreach (InterviewNotebookSession session in Object.FindObjectsByType<InterviewNotebookSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
             foreach (PlanSession session in Object.FindObjectsByType<PlanSession>(FindObjectsSortMode.None)) Object.Destroy(session.gameObject);
+            foreach (RuntimePanelManager manager in Object.FindObjectsByType<RuntimePanelManager>(FindObjectsSortMode.None)) Object.Destroy(manager.gameObject);
             yield return null;
         }
 
@@ -93,6 +94,8 @@ namespace AgriVerse.Client.Tests
             yield return WaitForScenario(investigation);
             yield return WaitForScenario(interviews);
             Assert.That(interviews.InterviewsVisible, Is.False);
+            Assert.That(RuntimeScrollableContent.ActiveScrollViewsDoNotBlockSceneRaycasts(), Is.True,
+                "The visible Notebook scroll card must not intercept test-site marker clicks.");
 
             foreach (TestSiteDto site in investigation.Scenario.test_sites)
             {
@@ -102,6 +105,8 @@ namespace AgriVerse.Client.Tests
 
             yield return null;
             Assert.That(interviews.InterviewsVisible, Is.True);
+            Assert.That(RuntimeScrollableContent.ActiveScrollViewsDoNotBlockSceneRaycasts(), Is.True,
+                "Notebook and chat cards must scroll without intercepting stakeholder marker clicks.");
 
             foreach (StakeholderDto stakeholder in interviews.Scenario.stakeholders)
             {
@@ -180,13 +185,16 @@ namespace AgriVerse.Client.Tests
             feedback.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
             brief.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
             yield return WaitForScenario(investigation); yield return WaitForScenario(interviews); yield return WaitForPlan(plan);
+            AssertPanelLayout(RuntimeActivityStage.Investigation);
             foreach (TestSiteDto site in investigation.Scenario.test_sites) { investigation.SelectSite(site.id); Assert.That(investigation.CollectSelectedSample(), Is.True); }
             yield return null;
+            AssertPanelLayout(RuntimeActivityStage.Interviews);
             foreach (StakeholderDto stakeholder in interviews.Scenario.stakeholders) { interviews.AskForTesting(stakeholder.id, "What condition must a workable response meet?"); yield return WaitForReply(interviews); }
             yield return null;
             interviews.ContinueToPlanning();
             yield return null;
             Assert.That(plan.PlanVisible, Is.True);
+            AssertPanelLayout(RuntimeActivityStage.Plan);
             plan.ConfigureForTesting(plan.Session == null ? investigation.Scenario.test_sites[0].id : investigation.Scenario.test_sites[0].id, investigation.Scenario.interventions[0].id, "The selected intervention should fit the recorded site conditions and household capital.");
             plan.SubmitPlan();
             yield return WaitForSimulation(plan);
@@ -195,6 +203,7 @@ namespace AgriVerse.Client.Tests
             Assert.That(plan.Session.SimulatorResult.fit_assessment.overall, Is.Not.Empty);
             yield return WaitForConsequences(consequences);
             Assert.That(consequences.ConsequencesVisible, Is.True);
+            AssertPanelLayout(RuntimeActivityStage.Consequences);
             Assert.That(consequences.DisplayedContentForTesting, Does.Contain("Year 1"));
             Assert.That(consequences.DisplayedContentForTesting, Does.Contain("Evidence source IDs:"));
             consequences.NextYear();
@@ -203,6 +212,7 @@ namespace AgriVerse.Client.Tests
             consequences.UnlockFeedback();
             yield return WaitForFeedback(feedback);
             Assert.That(feedback.FeedbackVisible, Is.True);
+            AssertPanelLayout(RuntimeActivityStage.Feedback);
             Assert.That(plan.Session.FeedbackResultJson, Is.Not.Empty);
             Assert.That(feedback.DisplayedContentForTesting, Does.Contain("Rubric results"));
             string originalTarget = plan.Session.TargetSiteId;
@@ -210,6 +220,7 @@ namespace AgriVerse.Client.Tests
             feedback.RevisePlan();
             yield return null;
             Assert.That(plan.PlanVisible, Is.True);
+            AssertPanelLayout(RuntimeActivityStage.Plan);
             Assert.That(plan.Session.TargetSiteId, Is.EqualTo(originalTarget));
             Assert.That(plan.Session.InterventionIds[0], Is.EqualTo(originalIntervention));
             plan.ConfigureForTesting(originalTarget, originalIntervention, "Revised rationale addresses the interview evidence and all four decision factors.");
@@ -217,15 +228,19 @@ namespace AgriVerse.Client.Tests
             yield return WaitForSimulation(plan);
             yield return WaitForConsequences(consequences);
             Assert.That(plan.Session.FeedbackResultJson, Is.Empty);
+            AssertPanelLayout(RuntimeActivityStage.Consequences);
             consequences.UnlockFeedback();
             yield return WaitForFeedback(feedback);
             Assert.That(plan.Session.FeedbackResultJson, Is.Not.Empty);
+            AssertPanelLayout(RuntimeActivityStage.Feedback);
             feedback.GenerateBrief();
             yield return WaitForBrief(brief);
             Assert.That(brief.BriefVisible, Is.True);
+            AssertPanelLayout(RuntimeActivityStage.Brief);
             Assert.That(plan.Session.PolicyBriefResultJson, Is.Not.Empty);
             Assert.That(brief.DisplayedContentForTesting, Does.Contain("Fit assessment"));
             Assert.That(brief.DisplayedContentForTesting, Does.Contain("Investigation complete"));
+            Assert.That(brief.ScrollToFinalLineForTesting(), Is.True, "The rendered policy brief must scroll to its final Investigation complete line.");
             Object.Destroy(investigationRoot); Object.Destroy(interviewRoot); Object.Destroy(planRoot); Object.Destroy(consequencesRoot); Object.Destroy(feedbackRoot); Object.Destroy(briefRoot);
         }
 
@@ -275,6 +290,18 @@ namespace AgriVerse.Client.Tests
             {
                 yield return new WaitForSecondsRealtime(0.1f);
             }
+        }
+
+        private static void AssertPanelLayout(RuntimeActivityStage expectedStage)
+        {
+            RuntimePanelManager manager = Object.FindFirstObjectByType<RuntimePanelManager>();
+            Assert.That(manager, Is.Not.Null);
+            Assert.That(manager.ActiveStage, Is.EqualTo(expectedStage));
+            Assert.That(manager.ActivePanelCount, Is.EqualTo(1), "Exactly one left-region stage panel may be active.");
+            Assert.That(manager.ActiveInstructionTextCount, Is.EqualTo(1), "The top instruction region must have exactly one text element.");
+            Assert.That(manager.ActiveScrollableContentCount, Is.GreaterThan(0), "Every displayed long-form region must use the shared scroll contract.");
+            Assert.That(RuntimeScrollableContent.ActiveScrollViewsDoNotBlockSceneRaycasts(), Is.True,
+                "Scrollable cards must not block scene-marker raycasts.");
         }
 
         private static IEnumerator WaitForPlan(PlanController controller)

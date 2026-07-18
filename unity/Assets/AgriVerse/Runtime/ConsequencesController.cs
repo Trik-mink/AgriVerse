@@ -16,7 +16,6 @@ namespace AgriVerse.Client
         private PlanSession session;
         private CanonicalJsonValue result;
         private GameObject stage;
-        private Text statusText;
         private Text contentText;
         private Button previousButton;
         private Button nextButton;
@@ -25,7 +24,7 @@ namespace AgriVerse.Client
         private string displayedResultJson = string.Empty;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
-        public bool ConsequencesVisible => stage != null && stage.activeSelf;
+        public bool ConsequencesVisible => RuntimePanelManager.GetOrCreate().IsShowing(RuntimeActivityStage.Consequences);
         public bool FeedbackUnlocked { get; private set; }
         public int CurrentYearIndex => yearIndex;
         public string DisplayedContentForTesting => contentText == null ? string.Empty : contentText.text;
@@ -34,7 +33,7 @@ namespace AgriVerse.Client
 
         private void Update()
         {
-            if (LoadState == InvestigationLoadState.Ready && !ConsequencesVisible && session.SimulatorResult != null)
+            if (LoadState == InvestigationLoadState.Ready && session.SimulatorResult != null && displayedResultJson != session.SimulatorResultJson)
             {
                 Activate();
             }
@@ -59,8 +58,9 @@ namespace AgriVerse.Client
             stage = new GameObject("ConsequencesStage");
             stage.transform.SetParent(transform, false);
             CreateInterface();
-            stage.SetActive(false);
+            RuntimePanelManager.GetOrCreate().Register(RuntimeActivityStage.Consequences, stage);
             LoadState = InvestigationLoadState.Ready;
+            Activate();
         }
 
         public void PreviousYear()
@@ -81,21 +81,20 @@ namespace AgriVerse.Client
         {
             FeedbackUnlocked = true;
             FeedbackController feedback = FindFirstObjectByType<FeedbackController>();
-            if (feedback == null) { statusText.text = "Feedback Controller is missing. Add its bootstrap to this scene."; return; }
+            if (feedback == null) { SetStatus("Feedback Controller is missing. Add its bootstrap to this scene."); return; }
             feedback.RequestFeedback();
         }
 
         private void Activate()
         {
             try { ReadCurrentResult(); }
-            catch (FormatException error) { statusText.text = "Stored simulation could not be read: " + error.Message; return; }
-            stage.SetActive(true);
-            FindFirstObjectByType<PlanController>()?.ShowConsequencesActivity();
-            statusText.text = "Simulation stored. Review its authoritative five-year results.";
+            catch (FormatException error) { SetStatus("Stored simulation could not be read: " + error.Message); return; }
+            RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Consequences);
+            SetStatus("Simulation stored. Review its authoritative five-year results.");
             Refresh();
         }
 
-        public void ShowFeedbackActivity(){if(stage!=null)stage.SetActive(false);}
+        public void ShowFeedbackActivity() { }
 
         private void ReadCurrentResult()
         {
@@ -121,9 +120,7 @@ namespace AgriVerse.Client
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
 
-            statusText = Text(canvas.transform, "ConsequencesStatus", 18);
-            Stretch(statusText.rectTransform, new Vector2(.03f, .86f), new Vector2(.97f, .91f));
-            contentText = ScrollableText(canvas.transform, "ConsequencesContent");
+            contentText = RuntimeScrollableContent.Create(canvas.transform, "ConsequencesContent", new Vector2(.03f, .1f), new Vector2(.62f, .82f), 13);
             previousButton = Button(canvas.transform, "PreviousYear", "Previous year");
             Stretch(previousButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.21f, .08f));
             previousButton.onClick.AddListener(PreviousYear);
@@ -162,12 +159,20 @@ namespace AgriVerse.Client
             {
                 text.Append('\n').Append(tradeoff.Property("category").Text).Append(": ").Append(tradeoff.Property("summary").Text);
             }
-            contentText.text = text.ToString();
-            contentText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentText.preferredHeight);
-            contentText.rectTransform.parent.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentText.preferredHeight);
+            RuntimeScrollableContent.SetText(contentText, text.ToString());
             previousButton.interactable = yearIndex > 0;
             nextButton.interactable = yearIndex < result.Property("years").Items.Count - 1;
         }
+
+        public void ReturnFromFeedback()
+        {
+            if (result == null) ReadCurrentResult();
+            RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Consequences);
+            SetStatus("Review the stored consequences before revising the proposal.");
+            Refresh();
+        }
+
+        private static void SetStatus(string value) => RuntimePanelManager.GetOrCreate().SetInstruction(value);
 
         private static string Join(IReadOnlyList<CanonicalJsonValue> values)
         {
@@ -189,37 +194,6 @@ namespace AgriVerse.Client
             text.color = Color.white;
             text.raycastTarget = false;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-            return text;
-        }
-
-        private static Text ScrollableText(Transform parent, string name)
-        {
-            ScrollRect scroll = new GameObject(name + "Scroll", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Mask), typeof(ScrollRect)).GetComponent<ScrollRect>();
-            scroll.transform.SetParent(parent, false);
-            RectTransform viewport = scroll.GetComponent<RectTransform>();
-            Stretch(viewport, new Vector2(.03f, .1f), new Vector2(.62f, .82f));
-            Image background = scroll.GetComponent<Image>();
-            background.color = new Color(.15f, .15f, .15f, .35f);
-            background.raycastTarget = false;
-            Mask mask = scroll.GetComponent<Mask>();
-            mask.showMaskGraphic = false;
-            var content = new GameObject(name + "Content", typeof(RectTransform)).GetComponent<RectTransform>();
-            content.SetParent(viewport, false);
-            content.anchorMin = new Vector2(0f, 1f);
-            content.anchorMax = new Vector2(1f, 1f);
-            content.pivot = new Vector2(0f, 1f);
-            content.offsetMin = Vector2.zero;
-            content.offsetMax = Vector2.zero;
-            Text text = Text(content, name, 13);
-            text.rectTransform.anchorMin = new Vector2(0f, 1f);
-            text.rectTransform.anchorMax = new Vector2(1f, 1f);
-            text.rectTransform.pivot = new Vector2(0f, 1f);
-            text.rectTransform.offsetMin = Vector2.zero;
-            text.rectTransform.offsetMax = Vector2.zero;
-            scroll.viewport = viewport;
-            scroll.content = content;
-            scroll.horizontal = false;
-            scroll.vertical = true;
             return text;
         }
 

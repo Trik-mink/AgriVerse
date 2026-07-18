@@ -19,16 +19,17 @@ namespace AgriVerse.Client
 
         private PlanSession session;
         private GameObject stage;
-        private Text statusText;
         private Text contentText;
         private Button retryButton;
         private bool busy;
         private bool retryAvailable;
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
-        public bool BriefVisible => stage != null && stage.activeSelf;
+        public bool BriefVisible => RuntimePanelManager.GetOrCreate().IsShowing(RuntimeActivityStage.Brief);
         public bool IsBusy => busy;
         public string DisplayedContentForTesting => contentText == null ? string.Empty : contentText.text;
+        public bool ScrollToFinalLineForTesting() =>
+            DisplayedContentForTesting.Contains("Investigation complete") && RuntimeScrollableContent.ScrollToBottom(contentText);
 
         private void Start()
         {
@@ -36,7 +37,7 @@ namespace AgriVerse.Client
             stage = new GameObject("PolicyBriefStage");
             stage.transform.SetParent(transform, false);
             CreateInterface();
-            stage.SetActive(false);
+            RuntimePanelManager.GetOrCreate().Register(RuntimeActivityStage.Brief, stage);
             LoadState = InvestigationLoadState.Ready;
         }
 
@@ -50,8 +51,7 @@ namespace AgriVerse.Client
                 SetStatus("Completed feedback and a saved simulation are required before the policy brief.");
                 return;
             }
-            stage.SetActive(true);
-            FindFirstObjectByType<FeedbackController>()?.ShowBriefActivity();
+            RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Brief);
             StartCoroutine(SendBrief());
         }
 
@@ -131,14 +131,13 @@ namespace AgriVerse.Client
         private static string OutcomeText(CanonicalJsonValue outcomes){var text=new StringBuilder("Salinity: ").Append(outcomes.Property("salinity").Property("value").Text).Append(' ').Append(outcomes.Property("salinity").Property("unit").Text).Append("\nYield items:");foreach(CanonicalJsonValue item in outcomes.Property("yield").Property("items").Items)text.Append("\n- ").Append(item.Property("commodity_id").Text).Append(": ").Append(item.Property("value").Text).Append(' ').Append(item.Property("unit").Text);CanonicalJsonValue income=outcomes.Property("income");CanonicalJsonValue sustainability=outcomes.Property("sustainability");text.Append("\nIncome score: ").Append(income.Property("score").Text).Append(" (scale ").Append(income.Property("scale_min").Text).Append("–").Append(income.Property("scale_max").Text).Append(")").Append("\nIncome projected value: ").Append(income.Property("projected_value").Text).Append(" ").Append(income.Property("currency").Text).Append(" ").Append(income.Property("basis").Text).Append("\nSustainability score: ").Append(sustainability.Property("score").Text).Append(" (scale ").Append(sustainability.Property("scale_min").Text).Append("–").Append(sustainability.Property("scale_max").Text).Append(")");return text.ToString();}
         private static string EvidenceText(CanonicalJsonValue evidence)=>"source IDs: "+Join(evidence.Property("source_ids").Items)+"; simulation years: "+Join(evidence.Property("simulation_years").Items);
 
-        private void CreateInterface(){var canvasObject=new GameObject("PolicyBriefCanvas",typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));canvasObject.transform.SetParent(stage.transform,false);Canvas canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;CanvasScaler scaler=canvasObject.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1280,720);statusText=Text(canvas.transform,"BriefStatus",18);Stretch(statusText.rectTransform,new Vector2(.03f,.86f),new Vector2(.97f,.91f));contentText=ScrollableText(canvas.transform,"PolicyBriefContent");retryButton=Button(canvas.transform,"RetryBrief","Retry policy brief");Stretch(retryButton.GetComponent<RectTransform>(),new Vector2(.03f,.04f),new Vector2(.62f,.08f));retryButton.onClick.AddListener(RetryBrief);RefreshButtons();}
+        private void CreateInterface(){var canvasObject=new GameObject("PolicyBriefCanvas",typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));canvasObject.transform.SetParent(stage.transform,false);Canvas canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;CanvasScaler scaler=canvasObject.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1280,720);contentText=RuntimeScrollableContent.Create(canvas.transform,"PolicyBriefContent",new Vector2(.03f,.1f),new Vector2(.62f,.82f),13);retryButton=Button(canvas.transform,"RetryBrief","Retry policy brief");Stretch(retryButton.GetComponent<RectTransform>(),new Vector2(.03f,.04f),new Vector2(.62f,.08f));retryButton.onClick.AddListener(RetryBrief);RefreshButtons();}
         private void RefreshButtons(){if(retryButton!=null)retryButton.interactable=!busy&&retryAvailable;}
-        private void SetScrollableText(string value){contentText.text=value;contentText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,contentText.preferredHeight);contentText.rectTransform.parent.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,contentText.preferredHeight);}
-        private void SetStatus(string value){if(statusText!=null)statusText.text=value;}
+        private void SetScrollableText(string value){RuntimeScrollableContent.SetText(contentText,value);}
+        private void SetStatus(string value){RuntimePanelManager.GetOrCreate().SetInstruction(value);}
         private static string ReadableError(UnityWebRequest request)=>request.responseCode>0?"server returned "+request.responseCode:request.error;
         private static string Join(IReadOnlyList<CanonicalJsonValue> values){var text=new StringBuilder();for(int i=0;i<values.Count;i++){if(i>0)text.Append(", ");text.Append(values[i].Text);}return text.ToString();}
         private static Text Text(Transform parent,string name,int size){Text text=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Text)).GetComponent<Text>();text.transform.SetParent(parent,false);text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");text.fontSize=size;text.color=Color.white;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;}
-        private static Text ScrollableText(Transform parent,string name){ScrollRect scroll=new GameObject(name+"Scroll",typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Mask),typeof(ScrollRect)).GetComponent<ScrollRect>();scroll.transform.SetParent(parent,false);RectTransform viewport=scroll.GetComponent<RectTransform>();Stretch(viewport,new Vector2(.03f,.1f),new Vector2(.62f,.82f));Image background=scroll.GetComponent<Image>();background.color=new Color(.15f,.15f,.15f,.35f);background.raycastTarget=false;scroll.GetComponent<Mask>().showMaskGraphic=false;var content=new GameObject(name+"Content",typeof(RectTransform)).GetComponent<RectTransform>();content.SetParent(viewport,false);content.anchorMin=new Vector2(0,1);content.anchorMax=new Vector2(1,1);content.pivot=new Vector2(0,1);content.offsetMin=Vector2.zero;content.offsetMax=Vector2.zero;Text text=Text(content,name,13);text.rectTransform.anchorMin=new Vector2(0,1);text.rectTransform.anchorMax=new Vector2(1,1);text.rectTransform.pivot=new Vector2(0,1);text.rectTransform.offsetMin=Vector2.zero;text.rectTransform.offsetMax=Vector2.zero;scroll.viewport=viewport;scroll.content=content;scroll.horizontal=false;return text;}
         private static Button Button(Transform parent,string name,string label){Button button=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button)).GetComponent<Button>();button.transform.SetParent(parent,false);Image image=button.GetComponent<Image>();image.color=new Color(.4f,.4f,.4f);button.targetGraphic=image;Text text=Text(button.transform,"Label",13);text.text=label;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,Vector2.zero,Vector2.one);return button;}
         private static void Stretch(RectTransform rect,Vector2 min,Vector2 max){rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;}
         private static bool IsWebBuild

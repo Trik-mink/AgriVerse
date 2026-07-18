@@ -248,3 +248,23 @@ Format per entry:
 - What Codex did: Replaced implicit plan activation with an explicit Continue to planning handoff, prevented interview-stage reactivation after the handoff, and added a live Play Mode regression for the chat-open gate transition.
 - Human decision: Required exactly one active left activity panel and a single top instruction line when the plan gate unlocks.
 - GPT-5.6 technique used: Preserved the recorded live stakeholder dialogue until the learner explicitly advances to the plan stage.
+
+### 2026-07-17 - Unity structural stage-panel manager
+- What Codex did: Centralized every Unity stage transition in one panel manager, replaced duplicated status labels with one shared instruction slot, added Feedback-to-Consequences return navigation, and hid portraits until a stakeholder is selected.
+- Human decision: Required a structural all-stage fix for stacked panels, no duplicate top or button text, and regression coverage across the full learning-loop transition sequence.
+- GPT-5.6 technique used: Kept each validated runtime result authoritative while separating presentation-state transitions from the GPT-backed learning systems.
+
+### 2026-07-17 - Unity reachable long-form content
+- What Codex did: Added one shared scroll-view contract for the Evidence Notebook, interview history, Consequences, Feedback, and policy brief, with wheel/trackpad support and visible-on-overflow scrollbars.
+- Human decision: Required every clipped content region to be reachable, including the policy brief's final `Investigation complete.` line, and required the transition regression to enforce it.
+- GPT-5.6 technique used: Kept the complete grounded outputs intact and navigable rather than truncating or rewriting them for presentation.
+
+### 2026-07-18 - Unity scroll input and scene markers
+- What Codex did: Replaced ScrollRect UI hit surfaces with bounded Input System wheel/drag handling so scroll cards remain usable without intercepting 3D marker clicks; extended the click/transition regressions accordingly.
+- Human decision: Required stakeholder cylinders to remain clickable while all visible content regions retain scrolling.
+- GPT-5.6 technique used: Kept the interaction layer deterministic and separate from the live GPT-backed stakeholder and assessment calls.
+
+### 2026-07-18 - Unity scroll-card text inset
+- What Codex did: Corrected the shared scroll content's vertical anchor and added a stable top-left gutter so placeholder and long-form text render inside, rather than clipped by, the card mask.
+- Human decision: Flagged the chat-history placeholder as visibly clipped in live play.
+- GPT-5.6 technique used: Reused one runtime UI primitive so the correction applies consistently across every long-form result view.
