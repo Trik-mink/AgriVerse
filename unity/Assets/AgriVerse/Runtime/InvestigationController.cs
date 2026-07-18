@@ -204,11 +204,14 @@ namespace AgriVerse.Client
             var markerRoot = new GameObject("TestSiteMarkers");
             markerRoot.transform.SetParent(transform, false);
 
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "InvestigationGround";
-            ground.transform.SetParent(markerRoot.transform, false);
-            ground.transform.localScale = new Vector3(1.2f, 1f, 0.8f);
-            SetGray(ground, new Color(0.32f, 0.32f, 0.32f));
+            if (FindFirstObjectByType<MekongEnvironmentController>() == null)
+            {
+                var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                ground.name = "InvestigationGround";
+                ground.transform.SetParent(markerRoot.transform, false);
+                ground.transform.localScale = new Vector3(1.2f, 1f, 0.8f);
+                SetGray(ground, new Color(0.32f, 0.32f, 0.32f));
+            }
 
             for (int index = 0; index < scenario.test_sites.Length; index++)
             {

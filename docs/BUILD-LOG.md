@@ -273,3 +273,8 @@ Format per entry:
 - What Codex did: Added a serialized Resources-backed URP Unlit material and applied clones to the runtime ground, cubes, and stakeholder cylinders so the standalone retains its required surface shader while preserving gray marker colors and colliders.
 - Human decision: Required a narrow material-reference fix for macOS magenta primitives, without changing URP, runtime data, API behavior, or learning flow.
 - GPT-5.6 technique used: Kept the presentation fix isolated from the scenario-driven and GPT-backed learning systems.
+
+### 2026-07-18 - Unity stylized Mekong environment
+- What Codex did: Added a procedural URP-lit Mekong field with paddy rows, water channel, paths, dock, shelter, palms, horizon, and warm lighting; guarded marker raycasts and channel-ripple bounds with Unity tests.
+- Human decision: Approved Environment Pass 1 after visual review, while requiring gray markers, existing learning flow, and data systems to remain unchanged.
+- GPT-5.6 technique used: Kept the presentation layer data-neutral and isolated from the scenario-driven, GPT-backed learning loop.
