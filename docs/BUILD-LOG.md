@@ -243,3 +243,8 @@ Format per entry:
 - What Codex did: Added live feedback and policy-brief requests using the existing contracts, scrollable read-only result panels, retry handling, and a revision path that preserves the plan while replacing downstream results after resimulation.
 - Human decision: Required the full primitive Unity loop, authoritative structured outputs, retained evidence/interviews, and a final `Investigation complete` state before the Sunday gate.
 - GPT-5.6 technique used: Used the retrieval-grounded grader and policy-brief generator as separate validated runtime systems, carrying the complete simulator JSON and recorded stakeholder dialogue forward.
+
+### 2026-07-17 - Unity chat-to-plan layout handoff
+- What Codex did: Replaced implicit plan activation with an explicit Continue to planning handoff, prevented interview-stage reactivation after the handoff, and added a live Play Mode regression for the chat-open gate transition.
+- Human decision: Required exactly one active left activity panel and a single top instruction line when the plan gate unlocks.
+- GPT-5.6 technique used: Preserved the recorded live stakeholder dialogue until the learner explicitly advances to the plan stage.

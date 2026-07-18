@@ -46,11 +46,6 @@ namespace AgriVerse.Client
         public bool IsBusy => busy;
 
         private void Start() { StartCoroutine(LoadScenario()); }
-        private void Update()
-        {
-            if (LoadState == InvestigationLoadState.Ready && !PlanVisible && InterviewsComplete() &&
-                (session.SimulatorResult == null || revisionRequested)) ActivatePlanStage();
-        }
 
         public IEnumerator LoadScenario()
         {
@@ -137,7 +132,8 @@ namespace AgriVerse.Client
         private static string[] Toggle(string[] values,string value){var list=new List<string>(values);if(list.Contains(value))list.Remove(value);else list.Add(value);return list.ToArray();}
         private bool InterviewsComplete(){InterviewNotebookSession interviews=InterviewNotebookSession.GetOrCreate();return interviews.Notebook!=null&&interviews.Notebook.AreAllStakeholdersInterviewed(scenario.stakeholders);}
         private bool CanSubmit(){return siteDropdown!=null&&siteDropdown.value>0&&session.InterventionIds.Length>0&&!string.IsNullOrWhiteSpace(rationaleInput.text);}
-        private void ActivatePlanStage(){planStage.SetActive(true); FindFirstObjectByType<InterviewController>()?.ShowPlanActivity(); SetStatus(revisionRequested ? "Revise the saved proposal, then run a new simulation." : "Interviews complete. Build a proposal, then run the model."); RefreshButtons();}
+        private void ActivatePlanStage(){planStage.SetActive(true); SetStatus(revisionRequested ? "Revise the saved proposal, then run a new simulation." : "Interviews complete. Build a proposal, then run the model."); RefreshButtons();}
+        public bool BeginPlanning(){if(LoadState!=InvestigationLoadState.Ready||!InterviewsComplete())return false;revisionRequested=false;ActivatePlanStage();return true;}
         public void ShowConsequencesActivity(){if(planStage!=null)planStage.SetActive(false);}
         public void BeginRevision(){if(LoadState!=InvestigationLoadState.Ready)return;revisionRequested=true;planStage.SetActive(true);FindFirstObjectByType<FeedbackController>()?.ShowPlanActivity();SetStatus("Revise the saved proposal, then run a new simulation.");RefreshButtons();}
         private void RefreshButtons(){if(submitButton==null)return;submitButton.interactable=!busy;retryButton.interactable=!busy&&retryAvailable;for(int i=0;i<siteButtons.Count;i++)siteButtons[i].GetComponent<Image>().color=siteDropdown.value==i+1?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);for(int i=0;i<interventionButtons.Count;i++)interventionButtons[i].GetComponent<Image>().color=Array.IndexOf(session.InterventionIds,scenario.interventions[i].id)>=0?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);for(int i=0;i<supportButtons.Count;i++)supportButtons[i].GetComponent<Image>().color=Array.IndexOf(session.SupportMeasures,scenario.support_measure_options[i].id)>=0?new Color(.65f,.65f,.65f):new Color(.4f,.4f,.4f);}

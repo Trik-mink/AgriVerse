@@ -171,9 +171,11 @@ world-marker clicks.
    deployed HTTPS Express URL and its CORS configuration for a Web deployment.
 5. Click **File > Save**, start the existing backend with `npm run dev:server`,
    and click **Play**.
-6. After all three stakeholder replies, the plan form appears in the left
-   column. Select a target site, one or more interventions, optional support
-   measures and parameters, then enter a rationale and click **Run simulation**.
+6. After all three stakeholder replies, finish reading the open conversation
+   and click **Continue to planning**. The chat then closes before the plan form
+   appears in the left column. Select a target site, one or more interventions,
+   optional support measures and parameters, then enter a rationale and click
+   **Run simulation**.
 7. The result confirms `fit_assessment.overall`. It intentionally does not
    display consequences yet; that belongs to the next stage.
 

@@ -119,6 +119,46 @@ namespace AgriVerse.Client.Tests
         }
 
         [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator ChatRemainsTheOnlyActiveLeftPanelWhenThePlanGateUnlocks()
+        {
+            var investigationRoot = new GameObject("ChatGateInvestigation");
+            var interviewRoot = new GameObject("ChatGateInterviews");
+            var planRoot = new GameObject("ChatGatePlan");
+            InvestigationController investigation = investigationRoot.AddComponent<InvestigationController>();
+            InterviewController interviews = interviewRoot.AddComponent<InterviewController>();
+            PlanController plan = planRoot.AddComponent<PlanController>();
+            investigation.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
+            interviews.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
+            plan.ConfigureEndpointsForTesting("http://localhost:8787", "http://localhost:8787");
+
+            yield return WaitForScenario(investigation);
+            yield return WaitForScenario(interviews);
+            yield return WaitForPlan(plan);
+            foreach (TestSiteDto site in investigation.Scenario.test_sites)
+            {
+                investigation.SelectSite(site.id);
+                Assert.That(investigation.CollectSelectedSample(), Is.True);
+            }
+            yield return null;
+            foreach (StakeholderDto stakeholder in interviews.Scenario.stakeholders)
+            {
+                interviews.AskForTesting(stakeholder.id, "What condition must a workable response meet?");
+                yield return WaitForReply(interviews);
+            }
+
+            yield return null;
+            Assert.That(interviews.PlanUnlocked, Is.True);
+            Assert.That(interviews.InterviewsVisible, Is.True);
+            Assert.That(plan.PlanVisible, Is.False, "The plan must wait for an explicit handoff from the open chat.");
+            interviews.ContinueToPlanning();
+            yield return null;
+            Assert.That(interviews.InterviewsVisible, Is.False);
+            Assert.That(plan.PlanVisible, Is.True);
+            Object.Destroy(investigationRoot); Object.Destroy(interviewRoot); Object.Destroy(planRoot);
+        }
+
+        [UnityTest]
         [Timeout(600000)]
         public IEnumerator FullLoopReachesTheSimulationRoundTripAfterThePlanGate()
         {
@@ -143,6 +183,8 @@ namespace AgriVerse.Client.Tests
             foreach (TestSiteDto site in investigation.Scenario.test_sites) { investigation.SelectSite(site.id); Assert.That(investigation.CollectSelectedSample(), Is.True); }
             yield return null;
             foreach (StakeholderDto stakeholder in interviews.Scenario.stakeholders) { interviews.AskForTesting(stakeholder.id, "What condition must a workable response meet?"); yield return WaitForReply(interviews); }
+            yield return null;
+            interviews.ContinueToPlanning();
             yield return null;
             Assert.That(plan.PlanVisible, Is.True);
             plan.ConfigureForTesting(plan.Session == null ? investigation.Scenario.test_sites[0].id : investigation.Scenario.test_sites[0].id, investigation.Scenario.interventions[0].id, "The selected intervention should fit the recorded site conditions and household capital.");

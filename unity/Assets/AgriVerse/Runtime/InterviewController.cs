@@ -45,8 +45,10 @@ namespace AgriVerse.Client
         private RawImage portrait;
         private InputField questionInput;
         private Button askButton;
+        private Text askButtonLabel;
         private Button retryButton;
         private bool busy;
+        private bool planningHandoffCompleted;
         private string lastFailedQuestion;
         private string lastFailedStakeholderId;
         private GameObject interviewStage;
@@ -66,7 +68,7 @@ namespace AgriVerse.Client
 
         private void Update()
         {
-            if (LoadState == InvestigationLoadState.Ready && !InterviewsVisible)
+            if (LoadState == InvestigationLoadState.Ready && !InterviewsVisible && !planningHandoffCompleted)
             {
                 if (InvestigationComplete()) ActivateInterviewStage();
                 return;
@@ -125,6 +127,7 @@ namespace AgriVerse.Client
 
         public void AskSelectedStakeholder()
         {
+            if (PlanUnlocked) { ContinueToPlanning(); return; }
             if (selected == null || busy || questionInput == null) return;
             string question = questionInput.text.Trim();
             if (question.Length == 0) { SetStatus("Enter a question before asking."); return; }
@@ -140,6 +143,18 @@ namespace AgriVerse.Client
             }
         }
 
+        public void ContinueToPlanning()
+        {
+            if (!PlanUnlocked) return;
+            PlanController plan = FindFirstObjectByType<PlanController>();
+            if (plan == null || !plan.BeginPlanning())
+            {
+                SetStatus("Plan Controller is unavailable. Add its bootstrap to this scene.");
+                return;
+            }
+            ShowPlanActivity();
+        }
+
         public void AskForTesting(string stakeholderId, string question)
         {
             SelectStakeholder(stakeholderId);
@@ -151,6 +166,7 @@ namespace AgriVerse.Client
 
         public void ShowPlanActivity()
         {
+            planningHandoffCompleted = true;
             if (interviewStage != null) interviewStage.SetActive(false);
         }
 
@@ -193,7 +209,7 @@ namespace AgriVerse.Client
                 questionInput.text = string.Empty;
                 lastFailedQuestion = string.Empty;
                 lastFailedStakeholderId = string.Empty;
-                SetStatus($"Recorded {stakeholder.name}'s response.");
+                SetStatus(PlanUnlocked ? "All stakeholder responses are recorded. Continue to planning when you finish reading." : $"Recorded {stakeholder.name}'s response.");
                 Refresh();
             }
         }
@@ -239,7 +255,7 @@ namespace AgriVerse.Client
             selectedText = Text(canvas.transform, "Stakeholder", 18); Stretch(selectedText.rectTransform, new Vector2(.17f, .68f), new Vector2(.62f, .82f));
             conversationText = Text(canvas.transform, "Conversation", 15); Stretch(conversationText.rectTransform, new Vector2(.03f, .27f), new Vector2(.62f, .65f));
             questionInput = Input(canvas.transform); Stretch(questionInput.GetComponent<RectTransform>(), new Vector2(.03f, .12f), new Vector2(.62f, .23f));
-            askButton = Button(canvas.transform, "AskButton", "Ask stakeholder"); Stretch(askButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.3f, .1f)); askButton.onClick.AddListener(AskSelectedStakeholder);
+            askButton = Button(canvas.transform, "AskButton", "Ask stakeholder"); askButtonLabel = askButton.GetComponentInChildren<Text>(); Stretch(askButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.3f, .1f)); askButton.onClick.AddListener(AskSelectedStakeholder);
             retryButton = Button(canvas.transform, "RetryButton", "Retry"); Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.33f, .04f), new Vector2(.62f, .1f)); retryButton.onClick.AddListener(RetryLastQuestion);
             gateText = Text(canvas.transform, "PlanGate", 16); Stretch(gateText.rectTransform, new Vector2(.66f, .84f), new Vector2(.97f, .9f));
         }
@@ -269,9 +285,11 @@ namespace AgriVerse.Client
             if (selectedText == null) return;
             selectedText.text = selected == null ? "Select a gray stakeholder marker." : $"{selected.name}\n{selected.role}\n{selected.persona}";
             conversationText.text = FormatConversation();
-            askButton.interactable = selected != null && !busy;
+            askButtonLabel.text = PlanUnlocked ? "Continue to planning" : "Ask stakeholder";
+            askButton.interactable = !busy && (PlanUnlocked || selected != null);
+            questionInput.interactable = !busy && !PlanUnlocked;
             retryButton.interactable = selected != null && !busy && selected.id == lastFailedStakeholderId && !string.IsNullOrWhiteSpace(lastFailedQuestion);
-            gateText.text = PlanUnlocked ? "Plan unlocked — all stakeholders have replied." : $"Plan locked — {RespondedCount()}/{scenario.stakeholders.Length} stakeholders have replied.";
+            gateText.text = PlanUnlocked ? string.Empty : $"Plan locked — {RespondedCount()}/{scenario.stakeholders.Length} stakeholders have replied.";
         }
 
         private string FormatConversation()
