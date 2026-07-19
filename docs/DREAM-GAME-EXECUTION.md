@@ -262,3 +262,5 @@ footstep rows remain documented below without blocking the current build.
   name-only first-person identity.
 - `87880e6` - Premium 3D stakeholder journey, physical planning handoff, Field Journal,
   accessibility controls, and compact Future Walk presentation.
+- `998cb03` - Verified universal macOS release candidate with native AgriVerse bundle
+  identity and complete release audit.
