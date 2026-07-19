@@ -318,3 +318,12 @@ Format per entry:
 - What Codex did: Expanded the approved field slice into a globe-to-ending desktop journey with three physical sample stations, world-return stakeholder interviews, planning, five-year Future Walk, feedback/revision comparison, brief, Judge View, certificate, endings, and a responsive presentation pass.
 - Human decision: Approved Human Gate B and required autonomous integration through a single concentrated beauty pass and macOS release candidate without intermediate visual gates.
 - GPT-5.6 technique used: Preserved the four live role-separated and structured-output systems unchanged, kept exact validated simulator tokens authoritative for original/revised visuals, and completed one approved live end-to-end verification.
+
+### 2026-07-19 - Premium Unity asset intake and identity correction
+- What Codex did: Preserved twelve new Tripo packages and the NASA globe bundle byte-for-byte,
+  recorded all hashes and rights, built URP/LOD/collider derivatives, and validated three
+  retargetable Humanoid stakeholder prefabs.
+- Human decision: Authorized redistribution, removed avatar selection/upload, retained name
+  entry and an unseen first-person participant, and kept dialogue text-first without voice.
+- GPT-5.6 technique used: Preserved the existing grounded stakeholder agents and all scored
+  contracts while changing only local presentation identity and licensed art.

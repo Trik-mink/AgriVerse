@@ -11,9 +11,11 @@ namespace AgriVerse.Client.Tests
         {
             var progress = new EpisodeProgress("scenario-1");
 
-            Assert.That(progress.SetIdentity("  Lan Nguyen  ", "sun-amber"), Is.True);
+            Assert.That(progress.SetIdentity("  Lan Nguyen  ", string.Empty), Is.True);
             Assert.That(progress.PlayerName, Is.EqualTo("Lan Nguyen"));
-            Assert.That(progress.AvatarPresetId, Is.EqualTo("sun-amber"));
+            Assert.That(
+                progress.AvatarPresetId,
+                Is.EqualTo(EpisodeProgress.FirstPersonObserverId));
             Assert.That(progress.RecordPrediction("mid", "on_the_edge"), Is.True);
             Assert.That(progress.RecordPrediction("mid", "safe"), Is.False);
             Assert.That(progress.PredictionFor("mid"), Is.EqualTo("on_the_edge"));
@@ -25,9 +27,11 @@ namespace AgriVerse.Client.Tests
         {
             var progress = new EpisodeProgress("scenario-1");
 
-            Assert.That(progress.SetIdentity("   ", "river-teal"), Is.False);
-            Assert.That(progress.SetIdentity(new string('x', 41), "river-teal"), Is.False);
-            Assert.That(progress.SetIdentity("Mai", string.Empty), Is.False);
+            Assert.That(progress.SetIdentity("   ", string.Empty), Is.False);
+            Assert.That(
+                progress.SetIdentity(new string('x', 41), string.Empty),
+                Is.False);
+            Assert.That(progress.SetIdentity("Mai", string.Empty), Is.True);
         }
 
         [Test]

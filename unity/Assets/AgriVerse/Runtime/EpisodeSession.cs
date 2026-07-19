@@ -16,6 +16,9 @@ namespace AgriVerse.Client
     /// </summary>
     public sealed class EpisodeProgress
     {
+        public const string FirstPersonObserverId =
+            "first-person-observer";
+
         private readonly Dictionary<string, string> predictions =
             new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -35,15 +38,13 @@ namespace AgriVerse.Client
         public bool SetIdentity(string playerName, string avatarPresetId)
         {
             string trimmedName = playerName?.Trim() ?? string.Empty;
-            string trimmedAvatar = avatarPresetId?.Trim() ?? string.Empty;
-            if (trimmedName.Length < 1 || trimmedName.Length > 40 ||
-                string.IsNullOrWhiteSpace(trimmedAvatar))
+            if (trimmedName.Length < 1 || trimmedName.Length > 40)
             {
                 return false;
             }
 
             PlayerName = trimmedName;
-            AvatarPresetId = trimmedAvatar;
+            AvatarPresetId = FirstPersonObserverId;
             return true;
         }
 

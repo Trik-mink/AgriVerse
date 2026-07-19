@@ -31,6 +31,53 @@ All source FBXs are Kaydara FBX 7.4 files exported by Tripo. Each contains an
 unwanted default cube; runtime derivatives must omit that cube and must not overwrite
 the source.
 
+### Premium character and field-station intake
+
+Tristan supplied the following additional authorization on 2026-07-19:
+
+> I generated the listed Tripo assets through my account and authorize their modification and redistribution in the AgriVerse source repository, standalone builds, demo video and hackathon submission.
+
+Each package was copied from the stated local delivery path into the listed `Source/`
+directory without changing a byte. `PREMIUM-ASSET-SHA256SUMS.txt` records every supplied
+FBX and texture file, not only the headline FBX hashes below.
+
+| Asset ID | Use | Original delivery path | Source FBX SHA-256 |
+|---|---|---|---|
+| `CHAR-MRBA-01` | Mr. Ba stakeholder | `villager+farmer+3d+model` | `c582e01411301fdcbb097930160bb337f1b62f44c1a54eafc5ef8c3ae40cb4db` |
+| `CHAR-DRLINH-01` | Dr. Linh stakeholder | `woman+explorer+3d+model` | `ad29e34b2389684593a5b34009d33759729acef05baed80be463b437d0f00930` |
+| `CHAR-MSHOA-01` | Ms. Hoa stakeholder | `human+figure+3d+model` | `756dca2abe7cc39a3b6fb7f91309a74a2b4175ce0eb5fc6a4c852e9a6a7ff339` |
+| `ENV-RESEARCH-POST-01` | Rural research post | `rural+hut+3d+model` | `c60301fd79f53f7f7587f6d735125b0d55d78d06d8dff6e0a6f887ac982e81c9` |
+| `ENV-DISTRICT-OFFICE-01` | District agricultural office | `rural+service+office+3d+model` | `8c53c12d44bc44c49a27ea2ebb2629abd784e809b479e0f0ad1865d11d9a92a2` |
+| `ENV-RESEARCH-WORKSTATION-01` | Research workstation | `laboratory+bench+3d+model` | `084074afd6e49a839e71673cdb23a56406a133088a18824b2e8d770ba1e745bc` |
+| `ENV-REFLECTION-PAVILION-01` | Ending pavilion | `waterfront+pavilion+3d+model` | `62c5b65f88789655fb1777c5332415a3bdbd900f88cb5f11e41afcb39158ddee` |
+| `ENV-SAMPLING-KIT-01` | Physical water station prop | `water+sampling+kit+3d+model` | `a093d25528c03d4b72d5e2177cd93abaf4e3d0cdb40c3fc84775f04b91f15812` |
+| `ENV-PLANNING-TABLE-01` | Proposal planning station | `rural+planning+table+3d+model` | `126332c68e49c4e4df62a9897807245f1f8bf3c2d8fceac9df0e119ced9b1a37` |
+| `ENV-WOVEN-BASKET-01` | Field dressing | `giỏ+đan+tre+3d+model` | `010fc900240a2918f4bf7cb2319c3867fe0885d51d162aea4071e137e39a0f0a` |
+| `ENV-HOE-01` | Field dressing | `agricultural+hoe+3d+model` | `90edd6b179f0c6dd3fc1ac521041c2559bd819a2a93d756b5882582230724ce9` |
+| `ENV-SHOVEL-01` | Field dressing | `shovel+3d+model` | `45d834f84e1b2aef9b6c3c50c184ce990b466fb9c213e42fe90f4b39b62202a8` |
+
+All three stakeholder FBXs import as valid Unity Humanoid Avatars. Runtime prefabs use
+the previously approved Mai Humanoid clips for retargeted idle, walk, talk, and gesture
+motion. Unity strips source cameras, lights, visibility tracks, and unwanted default cubes
+only from imported or derived representations.
+
+## NASA globe package
+
+The globe bundle was delivered at
+`AgriVerse_Globe_Assets` and is preserved byte-for-byte at
+`Globe/Source/`. It is not a Tripo or CC0 bundle. Its original `SOURCE_AND_LICENSE.md`,
+`README.md`, and `SHA256SUMS.txt` remain intact.
+
+- Earth color and clouds: NASA Earth Observatory / Blue Marble.
+- Elevation and derived normal: NASA Earth Observatory using GEBCO 08 data.
+- Star map: NASA/Goddard Space Flight Center Scientific Visualization Studio, with
+  ESA/Gaia/DPAC and source-page catalogue acknowledgements retained.
+- No NASA logos or insignia are included, and project credits must not imply NASA
+  endorsement.
+- Repository and release redistribution must retain the package acknowledgements and
+  follow NASA's current media guidelines:
+  `https://www.nasa.gov/nasa-brand-center/images-and-media/`.
+
 ## Poly Haven PBR materials
 
 The `Environment/Materials/Source/` directory contains the 2K Clay, Muddy Tracks,

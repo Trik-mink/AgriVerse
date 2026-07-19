@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,9 +7,6 @@ namespace AgriVerse.Client
 {
     internal sealed class EpisodePresentationView : MonoBehaviour
     {
-        private readonly Dictionary<string, Button> avatarButtons =
-            new Dictionary<string, Button>(StringComparer.Ordinal);
-
         private GameObject landing;
         private GameObject guide;
         private GameObject glossary;
@@ -33,7 +29,6 @@ namespace AgriVerse.Client
         private Action toggleJudge;
         private Action openCertificate;
         private Action<EpisodeEndingChoice> chooseEnding;
-        private Action<string> selectAvatar;
 
         internal InputField NameInput { get; private set; }
         internal bool LandingVisible => landing != null && landing.activeSelf;
@@ -55,8 +50,7 @@ namespace AgriVerse.Client
             Action onToggleGlossary,
             Action onToggleJudge,
             Action onOpenCertificate,
-            Action<EpisodeEndingChoice> onChooseEnding,
-            Action<string> onSelectAvatar)
+            Action<EpisodeEndingChoice> onChooseEnding)
         {
             beginMission = onBegin;
             dismissGuide = onDismissGuide;
@@ -64,7 +58,6 @@ namespace AgriVerse.Client
             toggleJudge = onToggleJudge;
             openCertificate = onOpenCertificate;
             chooseEnding = onChooseEnding;
-            selectAvatar = onSelectAvatar;
             EpisodeUiFactory.EnsureEventSystem();
 
             GameObject canvasObject = new GameObject(
@@ -86,17 +79,6 @@ namespace AgriVerse.Client
             BuildGlossary(canvas.transform);
             BuildJudge(canvas.transform);
             BuildCertificate(canvas.transform);
-        }
-
-        internal void SetSelectedAvatar(string avatarId)
-        {
-            foreach (KeyValuePair<string, Button> entry in avatarButtons)
-            {
-                entry.Value.GetComponent<Image>().color =
-                    entry.Key == avatarId
-                        ? EpisodeUiFactory.Amber
-                        : EpisodeUiFactory.RiverTeal;
-            }
         }
 
         internal void HideLanding()
@@ -260,10 +242,8 @@ namespace AgriVerse.Client
             NameInput = EpisodeUiFactory.Input(card.transform, "Enter your name");
             EpisodeUiFactory.Stretch(
                 NameInput.GetComponent<RectTransform>(),
-                new Vector2(.07f, .34f),
+                new Vector2(.07f, .29f),
                 new Vector2(.93f, .42f));
-
-            BuildAvatarChoices(card.transform);
 
             landingError = EpisodeUiFactory.Text(
                 card.transform,
@@ -273,8 +253,8 @@ namespace AgriVerse.Client
                 new Color(1f, .76f, .48f, 1f));
             EpisodeUiFactory.Stretch(
                 landingError.rectTransform,
-                new Vector2(.07f, .12f),
-                new Vector2(.93f, .18f));
+                new Vector2(.07f, .17f),
+                new Vector2(.93f, .25f));
 
             Button start = EpisodeUiFactory.Button(
                 card.transform,
@@ -284,8 +264,8 @@ namespace AgriVerse.Client
                 17);
             EpisodeUiFactory.Stretch(
                 start.GetComponent<RectTransform>(),
-                new Vector2(.07f, .04f),
-                new Vector2(.93f, .12f));
+                new Vector2(.07f, .06f),
+                new Vector2(.93f, .16f));
             start.onClick.AddListener(() => beginMission?.Invoke());
 
             BuildGlobe(landing.transform);
@@ -319,6 +299,9 @@ namespace AgriVerse.Client
                 globe.rectTransform,
                 new Vector2(.64f, .29f),
                 new Vector2(.92f, .79f));
+            GlobeLandingRenderer globeRenderer =
+                globe.gameObject.AddComponent<GlobeLandingRenderer>();
+            globeRenderer.Configure(globe);
 
             landingCountry = EpisodeUiFactory.Text(
                 root,
@@ -423,37 +406,6 @@ namespace AgriVerse.Client
             if (globeTexture != null)
             {
                 Destroy(globeTexture);
-            }
-        }
-
-        private void BuildAvatarChoices(Transform card)
-        {
-            string[] ids = { "river-teal", "sun-amber", "rice-green", "clay-red" };
-            string[] labels = { "River", "Sun", "Rice", "Clay" };
-            Color[] colors =
-            {
-                EpisodeUiFactory.RiverTeal,
-                new Color(.62f, .38f, .12f, 1f),
-                new Color(.18f, .34f, .16f, 1f),
-                new Color(.46f, .20f, .13f, 1f)
-            };
-
-            for (int index = 0; index < ids.Length; index++)
-            {
-                string id = ids[index];
-                Button avatar = EpisodeUiFactory.Button(
-                    card,
-                    "Avatar_" + id,
-                    labels[index],
-                    colors[index],
-                    14);
-                float left = .07f + index * .22f;
-                EpisodeUiFactory.Stretch(
-                    avatar.GetComponent<RectTransform>(),
-                    new Vector2(left, .21f),
-                    new Vector2(left + .18f, .31f));
-                avatar.onClick.AddListener(() => selectAvatar?.Invoke(id));
-                avatarButtons.Add(id, avatar);
             }
         }
 

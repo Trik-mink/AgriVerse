@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace AgriVerse.Client.Tests
 {
@@ -34,6 +35,10 @@ namespace AgriVerse.Client.Tests
             });
 
             Assert.That(controller.LandingVisible, Is.True);
+            Assert.That(
+                root.GetComponentsInChildren<Button>(true),
+                Has.None.Matches<Button>(button =>
+                    button.name.StartsWith("Avatar_")));
             Assert.That(controller.BeginMissionForTesting("Lan", "sun-amber"), Is.True);
             Assert.That(controller.LandingVisible, Is.False);
             Assert.That(controller.GuideVisible, Is.True);
@@ -116,8 +121,11 @@ namespace AgriVerse.Client.Tests
             });
 
             Assert.That(controller.BeginMissionForTesting(" ", "river-teal"), Is.False);
-            Assert.That(controller.BeginMissionForTesting("Lan", string.Empty), Is.False);
-            Assert.That(controller.LandingVisible, Is.True);
+            Assert.That(controller.BeginMissionForTesting("Lan", string.Empty), Is.True);
+            Assert.That(
+                EpisodeSession.GetOrCreate().Progress.AvatarPresetId,
+                Is.EqualTo(EpisodeProgress.FirstPersonObserverId));
+            Assert.That(controller.LandingVisible, Is.False);
 
             Object.DestroyImmediate(root);
         }

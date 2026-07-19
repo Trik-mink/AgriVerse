@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a48e594823b64143ac4e4e43a881c37, type: 3}
+  m_Name: GlobeLandingAssets
+  m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.GlobeLandingAssets
+  earthMaterial: {fileID: 2100000, guid: e4bf3b568feb84ea384e7f59470366d2, type: 2}
+  cloudMaterial: {fileID: 2100000, guid: 884e6e8967e22457fb5ada2a0259e6d7, type: 2}
+  spaceMaterial: {fileID: 2100000, guid: 9ca0dad4411ea423c8bfae7e33adca71, type: 2}

@@ -18,7 +18,6 @@ namespace AgriVerse.Client
         private EpisodePresentationView view;
         private ScenarioDto scenario;
         private EpisodeSession session;
-        private string selectedAvatarId = string.Empty;
         private bool missionStarted;
         [SerializeField] private bool showArrivalGuideCues = true;
 
@@ -141,8 +140,6 @@ namespace AgriVerse.Client
             string playerName,
             string avatarPresetId)
         {
-            selectedAvatarId = avatarPresetId ?? string.Empty;
-            view.SetSelectedAvatar(selectedAvatarId);
             view.NameInput.text = playerName ?? string.Empty;
             return BeginMission();
         }
@@ -205,8 +202,7 @@ namespace AgriVerse.Client
                 ToggleGlossary,
                 ToggleJudge,
                 OpenCertificate,
-                ChooseEnding,
-                SelectAvatar);
+                ChooseEnding);
         }
 
         private void ConfigureScenario(ScenarioDto source)
@@ -220,13 +216,6 @@ namespace AgriVerse.Client
                 scenario.location?.region);
         }
 
-        private void SelectAvatar(string avatarId)
-        {
-            selectedAvatarId = avatarId ?? string.Empty;
-            view.SetSelectedAvatar(selectedAvatarId);
-            view.ShowLandingError(string.Empty);
-        }
-
         private bool BeginMission()
         {
             if (scenario == null)
@@ -237,10 +226,10 @@ namespace AgriVerse.Client
 
             if (!session.Progress.SetIdentity(
                     view.NameInput.text,
-                    selectedAvatarId))
+                    EpisodeProgress.FirstPersonObserverId))
             {
                 view.ShowLandingError(
-                    "Enter a name (1-40 characters) and choose a portrait.");
+                    "Enter a name between 1 and 40 characters.");
                 return false;
             }
 

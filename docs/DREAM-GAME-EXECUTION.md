@@ -5,9 +5,10 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Human Gate C - the complete standalone journey is integrated, live-verified, presentation
-polished, and built as a non-development macOS release candidate. It awaits final human
-release approval; the stable SampleScene and all existing tags remain preserved.
+Post-Gate-C production expansion - the complete standalone journey remains integrated and
+playable while licensed stakeholder, field-station, and globe assets replace approved
+fallback presentation. Asset intake and identity simplification are verified; full scene
+integration and concentrated release polish are in progress.
 
 ## Completed tasks
 
@@ -49,12 +50,17 @@ release approval; the stable SampleScene and all existing tags remain preserved.
 - Phase 8 completed a concentrated teal/amber presentation pass, bounded scrolling,
   first-person return between interviews, responsive 16:9 validation, and the macOS
   release-candidate build.
+- Premium asset expansion intake completed: three user-authorized Tripo stakeholders, nine
+  field-station structures/props, and the NASA globe package are preserved with complete
+  checksums, LFS coverage, source/license records, explicit URP derivatives, and fallback-safe
+  runtime assets.
+- Player avatar selection was removed by human direction. Name entry remains authoritative
+  for Mai's greeting and the certificate; the player is an unseen first-person observer.
 
 ## Current blockers
 
-- Human Gate C release approval. The optional three stakeholder models and optional
-  footstep set remain absent; the approved portrait fallback and existing UI/audio
-  treatment keep both non-blocking.
+- None. The existing portrait, procedural-world, and globe fallbacks remain available if an
+  optional premium presentation asset fails at runtime.
 
 ## External asset manifest
 
@@ -67,9 +73,9 @@ footstep rows remain documented below without blocking the current build.
 | Asset ID | Purpose and status | Delivery requirements | Suggested source | Destination |
 |---|---|---|---|---|
 | `CHAR-MAI-01` | Field guide; **required for Gate B** | `Mai.fbx`; humanoid rig, skinned mesh, 20k-60k triangles plus one lower LOD; neutral pose; PBR base color, normal, metallic/roughness, and AO maps at 2K; no facial rig required | Preferred: original/Meshy-to-Blender model with user-confirmed redistribution rights. Free fallback: Quaternius *Universal Base Characters* (CC0) | `unity/Assets/AgriVerse/Art/Characters/Mai/` |
-| `CHAR-MRBA-01` | Farmer NPC; optional because portrait fallback ships | `MrBa.fbx`; same rig, maps, scale, orientation, and performance limits as Mai; culturally respectful practical field clothing | Same original workflow or Quaternius CC0 base | `unity/Assets/AgriVerse/Art/Characters/MrBa/` |
-| `CHAR-DRLINH-01` | Researcher NPC; optional because portrait fallback ships | `DrLinh.fbx`; same rig/maps/limits; restrained field-research clothing | Same original workflow or Quaternius CC0 base | `unity/Assets/AgriVerse/Art/Characters/DrLinh/` |
-| `CHAR-MSHOA-01` | District official NPC; optional because portrait fallback ships | `MsHoa.fbx`; same rig/maps/limits; practical district-field clothing | Same original workflow or Quaternius CC0 base | `unity/Assets/AgriVerse/Art/Characters/MsHoa/` |
+| `CHAR-MRBA-01` | Farmer NPC; **supplied and Humanoid-validated** | Retargets approved idle/walk/talk/gesture clips; explicit URP material and portrait fallback retained | User-authorized original Tripo package | `unity/Assets/AgriVerse/Art/Characters/MrBa/` |
+| `CHAR-DRLINH-01` | Researcher NPC; **supplied and Humanoid-validated** | Retargets approved idle/walk/talk/gesture clips; explicit URP material and portrait fallback retained | User-authorized original Tripo package | `unity/Assets/AgriVerse/Art/Characters/DrLinh/` |
+| `CHAR-MSHOA-01` | District official NPC; **supplied and Humanoid-validated** | Retargets approved idle/walk/talk/gesture clips; explicit URP material and portrait fallback retained | User-authorized original Tripo package | `unity/Assets/AgriVerse/Art/Characters/MsHoa/` |
 | `ANIM-HUMANOID-01` | Shared motion set; **required for Gate B** | Humanoid FBX clips: idle, walk, talk, point, wave, open-hand explain, and one calm listening gesture; in-place except walk; no root scale animation | Quaternius *Universal Animation Library* or *Library 2*, CC0 | `unity/Assets/AgriVerse/Art/Animations/Humanoid/` |
 
 ### Environment

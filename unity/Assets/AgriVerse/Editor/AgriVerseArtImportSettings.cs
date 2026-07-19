@@ -24,7 +24,7 @@ namespace AgriVerse.Client.Editor
             "Mai_Walk"
         };
 
-        public override uint GetVersion() => 4;
+        public override uint GetVersion() => 5;
 
         private bool IsEpisodeArt =>
             assetPath.StartsWith(ArtRoot, StringComparison.Ordinal);
@@ -42,6 +42,9 @@ namespace AgriVerse.Client.Editor
             bool isMai = assetPath.Contains(
                 "/Characters/Mai/",
                 StringComparison.Ordinal);
+            bool isCharacter = assetPath.Contains(
+                "/Characters/",
+                StringComparison.Ordinal);
             importer.importCameras = false;
             importer.importLights = false;
             importer.importVisibility = false;
@@ -54,15 +57,18 @@ namespace AgriVerse.Client.Editor
             importer.isReadable = false;
             importer.optimizeMeshPolygons = true;
             importer.optimizeMeshVertices = true;
-            importer.importBlendShapes = isMai;
+            importer.importBlendShapes = isCharacter;
             importer.importAnimation = isMai;
-            importer.animationType = isMai
+            importer.animationType = isCharacter
                 ? ModelImporterAnimationType.Human
                 : ModelImporterAnimationType.None;
-            if (isMai)
+            if (isCharacter)
             {
                 importer.avatarSetup =
                     ModelImporterAvatarSetup.CreateFromThisModel;
+            }
+            if (isMai)
+            {
                 ConfigureMaiClips(importer);
             }
         }
@@ -88,6 +94,9 @@ namespace AgriVerse.Client.Editor
                 filename.EndsWith("_0_3", StringComparison.OrdinalIgnoreCase);
             bool isColor =
                 filename.Contains("basecolor", StringComparison.OrdinalIgnoreCase) ||
+                filename.Contains("earth_color", StringComparison.OrdinalIgnoreCase) ||
+                filename.Contains("clouds", StringComparison.OrdinalIgnoreCase) ||
+                filename.Contains("starmap", StringComparison.OrdinalIgnoreCase) ||
                 filename.EndsWith("_0_0", StringComparison.OrdinalIgnoreCase) ||
                 filename.EndsWith("_Card", StringComparison.OrdinalIgnoreCase);
             bool isCard = filename.EndsWith(
@@ -104,10 +113,13 @@ namespace AgriVerse.Client.Editor
                 : TextureWrapMode.Repeat;
             importer.filterMode = FilterMode.Trilinear;
             importer.anisoLevel = isColor ? 4 : 2;
-            importer.maxTextureSize = 2048;
+            importer.maxTextureSize = GlobeTextureSize(assetPath);
             importer.textureCompression =
                 TextureImporterCompression.CompressedHQ;
-            if (isCard)
+            if (isCard ||
+                filename.Contains(
+                    "clouds",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 importer.alphaSource =
                     TextureImporterAlphaSource.FromInput;
@@ -141,7 +153,7 @@ namespace AgriVerse.Client.Editor
 
         private static float SourceModelScale(string path)
         {
-            if (path.Contains("/Characters/Mai/", StringComparison.Ordinal))
+            if (path.Contains("/Characters/", StringComparison.Ordinal))
                 return 1.65f;
             if (path.Contains("/Trees/Banana_A/", StringComparison.Ordinal))
                 return 5f;
@@ -157,11 +169,53 @@ namespace AgriVerse.Client.Editor
                 return 6f;
             if (path.Contains("/Props/Boat_A/", StringComparison.Ordinal))
                 return 6f;
+            if (path.Contains(
+                    "/Structures/ResearchPost_A/",
+                    StringComparison.Ordinal))
+                return 5f;
+            if (path.Contains(
+                    "/Structures/DistrictOffice_A/",
+                    StringComparison.Ordinal))
+                return 8f;
+            if (path.Contains(
+                    "/Structures/ReflectionPavilion_A/",
+                    StringComparison.Ordinal))
+                return 6f;
+            if (path.Contains(
+                    "/Props/ResearchWorkstation_A/",
+                    StringComparison.Ordinal))
+                return 2f;
+            if (path.Contains(
+                    "/Props/SamplingKit_A/",
+                    StringComparison.Ordinal))
+                return .8f;
+            if (path.Contains(
+                    "/Props/PlanningTable_A/",
+                    StringComparison.Ordinal))
+                return 2.4f;
+            if (path.Contains(
+                    "/Props/WovenBasket_A/",
+                    StringComparison.Ordinal))
+                return .7f;
+            if (path.Contains("/Props/Hoe_A/", StringComparison.Ordinal) ||
+                path.Contains("/Props/Shovel_A/", StringComparison.Ordinal))
+                return 1.5f;
             if (path.Contains("/Banks/Reed_A/", StringComparison.Ordinal))
                 return 1.4f;
             if (path.Contains("/Banks/Grass_A/", StringComparison.Ordinal))
                 return .8f;
             return 1f;
+        }
+
+        private static int GlobeTextureSize(string path)
+        {
+            if (!path.Contains("/Globe/", StringComparison.Ordinal))
+                return 2048;
+            if (path.Contains(
+                    "Earth_Color_8K",
+                    StringComparison.OrdinalIgnoreCase))
+                return 4096;
+            return 2048;
         }
 
         private static void ConfigureMaiClips(ModelImporter importer)
