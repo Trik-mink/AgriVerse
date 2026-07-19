@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db1fd08f7c5c34106a6c078b8b48eb33, type: 3}
+  m_Name: Episode3DWorldConfig
+  m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.Episode3DWorldConfig
+  scenarioId: vietnam-mekong-salinity
+  arrivalSiteId: upstream
+  maiPosition: {x: -0.25, y: 0, z: -36.3}
+  hotspotPosition: {x: -7.35, y: 0.735, z: -14}
+  approachPosition: {x: -4.6, y: 0, z: -16.4}
+  approachHeading: 300

@@ -36,6 +36,9 @@ namespace AgriVerse.Client
         [SerializeField]
         private bool createRuntimeUi = true;
 
+        [SerializeField]
+        private bool createRuntimeMarkers = true;
+
         // Keep Unity's runtime primitive dependencies from being stripped in Web builds.
         [SerializeField] private MeshFilter preserveMeshFilter;
         [SerializeField] private MeshRenderer preserveMeshRenderer;
@@ -64,6 +67,8 @@ namespace AgriVerse.Client
 
         public InvestigationLoadState LoadState { get; private set; } = InvestigationLoadState.NotStarted;
         public ScenarioDto Scenario => scenario;
+        public bool CreatesRuntimeUi => createRuntimeUi;
+        public bool CreatesRuntimeMarkers => createRuntimeMarkers;
         public int MarkerCount => markers.Count;
         public int RecordedReadingCount => notebookSession?.Notebook?.RecordedReadings.Count ?? 0;
         public bool SelectedReadingRevealed =>
@@ -157,7 +162,10 @@ namespace AgriVerse.Client
             notebookSession.ConfigureScenario(scenario.id);
             episodeSession = EpisodeSession.GetOrCreate();
             episodeSession.ConfigureScenario(scenario.id);
-            CreateMarkers();
+            if (createRuntimeMarkers)
+            {
+                CreateMarkers();
+            }
             if (createRuntimeUi)
             {
                 CreateInterface();
@@ -258,6 +266,14 @@ namespace AgriVerse.Client
         {
             editorApiBaseUrl = editorBaseUrl;
             webApiBaseUrl = webBaseUrl;
+        }
+
+        public void ConfigurePresentation(
+            bool createUi,
+            bool createMarkers)
+        {
+            createRuntimeUi = createUi;
+            createRuntimeMarkers = createMarkers;
         }
 
         private void CreateMarkers()
@@ -587,7 +603,10 @@ namespace AgriVerse.Client
 
         private void SetStatus(string message)
         {
-            RuntimePanelManager.GetOrCreate().SetInstruction(message);
+            if (createRuntimeUi)
+            {
+                RuntimePanelManager.GetOrCreate().SetInstruction(message);
+            }
         }
 
         private void Fail(string studentMessage, string diagnostic)

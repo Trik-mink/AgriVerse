@@ -14,6 +14,8 @@ namespace AgriVerse.Client.Editor
             "Assets/Scenes/CharacterLab.unity";
         private const string WorldLabScenePath =
             "Assets/Scenes/AnGiangWorldLab.unity";
+        private const string AlphaScenePath =
+            "Assets/Scenes/Episode3DAlpha.unity";
 
         [MenuItem("AgriVerse/Build/macOS Checkpoint")]
         public static void BuildCheckpoint()
@@ -37,6 +39,12 @@ namespace AgriVerse.Client.Editor
         public static void BuildWorldLab()
         {
             Build("AnGiangWorldLab.app", WorldLabScenePath);
+        }
+
+        [MenuItem("AgriVerse/Build/macOS Episode 3D Alpha")]
+        public static void BuildVerticalSlice()
+        {
+            Build("AgriVerse3DAlpha.app", AlphaScenePath);
         }
 
         private static void Build(string applicationName, string scenePath)

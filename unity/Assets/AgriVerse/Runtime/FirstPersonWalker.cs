@@ -15,6 +15,7 @@ namespace AgriVerse.Client
         [SerializeField] private float walkSpeed = 3.3f;
         [SerializeField] private float lookSensitivity = .075f;
         [SerializeField] private float gravity = 18f;
+        [SerializeField] private bool movementEnabled = true;
 
         private CharacterController character;
         private float yaw;
@@ -23,6 +24,7 @@ namespace AgriVerse.Client
 
         public Camera ViewCamera => viewCamera;
         public float EyeHeight => eyeHeight;
+        public bool MovementEnabled => movementEnabled;
         public bool CursorIsCaptured =>
             Cursor.lockState == CursorLockMode.Locked;
 
@@ -73,6 +75,15 @@ namespace AgriVerse.Client
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+
+        public void SetMovementEnabled(bool enabled)
+        {
+            movementEnabled = enabled;
+            if (!enabled)
+            {
+                verticalSpeed = 0f;
+            }
         }
 
         public void Move(Vector2 input, float deltaTime)
@@ -133,6 +144,11 @@ namespace AgriVerse.Client
                      mouse.leftButton.wasPressedThisFrame)
             {
                 CaptureCursor();
+            }
+
+            if (!movementEnabled)
+            {
+                return;
             }
 
             if (CursorIsCaptured && mouse != null)

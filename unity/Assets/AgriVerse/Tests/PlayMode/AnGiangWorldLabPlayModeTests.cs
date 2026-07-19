@@ -42,6 +42,7 @@ namespace AgriVerse.Client.Tests
             walker.Configure(cameraObject.GetComponent<Camera>(), 1.65f);
             walker.Teleport(Vector3.zero, 0f);
 
+            Physics.SyncTransforms();
             yield return null;
             Assert.That(
                 cameraObject.transform.localPosition.y,

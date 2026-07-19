@@ -308,3 +308,8 @@ Format per entry:
 - What Codex did: Built an isolated walkable canal-and-paddy lab with matte CC0 PBR terrain, GPU-instanced three-LOD rice/grass, correctly oriented authored vegetation and structures, coherent wind, water, atmosphere, collision, and layered CC0 ambience.
 - Human decision: Supplied the licensed art/audio set, required source rice and grass FBXs to remain unchanged, and prioritized a compact grounded first-person world over another procedural-primitive presentation.
 - GPT-5.6 technique used: Kept the quality lab and asset derivatives separate from scenario facts, prompts, backend contracts, deterministic outputs, and the four live GPT systems.
+
+### 2026-07-19 - Unity playable 3D investigation vertical slice
+- What Codex did: Added a separate first-person Episode3DAlpha with Mai's canal arrival, a configuration-mapped upstream prediction and physical sample interaction, exact sanitized reading, focused notebook, ambience, and a Metal build.
+- Human decision: Approved Human Gate B after personally verifying movement, exploration, sampling, interaction, and notebook feel; required moving directly to complete full-loop integration.
+- GPT-5.6 technique used: Reused the scenario-backed investigation and evidence contracts unchanged while keeping all prompts and GPT systems server-side.

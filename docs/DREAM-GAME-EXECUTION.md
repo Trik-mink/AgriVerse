@@ -5,9 +5,8 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Phase 4 - Mai and the isolated true-3D AnGiangWorldLab have passed their quality labs. The
-next checkpoint integrates the first walkable Mai-to-water-test vertical slice without
-replacing the stable SampleScene.
+Phase 5 - Human Gate B is approved. The verified standalone 3D alpha now expands into the
+complete arrival-to-ending learning journey while the stable SampleScene remains preserved.
 
 ## Completed tasks
 
@@ -33,6 +32,12 @@ replacing the stable SampleScene.
 - AnGiangWorldLab completed as an isolated 120-by-120-meter true-3D field location with a
   walkable canal/dike layout, dense instanced rice and bank vegetation, authored rural
   structures, coherent wind, layered CC0 ambience, matte PBR ground, and Metal-safe URP art.
+- The Gate-B vertical slice is implemented in a separate Episode3DAlpha scene: Mai wakes the
+  player beside the canal, first-person travel leads to a configuration-mapped upstream
+  sample, prediction gates a physical vial interaction, and the authoritative reading enters
+  a focused notebook without enabling legacy cubes or panels.
+- Human Gate B approved: the user personally verified the standalone movement, world
+  exploration, interaction, sampling, and notebook experience.
 
 ## Current blockers
 
@@ -105,6 +110,19 @@ footstep rows remain documented below without blocking the current build.
   137-200 FPS after warm-up on Apple M4.
 - macOS build: succeeded at `unity/Builds/macOS/AnGiangWorldLab.app`; SampleScene remained
   unchanged.
+
+### Human Gate B approved alpha
+
+- EditMode: 53 passed, 0 failed, 1 existing connectivity test ignored.
+- PlayMode: isolated movement/CharacterController collision passed; the live upstream-site
+  flow passed against `/api/scenario` from prediction through notebook recording.
+- macOS Metal build: succeeded at `unity/Builds/macOS/AgriVerse3DAlpha.app`.
+- Metal player: five 1280x720 evidence views rendered without runtime, shader, or magenta
+  errors; reported roughly 190-258 FPS after warm-up on Apple M4.
+- Geographic check: the An Giang field-base interaction maps through serialized world
+  configuration to the upstream scenario site, never the coastal 12 g/L site.
+- Human verification: approved after a standalone playthrough of movement, exploration,
+  interaction, sampling, and the notebook.
 
 ### Cinematic stakeholder interview checkpoint
 
