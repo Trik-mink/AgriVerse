@@ -5,8 +5,8 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Human Gate A - external character, environment, and audio assets required before the
-CharacterLab and AnGiangWorldLab can meet the approved non-blockout quality bar.
+Phase 3 - Mai has passed the isolated CharacterLab; the supplied licensed assets are now
+being assembled and optimized in the separate AnGiangWorldLab.
 
 ## Completed tasks
 
@@ -22,18 +22,24 @@ CharacterLab and AnGiangWorldLab can meet the approved non-blockout quality bar.
 - Phase 2 completed: original and revised simulation histories remain separately available;
   Judge View audits raw validated outputs and source IDs; the named certificate and both
   respectful ending choices are wired without entering scored request data.
+- Human Gate A resolved: the user supplied Mai, rice, grass, reeds, tropical trees, shelter,
+  dock, boat, four Poly Haven CC0 material sets, and seven CC0 audio deliverables, together
+  with explicit rights confirmation for every Tripo-generated model and texture.
+- Asset intake completed with byte-identical source preservation, source hashes, provenance,
+  deterministic import settings, and Git LFS coverage.
+- Mai CharacterLab completed with an explicit URP material, valid Humanoid avatar, restrained
+  look-at behavior, and visually verified idle, walk, talk, wave, and hat-adjust motions.
 
 ## Current blockers
 
-- The true-3D world and animated Mai require the consolidated external assets below.
-- Art-independent Episode 1 implementation is complete. Phase 3 can resume as soon as the
-  required local, redistributable asset bundle below is available.
+- None. The optional three stakeholder models and optional footstep set remain absent, but
+  the approved portrait fallback and existing UI sound treatment keep both non-blocking.
 
-## External assets required
+## External asset manifest
 
-All requested files must be CC0 or original work the user can redistribute in the public
-repository. Unity scale is 1 unit = 1 meter, Y-up, forward +Z. Do not supply raw commercial
-Asset Store content that cannot be redistributed.
+The required bundle was supplied as CC0 material/audio sources and user-authorized original
+Tripo work. Unity scale is 1 unit = 1 meter, Y-up, forward +Z. Optional stakeholder and
+footstep rows remain documented below without blocking the current build.
 
 ### Characters
 
@@ -67,6 +73,20 @@ Asset Store content that cannot be redistributed.
 | `AUD-FOOTSTEPS-01` | Dirt/wood walking feedback; optional for alpha | 6-10 short mono clips for dirt/mud and 4-6 for wood, 48 kHz, peak-normalized consistently | Original or CC0 | `unity/Assets/AgriVerse/Art/Audio/SFX/Footsteps/` |
 
 ## Verification results
+
+### Licensed asset intake and Mai CharacterLab checkpoint
+
+- Provenance: exact user authorization, source URLs/licenses, and SHA-256 hashes recorded;
+  every copied source model remained byte-identical to the supplied file.
+- Import tests: source cameras/lights/default cubes stripped only from Unity's imported
+  representation; source FBX files unchanged; scenery animation disabled; PBR maps and
+  streaming/decompressed audio import policies verified.
+- EditMode: 41 passed, 0 failed, 1 existing connectivity test ignored.
+- Mai Metal-player capture: all five semantic motions rendered at 1280x720 with a valid
+  Humanoid avatar, stable deformation, explicit URP material, and no magenta or shader errors.
+- CharacterLab macOS build: succeeded at `unity/Builds/macOS/CharacterLab.app`.
+- SampleScene macOS checkpoint build: succeeded at
+  `unity/Builds/macOS/AgriVerseCheckpoint.app`; startup log was clean on Apple M4 Metal.
 
 ### Cinematic stakeholder interview checkpoint
 

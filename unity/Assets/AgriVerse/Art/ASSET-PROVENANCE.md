@@ -1,0 +1,60 @@
+# AgriVerse Unity art provenance
+
+This record covers the external art sources imported for Episode 1. Source FBXs and
+their companion texture folders are retained byte-for-byte under each asset's `Source/`
+directory. Runtime-ready meshes, materials, texture atlases, LODs, prefabs, and animation
+controllers are derivatives and must be stored outside those source directories.
+
+## User-provided Tripo models
+
+Creator and rights confirmation supplied by Tristan on 2026-07-18:
+
+> I confirm that I generated the non-Poly Haven models through my own paid Tripo account using original text prompts and/or references I had permission to use. I authorize the AgriVerse project to modify, optimize, create derivatives from, and redistribute these models and their textures in the public source repository and compiled game builds, subject to Tripo’s applicable terms. Please preserve this confirmation in the project’s asset provenance records.
+
+The creator identified these files and intended uses:
+
+| Asset ID | Intended use | Source FBX SHA-256 |
+|---|---|---|
+| `CHAR-MAI-01` | Mai field guide | `088cd7a130670468d55d0a95d3826102cefa21fcd6841b03bbf8eb77de2fa242` |
+| `ENV-RICE-01-A` | Rice clump source | `01d974a0df304562d44204b92167b20ef9b77a3d2f183641f770e68354f0cb4a` |
+| `ENV-GRASS-01-A` | Wet/dry bank grass source | `11fd3a09f7427a114eee459830d43d0db099889c2bdc139055bacad9c8df6d4e` |
+| `ENV-REED-01-A` | Wetland reed cluster | `787d4df87cedd3c12f6b532047801d5ce54c5a37df97356f9abf0bb13e601eaf` |
+| `ENV-BANANA-01-A` | Banana plant | `4630f62849864e955b58fc756e0eb785f95fe38b799274f07a67f01e57385895` |
+| `ENV-COCONUT-01-A` | Coconut palm | `4f4d443ed9d340475c256f7bc1fe924ecab29faad568456d6a8d93f2a0d75b04` |
+| `ENV-PALMYRA-01-A` | Fan-shaped palm | `3c35fda328f4b009992e69a14357fbc5c0accf392f1d1807280a1902e8a13981` |
+| `ENV-BROADLEAF-01-A` | Distant broadleaf tree | `8658ecdb0f7612c6d98a7407371cd1989fb24c5dca8520cdf1c125e9356c72bf` |
+| `ENV-SHELTER-01-A` | Rural field shelter | `d42c22549e50824aa962174c979edd3c04923acae19ab06e86ff11ff3233bf3b` |
+| `ENV-DOCK-01-A` | Wooden sampling dock | `5a3a0f1fabf4890cbade232f9fb745df7ead2cb72ed8b4298d10325db64ab1b1` |
+| `ENV-BOAT-01-A` | Narrow wooden field boat | `24ae93c62f36eb24a1e480b2c3f955500256ef19af0c5058683b30f8d5414734` |
+
+All source FBXs are Kaydara FBX 7.4 files exported by Tripo. Each contains an
+unwanted default cube; runtime derivatives must omit that cube and must not overwrite
+the source.
+
+## Poly Haven PBR materials
+
+The `Environment/Materials/Source/` directory contains the 2K Clay, Muddy Tracks,
+Grass Path 2, and Weathered Planks source maps supplied under CC0 1.0. Each material
+directory contains its own `SOURCE.md` with creator, direct source URL, license URL,
+download date, map inventory, and modification record. The imported files matched all
+20 supplied SHA-256 checksums before Unity ingestion.
+
+## CC0 audio
+
+The processed Episode 1 audio is derived from seven Joseph Sardin / BigSoundBank
+recordings whose saved source pages identify them as CC0/public domain. Full source
+URLs, processing details, limitations, and the representative-not-Vietnam caveat are
+retained in `Audio/SOURCE.md`. Only the seven final files are imported into Unity:
+
+| Final file | SHA-256 |
+|---|---|
+| `Birds_Loop.ogg` | `432c3643a2c0e7e58ec959ae24f8cd8fac57ff7e33763fc4c1d63810aaf1d1a1` |
+| `Canal_Loop.ogg` | `15940205ee6b5d59ba2dc10b254731e902035a328ba6b6367f4c447218b0388c` |
+| `Insects_Loop.ogg` | `a0c8fbd9ff064358d2e4aeb583251d25c0dfe2d3dfd4ea676d449bfcc7095ecc` |
+| `Wind_Loop.ogg` | `bef49581d2b21c87ce5653874f1d0cbe3e470c0e84007c766b3e9eedbfb2a978` |
+| `VialCap_01.wav` | `329d675f0e424f597ad2e304186e8ebb7b419708800f6d883c2a68078ea85b77` |
+| `VialHandle_01.wav` | `1f486f3281f7ac318ac4530152a1e32dd2ea7efeeb7f99b8366abedfc766f5bc` |
+| `WaterScoop_01.wav` | `ede338bb2c96821bc5f046a0a34ff0616b2ad595fe26a4b7f94937bf685377ce` |
+
+All final clips decode at 48 kHz. Ambience must be auditioned in the built scene because
+it is representative sound design rather than a field recording made in Vietnam.

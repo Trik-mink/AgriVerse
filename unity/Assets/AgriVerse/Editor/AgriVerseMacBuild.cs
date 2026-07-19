@@ -9,21 +9,29 @@ namespace AgriVerse.Client.Editor
 {
     public static class AgriVerseMacBuild
     {
-        private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string CharacterLabScenePath =
+            "Assets/Scenes/CharacterLab.unity";
 
         [MenuItem("AgriVerse/Build/macOS Checkpoint")]
         public static void BuildCheckpoint()
         {
-            Build("AgriVerseCheckpoint.app");
+            Build("AgriVerseCheckpoint.app", SampleScenePath);
         }
 
         [MenuItem("AgriVerse/Build/macOS Release")]
         public static void BuildRelease()
         {
-            Build("AgriVerse.app");
+            Build("AgriVerse.app", SampleScenePath);
         }
 
-        private static void Build(string applicationName)
+        [MenuItem("AgriVerse/Build/macOS Character Lab")]
+        public static void BuildCharacterLab()
+        {
+            Build("CharacterLab.app", CharacterLabScenePath);
+        }
+
+        private static void Build(string applicationName, string scenePath)
         {
             string projectRoot =
                 Directory.GetParent(Application.dataPath)?.FullName ??
@@ -38,7 +46,7 @@ namespace AgriVerse.Client.Editor
             BuildReport report = BuildPipeline.BuildPlayer(
                 new BuildPlayerOptions
                 {
-                    scenes = new[] { ScenePath },
+                    scenes = new[] { scenePath },
                     locationPathName = outputPath,
                     target = BuildTarget.StandaloneOSX,
                     options = BuildOptions.None

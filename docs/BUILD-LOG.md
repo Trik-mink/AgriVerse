@@ -298,3 +298,8 @@ Format per entry:
 - What Codex did: Preserved original and revised simulator results, added authoritative Future Walk comparison mappings, a citation-audited Judge View, named field-service certificate, and respectful ending choices.
 - Human decision: Required revision to represent responsible professional practice, retained exact backend values, and kept player identity outside scored requests.
 - GPT-5.6 technique used: Exposed role-separated agent state and raw validated structured outputs without changing them, then audited every result document against the sanitized source registry.
+
+### 2026-07-18 - Licensed art intake and Mai CharacterLab
+- What Codex did: Preserved and provenance-recorded the supplied Tripo, Poly Haven CC0, and CC0 audio sources; added deterministic Unity import rules plus an isolated URP CharacterLab validating Mai's Humanoid rig, materials, look-at behavior, and five named motions.
+- Human decision: Confirmed redistribution and derivative rights for the Tripo models, supplied the complete art/audio bundle, and required the original rice and grass FBX files to remain unchanged while optimized derivatives are built separately.
+- GPT-5.6 technique used: Kept the character and asset pipeline presentation-only, isolated from prompts, scenario facts, validated outputs, and all four runtime GPT systems.
