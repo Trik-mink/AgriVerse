@@ -83,6 +83,7 @@ namespace AgriVerse.Client
             if (!enabled)
             {
                 verticalSpeed = 0f;
+                ReleaseCursor();
             }
         }
 
@@ -139,7 +140,8 @@ namespace AgriVerse.Client
             {
                 ReleaseCursor();
             }
-            else if (!CursorIsCaptured &&
+            else if (movementEnabled &&
+                     !CursorIsCaptured &&
                      mouse != null &&
                      mouse.leftButton.wasPressedThisFrame)
             {

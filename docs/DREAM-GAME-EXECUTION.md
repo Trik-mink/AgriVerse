@@ -5,8 +5,9 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Phase 5 - Human Gate B is approved. The verified standalone 3D alpha now expands into the
-complete arrival-to-ending learning journey while the stable SampleScene remains preserved.
+Human Gate C - the complete standalone journey is integrated, live-verified, presentation
+polished, and built as a non-development macOS release candidate. It awaits final human
+release approval; the stable SampleScene and all existing tags remain preserved.
 
 ## Completed tasks
 
@@ -38,11 +39,22 @@ complete arrival-to-ending learning journey while the stable SampleScene remains
   a focused notebook without enabling legacy cubes or panels.
 - Human Gate B approved: the user personally verified the standalone movement, world
   exploration, interaction, sampling, and notebook experience.
+- Phase 5 integrated all three physical water stations, scenario-configured stakeholder
+  meeting points, portrait-backed live interviews, proposal planning, simulation,
+  grounded feedback, revision, policy brief, Judge View, certificate, and both endings.
+- Phase 6 added an exact-token Future Walk with five-year field presentation and an
+  original-versus-revised comparison driven only by the stored validated simulator JSON.
+- Phase 7 added a scenario-driven globe and identity landing, a fade-to-canal arrival, and
+  non-blocking transition into the first-person episode.
+- Phase 8 completed a concentrated teal/amber presentation pass, bounded scrolling,
+  first-person return between interviews, responsive 16:9 validation, and the macOS
+  release-candidate build.
 
 ## Current blockers
 
-- None. The optional three stakeholder models and optional footstep set remain absent, but
-  the approved portrait fallback and existing UI sound treatment keep both non-blocking.
+- Human Gate C release approval. The optional three stakeholder models and optional
+  footstep set remain absent; the approved portrait fallback and existing UI/audio
+  treatment keep both non-blocking.
 
 ## External asset manifest
 
@@ -123,6 +135,22 @@ footstep rows remain documented below without blocking the current build.
   configuration to the upstream scenario site, never the coastal 12 g/L site.
 - Human verification: approved after a standalone playthrough of movement, exploration,
   interaction, sampling, and the notebook.
+
+### Complete 3D journey release candidate
+
+- EditMode: 55 passed, 0 failed, 1 existing connectivity test ignored.
+- Focused PlayMode: 3 passed, covering all three samples, world-return interviews, and the
+  authoritative original-versus-revised Future Walk.
+- Live full loop: passed in 137.9 seconds against the real backend, including all three
+  stakeholder GPT replies, two simulator runs, two grounded feedback runs, revision
+  preservation, and the policy brief.
+- macOS release build: succeeded at `unity/Builds/macOS/AgriVerse.app`
+  (208,740,705 bytes, universal Apple Silicon/Intel executable).
+- Metal player: clean 1280x720 journey captures and a clean 1920x1080 identity capture;
+  Player.log contained no runtime, shader, rendering, magenta-material, or missing-asset
+  errors.
+- Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
+  API contracts, ProjectSettings, and tags remained unchanged.
 
 ### Cinematic stakeholder interview checkpoint
 

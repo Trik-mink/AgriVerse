@@ -39,7 +39,35 @@ namespace AgriVerse.Client.Tests
                 Assert.That(RuntimeScrollableContent.ActiveScrollViewsDoNotBlockSceneRaycasts(), Is.True, "Scrollable cards must not add a UI raycast blocker over scene markers.");
                 Assert.That(RuntimeScrollableContent.IsBoundedToVisibleCard(contentByStage[stage]), Is.True, "A scroll interaction rect must stay within its visible card, never expand to the screen.");
                 Assert.That(RuntimeScrollableContent.HasTopLeftTextGutter(contentByStage[stage]), Is.True, "Scrollable text must stay fully inside the card's top-left gutter.");
+                Assert.That(
+                    manager.InstructionCanvasVisible,
+                    Is.EqualTo(
+                        stage != RuntimeActivityStage.Interviews),
+                    "Cinematic interviews own their status slot even when the shared instruction canvas is created after the stage swap.");
             }
+
+            manager.Clear();
+            Assert.That(manager.ActiveStage, Is.Null);
+            Assert.That(manager.ActivePanelCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void CinematicModeHidesInstructionCanvasCreatedAfterTheStageSwap()
+        {
+            RuntimePanelManager manager =
+                RuntimePanelManager.GetOrCreate();
+            GameObject panel =
+                new GameObject("InterviewPanel");
+            manager.Register(
+                RuntimeActivityStage.Interviews,
+                panel);
+            manager.Show(RuntimeActivityStage.Interviews);
+            manager.SetInstruction(
+                "This status belongs inside the cinematic shell.");
+
+            Assert.That(
+                manager.InstructionCanvasVisible,
+                Is.False);
         }
     }
 }

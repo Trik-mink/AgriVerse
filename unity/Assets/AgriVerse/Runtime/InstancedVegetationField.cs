@@ -48,8 +48,12 @@ namespace AgriVerse.Client
         [SerializeField] private float lod0Distance = 23f;
         [SerializeField] private float lod1Distance = 52f;
         [SerializeField, Range(0f, .3f)] private float patchGap = .07f;
+        [SerializeField] private Color presentationTint = Color.white;
+        [SerializeField, Range(.1f, 1f)]
+        private float presentationDensity = 1f;
 
         private Plant[] plants = Array.Empty<Plant>();
+        private MaterialPropertyBlock presentationProperties;
         private readonly List<Matrix4x4>[] matrices =
         {
             new List<Matrix4x4>(1024),
@@ -62,10 +66,28 @@ namespace AgriVerse.Client
         public IReadOnlyList<Material> LodMaterials => lodMaterials;
         public IReadOnlyList<Vector3> LodLocalScales =>
             lodLocalScales;
+        public Color PresentationTint => presentationTint;
+        public float PresentationDensity => presentationDensity;
 
         public void Rebuild()
         {
             BuildPlants();
+        }
+
+        public void SetFuturePresentation(
+            Color tint,
+            float density)
+        {
+            presentationTint = tint;
+            presentationDensity = Mathf.Clamp(density, .1f, 1f);
+            if (presentationProperties == null)
+            {
+                presentationProperties =
+                    new MaterialPropertyBlock();
+            }
+            presentationProperties.SetColor(
+                "_BaseColor",
+                presentationTint);
         }
 
         public void Configure(
@@ -185,8 +207,16 @@ namespace AgriVerse.Client
             float nearSquared = lod0Distance * lod0Distance;
             float middleSquared = lod1Distance * lod1Distance;
             float time = Time.time;
-            foreach (Plant plant in plants)
+            for (int plantIndex = 0;
+                 plantIndex < plants.Length;
+                 plantIndex++)
             {
+                if (DeterministicFraction(plantIndex) >
+                    presentationDensity)
+                {
+                    continue;
+                }
+                Plant plant = plants[plantIndex];
                 float distanceSquared =
                     (plant.Position - cameraPosition).sqrMagnitude;
                 int lod = distanceSquared < nearSquared
@@ -241,7 +271,8 @@ namespace AgriVerse.Client
                     lodMeshes[lod],
                     lodMaterials[lod],
                     matrices[lod],
-                    lod < 2);
+                    lod < 2,
+                    presentationProperties);
             }
         }
 
@@ -249,7 +280,8 @@ namespace AgriVerse.Client
             Mesh mesh,
             Material material,
             List<Matrix4x4> source,
-            bool shadows)
+            bool shadows,
+            MaterialPropertyBlock properties)
         {
             if (mesh == null || material == null ||
                 source.Count == 0)
@@ -277,7 +309,7 @@ namespace AgriVerse.Client
                     material,
                     batch,
                     count,
-                    null,
+                    properties,
                     shadows
                         ? ShadowCastingMode.On
                         : ShadowCastingMode.Off,
@@ -297,5 +329,15 @@ namespace AgriVerse.Client
                 minimum,
                 maximum,
                 (float)random.NextDouble());
+
+        private static float DeterministicFraction(int index)
+        {
+            unchecked
+            {
+                uint value = (uint)(index + 1) * 2654435761u;
+                return (value & 0x00ffffffu) /
+                       16777215f;
+            }
+        }
     }
 }

@@ -313,3 +313,8 @@ Format per entry:
 - What Codex did: Added a separate first-person Episode3DAlpha with Mai's canal arrival, a configuration-mapped upstream prediction and physical sample interaction, exact sanitized reading, focused notebook, ambience, and a Metal build.
 - Human decision: Approved Human Gate B after personally verifying movement, exploration, sampling, interaction, and notebook feel; required moving directly to complete full-loop integration.
 - GPT-5.6 technique used: Reused the scenario-backed investigation and evidence contracts unchanged while keeping all prompts and GPT systems server-side.
+
+### 2026-07-19 - Complete Unity 3D learning journey
+- What Codex did: Expanded the approved field slice into a globe-to-ending desktop journey with three physical sample stations, world-return stakeholder interviews, planning, five-year Future Walk, feedback/revision comparison, brief, Judge View, certificate, endings, and a responsive presentation pass.
+- Human decision: Approved Human Gate B and required autonomous integration through a single concentrated beauty pass and macOS release candidate without intermediate visual gates.
+- GPT-5.6 technique used: Preserved the four live role-separated and structured-output systems unchanged, kept exact validated simulator tokens authoritative for original/revised visuals, and completed one approved live end-to-end verification.

@@ -23,15 +23,22 @@ namespace AgriVerse.Client
     }
 
     /// <summary>
-    /// Gate-B presentation adapter for one scenario-driven investigation. It delegates
+    /// First-person presentation adapter for scenario-driven investigations. It delegates
     /// scenario loading, predictions, and notebook recording to InvestigationController.
     /// </summary>
     public sealed class Episode3DAlphaController : MonoBehaviour
     {
         [SerializeField] private InvestigationController investigation;
         [SerializeField] private FirstPersonWalker walker;
-        [SerializeField] private WaterSampleHotspot hotspot;
-        [SerializeField] private string configuredSiteId = string.Empty;
+        [SerializeField] private WaterSampleHotspot[] hotspots =
+            Array.Empty<WaterSampleHotspot>();
+        [SerializeField] private string[] configuredSiteIds =
+            Array.Empty<string>();
+        [SerializeField] private StakeholderHotspot[]
+            stakeholderHotspots =
+                Array.Empty<StakeholderHotspot>();
+        [SerializeField] private string[] configuredStakeholderIds =
+            Array.Empty<string>();
         [SerializeField] private Animator maiAnimator;
         [SerializeField] private GameObject sampleVial;
         [SerializeField] private GameObject sampleFill;
@@ -42,6 +49,7 @@ namespace AgriVerse.Client
         [SerializeField] private float captureApproachHeading;
 
         private CanvasGroup fade;
+        private GameObject hudRoot;
         private Text objectiveText;
         private Text progressText;
         private Text reticleText;
@@ -56,17 +64,26 @@ namespace AgriVerse.Client
         private Text controlsText;
         private AudioSource oneShotAudio;
         private TestSiteDto activeSite;
+        private WaterSampleHotspot activeHotspot;
+        private StakeholderHotspot activeStakeholderHotspot;
         private int activeSiteIndex = -1;
         private int introPage;
         private bool notebookOpen;
         private Vector3 vialRestPosition;
         private Quaternion vialRestRotation;
         private Coroutine sampleRoutine;
+        private bool worldInputWasBlocked;
 
         public Episode3DAlphaState State { get; private set; } =
             Episode3DAlphaState.Loading;
         public TestSiteDto ActiveSite => activeSite;
-        public string ConfiguredSiteId => configuredSiteId;
+        public string ConfiguredSiteId =>
+            configuredSiteIds.Length == 0
+                ? string.Empty
+                : configuredSiteIds[0];
+        public int ConfiguredSiteCount => configuredSiteIds.Length;
+        public int ConfiguredStakeholderCount =>
+            configuredStakeholderIds.Length;
         public bool SampleRecorded =>
             investigation != null &&
             investigation.RecordedReadingCount > 0;
@@ -98,10 +115,43 @@ namespace AgriVerse.Client
             AudioClip handle,
             AudioClip cap)
         {
+            Configure(
+                sourceInvestigation,
+                sourceWalker,
+                new[] { sourceHotspot },
+                new[] { siteId ?? string.Empty },
+                sourceMaiAnimator,
+                sourceVial,
+                sourceFill,
+                approachPosition,
+                approachHeading,
+                scoop,
+                handle,
+                cap);
+        }
+
+        public void Configure(
+            InvestigationController sourceInvestigation,
+            FirstPersonWalker sourceWalker,
+            WaterSampleHotspot[] sourceHotspots,
+            string[] siteIds,
+            Animator sourceMaiAnimator,
+            GameObject sourceVial,
+            GameObject sourceFill,
+            Vector3 approachPosition,
+            float approachHeading,
+            AudioClip scoop,
+            AudioClip handle,
+            AudioClip cap)
+        {
             investigation = sourceInvestigation;
             walker = sourceWalker;
-            hotspot = sourceHotspot;
-            configuredSiteId = siteId ?? string.Empty;
+            hotspots =
+                sourceHotspots ??
+                Array.Empty<WaterSampleHotspot>();
+            configuredSiteIds =
+                siteIds ??
+                Array.Empty<string>();
             maiAnimator = sourceMaiAnimator;
             sampleVial = sourceVial;
             sampleFill = sourceFill;
@@ -110,6 +160,18 @@ namespace AgriVerse.Client
             waterScoop = scoop;
             vialHandle = handle;
             vialCap = cap;
+        }
+
+        public void ConfigureStakeholders(
+            StakeholderHotspot[] sourceHotspots,
+            string[] stakeholderIds)
+        {
+            stakeholderHotspots =
+                sourceHotspots ??
+                Array.Empty<StakeholderHotspot>();
+            configuredStakeholderIds =
+                stakeholderIds ??
+                Array.Empty<string>();
         }
 
         private void Awake()
@@ -154,35 +216,74 @@ namespace AgriVerse.Client
                 yield break;
             }
 
-            for (int index = 0;
-                 index < investigation.Scenario.test_sites.Length;
-                 index++)
+            if (hotspots.Length == 0 ||
+                hotspots.Length != configuredSiteIds.Length)
             {
-                if (string.Equals(
-                        investigation.Scenario.test_sites[index].id,
-                        configuredSiteId,
-                        StringComparison.Ordinal))
-                {
-                    activeSite =
-                        investigation.Scenario.test_sites[index];
-                    activeSiteIndex = index;
-                    break;
-                }
-            }
-            if (activeSite == null)
-            {
-                Fail(
-                    "The configured field site is not available in this scenario.");
+                Fail("The field sampling stations are not configured.");
                 yield break;
             }
-            hotspot.Bind(activeSite.id);
+            for (int index = 0; index < hotspots.Length; index++)
+            {
+                if (hotspots[index] == null ||
+                    !TrySelectSite(configuredSiteIds[index]))
+                {
+                    Fail(
+                        "A configured field site is not available in this scenario.");
+                    yield break;
+                }
+                hotspots[index].Bind(configuredSiteIds[index]);
+            }
+            TrySelectSite(configuredSiteIds[0]);
+            if (stakeholderHotspots.Length !=
+                configuredStakeholderIds.Length)
+            {
+                Fail("The stakeholder meeting points are not configured.");
+                yield break;
+            }
+            for (int index = 0;
+                 index < stakeholderHotspots.Length;
+                 index++)
+            {
+                if (stakeholderHotspots[index] == null ||
+                    StakeholderById(
+                        configuredStakeholderIds[index]) == null)
+                {
+                    Fail(
+                        "A configured stakeholder is not available in this scenario.");
+                    yield break;
+                }
+                stakeholderHotspots[index].Bind(
+                    configuredStakeholderIds[index]);
+            }
             RefreshProgress();
-            yield return FadeFromBlack(2.2f);
-            BeginIntro();
 
             string captureDirectory =
                 CaptureDirectoryFromArguments(
                     Environment.GetCommandLineArgs());
+            EpisodePresentationController presentation =
+                FindFirstObjectByType<EpisodePresentationController>();
+            if (presentation != null)
+            {
+                if (!string.IsNullOrWhiteSpace(captureDirectory))
+                {
+                    while (!presentation.MissionStarted)
+                    {
+                        presentation.BeginMissionForTesting(
+                            "Field Advisor",
+                            "river-teal");
+                        yield return null;
+                    }
+                }
+                else
+                {
+                    while (!presentation.MissionStarted)
+                    {
+                        yield return null;
+                    }
+                }
+            }
+            yield return FadeFromBlack(2.2f);
+            BeginIntro();
             if (!string.IsNullOrWhiteSpace(captureDirectory))
             {
                 StartCoroutine(CaptureEvidence(captureDirectory));
@@ -191,6 +292,32 @@ namespace AgriVerse.Client
 
         private void Update()
         {
+            if (WorldInputIsBlocked())
+            {
+                worldInputWasBlocked = true;
+                SetMovement(false);
+                if (hudRoot != null)
+                {
+                    RuntimePanelManager manager =
+                        FindFirstObjectByType<RuntimePanelManager>();
+                    hudRoot.SetActive(
+                        manager == null ||
+                        !manager.ActiveStage.HasValue);
+                }
+                return;
+            }
+            if (worldInputWasBlocked)
+            {
+                worldInputWasBlocked = false;
+                if (!notebookOpen &&
+                    (State == Episode3DAlphaState.Exploring ||
+                     State == Episode3DAlphaState.Complete))
+                {
+                    SetMovement(true);
+                }
+            }
+            if (hudRoot != null) hudRoot.SetActive(true);
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
 
@@ -215,11 +342,27 @@ namespace AgriVerse.Client
             if (State == Episode3DAlphaState.Exploring ||
                 State == Episode3DAlphaState.Complete)
             {
-                UpdateHotspotFocus();
-                if (hotspot.IsFocused &&
+                if (State == Episode3DAlphaState.Complete)
+                {
+                    UpdateStakeholderFocus();
+                }
+                else
+                {
+                    UpdateHotspotFocus();
+                }
+                if (activeHotspot != null &&
+                    State == Episode3DAlphaState.Exploring &&
+                    activeHotspot.IsFocused &&
                     keyboard.eKey.wasPressedThisFrame)
                 {
                     BeginSiteInteraction();
+                }
+                else if (activeStakeholderHotspot != null &&
+                         State == Episode3DAlphaState.Complete &&
+                         activeStakeholderHotspot.IsFocused &&
+                         keyboard.eKey.wasPressedThisFrame)
+                {
+                    BeginStakeholderInteraction();
                 }
                 return;
             }
@@ -284,17 +427,44 @@ namespace AgriVerse.Client
             investigation.SelectSite(activeSite.id);
             if (investigation.SelectedReadingRevealed)
             {
-                State = Episode3DAlphaState.ReadyToCollect;
-                ShowCollectPrompt();
+                State = Episode3DAlphaState.Reading;
+                readingPanel.SetActive(true);
+                readingText.text = FormatReading(activeSite);
+                dialoguePanel.SetActive(true);
+                dialogueText.text =
+                    "This field reading is already recorded in the Evidence Notebook.";
+                dialogueHint.text =
+                    "Press E to return · Press N for the Evidence Notebook";
             }
             else
             {
                 State = Episode3DAlphaState.Predicting;
                 ShowPredictionPrompt();
             }
-            hotspot.SetFocused(true);
+            activeHotspot?.SetFocused(true);
             SetMovement(false);
             return true;
+        }
+
+        public bool SelectConfiguredSiteForTesting(string siteId) =>
+            TrySelectSite(siteId);
+
+        public void ContinueAfterReadingForTesting()
+        {
+            CloseReading();
+        }
+
+        public void BeginFreeExploration()
+        {
+            notebookOpen = false;
+            notebookPanel.SetActive(false);
+            dialoguePanel.SetActive(false);
+            readingPanel.SetActive(false);
+            promptText.gameObject.SetActive(true);
+            reticleText.gameObject.SetActive(true);
+            SetObjective(
+                "Field mission complete · Free exploration");
+            SetMovement(true);
         }
 
         public bool ChoosePrediction(int choiceIndex)
@@ -328,7 +498,10 @@ namespace AgriVerse.Client
             notebookPanel.SetActive(notebookOpen);
             if (notebookOpen)
             {
-                notebookText.text = FormatNotebook();
+                RuntimeScrollableContent.SetText(
+                    notebookText,
+                    FormatNotebook());
+                SetMovement(false);
                 SetObjective("Evidence notebook · Press N to close");
                 dialoguePanel.SetActive(false);
                 readingPanel.SetActive(false);
@@ -345,7 +518,7 @@ namespace AgriVerse.Client
                 else if (State == Episode3DAlphaState.Complete)
                 {
                     SetObjective(
-                        "First sample recorded. Continue along the canal to the next test.");
+                        "Investigation complete. Meet the community stakeholders.");
                 }
                 promptText.gameObject.SetActive(true);
                 reticleText.gameObject.SetActive(true);
@@ -358,6 +531,11 @@ namespace AgriVerse.Client
                     State == Episode3DAlphaState.Predicting ||
                     State == Episode3DAlphaState.ReadyToCollect ||
                     State == Episode3DAlphaState.Sampling);
+                if (State == Episode3DAlphaState.Exploring ||
+                    State == Episode3DAlphaState.Complete)
+                {
+                    SetMovement(true);
+                }
             }
         }
 
@@ -374,27 +552,189 @@ namespace AgriVerse.Client
 
         private void UpdateHotspotFocus()
         {
-            if (walker?.ViewCamera == null || hotspot == null) return;
+            if (walker?.ViewCamera == null || hotspots.Length == 0) return;
             Camera camera = walker.ViewCamera;
             Ray ray = camera.ViewportPointToRay(
                 new Vector3(.5f, .5f, 0f));
-            int mask = 1 << hotspot.gameObject.layer;
-            bool focused =
-                Physics.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    hotspot.InteractionRange,
-                    mask,
-                    QueryTriggerInteraction.Collide) &&
-                (hit.collider.gameObject == hotspot.gameObject ||
-                 hit.collider.transform.IsChildOf(hotspot.transform));
-            hotspot.SetFocused(focused);
-            reticleText.color = focused
+            WaterSampleHotspot focusedHotspot = null;
+            RaycastHit[] hits = Physics.RaycastAll(
+                ray,
+                6f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Collide);
+            Array.Sort(
+                hits,
+                (left, right) =>
+                    left.distance.CompareTo(right.distance));
+            foreach (RaycastHit hit in hits)
+            {
+                WaterSampleHotspot candidate =
+                    hit.collider.GetComponentInParent<
+                        WaterSampleHotspot>();
+                if (candidate != null &&
+                    Array.IndexOf(hotspots, candidate) >= 0 &&
+                    hit.distance <= candidate.InteractionRange)
+                {
+                    focusedHotspot = candidate;
+                    break;
+                }
+            }
+            foreach (WaterSampleHotspot candidate in hotspots)
+            {
+                candidate?.SetFocused(candidate == focusedHotspot);
+            }
+            if (focusedHotspot != null)
+            {
+                TrySelectSite(focusedHotspot.SiteId);
+            }
+            reticleText.color = focusedHotspot != null
                 ? new Color(1f, .74f, .30f, 1f)
                 : new Color(.94f, .94f, .88f, .68f);
-            promptText.text = focused
+            promptText.text = focusedHotspot != null
                 ? $"{activeSite.label}\nPress E to inspect the water"
                 : string.Empty;
+        }
+
+        private bool TrySelectSite(string siteId)
+        {
+            if (investigation?.Scenario?.test_sites == null)
+            {
+                return false;
+            }
+            for (int index = 0;
+                 index < investigation.Scenario.test_sites.Length;
+                 index++)
+            {
+                TestSiteDto candidate =
+                    investigation.Scenario.test_sites[index];
+                if (!string.Equals(
+                        candidate.id,
+                        siteId,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                activeSite = candidate;
+                activeSiteIndex = index;
+                int hotspotIndex =
+                    Array.IndexOf(configuredSiteIds, siteId);
+                activeHotspot =
+                    hotspotIndex >= 0 &&
+                    hotspotIndex < hotspots.Length
+                        ? hotspots[hotspotIndex]
+                        : null;
+                return true;
+            }
+            return false;
+        }
+
+        private void UpdateStakeholderFocus()
+        {
+            if (walker?.ViewCamera == null ||
+                stakeholderHotspots.Length == 0)
+            {
+                return;
+            }
+            Camera camera = walker.ViewCamera;
+            Ray ray = camera.ViewportPointToRay(
+                new Vector3(.5f, .5f, 0f));
+            StakeholderHotspot focusedHotspot = null;
+            RaycastHit[] hits = Physics.RaycastAll(
+                ray,
+                6f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Collide);
+            Array.Sort(
+                hits,
+                (left, right) =>
+                    left.distance.CompareTo(right.distance));
+            foreach (RaycastHit hit in hits)
+            {
+                StakeholderHotspot candidate =
+                    hit.collider.GetComponentInParent<
+                        StakeholderHotspot>();
+                if (candidate != null &&
+                    Array.IndexOf(
+                        stakeholderHotspots,
+                        candidate) >= 0 &&
+                    hit.distance <= candidate.InteractionRange)
+                {
+                    focusedHotspot = candidate;
+                    break;
+                }
+            }
+            foreach (StakeholderHotspot candidate in
+                     stakeholderHotspots)
+            {
+                candidate?.SetFocused(
+                    candidate == focusedHotspot);
+            }
+            activeStakeholderHotspot = focusedHotspot;
+            StakeholderDto stakeholder =
+                focusedHotspot == null
+                    ? null
+                    : StakeholderById(
+                        focusedHotspot.StakeholderId);
+            reticleText.color = focusedHotspot != null
+                ? new Color(1f, .74f, .30f, 1f)
+                : new Color(.94f, .94f, .88f, .68f);
+            promptText.text = stakeholder == null
+                ? string.Empty
+                : $"{stakeholder.name} · {stakeholder.role}\n" +
+                  "Press E to begin the interview";
+        }
+
+        private void BeginStakeholderInteraction()
+        {
+            if (activeStakeholderHotspot == null)
+            {
+                return;
+            }
+            InterviewController interviews =
+                FindFirstObjectByType<InterviewController>();
+            if (interviews == null ||
+                !interviews.BeginInterviews())
+            {
+                SetObjective(
+                    "The interview station is still loading.");
+                return;
+            }
+            interviews.SelectStakeholder(
+                activeStakeholderHotspot.StakeholderId);
+            activeStakeholderHotspot.SetFocused(false);
+        }
+
+        private StakeholderDto StakeholderById(string stakeholderId)
+        {
+            StakeholderDto[] stakeholders =
+                investigation?.Scenario?.stakeholders;
+            if (stakeholders == null) return null;
+            foreach (StakeholderDto stakeholder in stakeholders)
+            {
+                if (stakeholder != null &&
+                    string.Equals(
+                        stakeholder.id,
+                        stakeholderId,
+                        StringComparison.Ordinal))
+                {
+                    return stakeholder;
+                }
+            }
+            return null;
+        }
+
+        private bool WorldInputIsBlocked()
+        {
+            RuntimePanelManager manager =
+                FindFirstObjectByType<RuntimePanelManager>();
+            if (manager != null && manager.ActiveStage.HasValue)
+            {
+                return true;
+            }
+            EpisodePresentationController presentation =
+                FindFirstObjectByType<EpisodePresentationController>();
+            return presentation != null &&
+                   presentation.InputBlocked;
         }
 
         private void ShowPredictionPrompt()
@@ -498,14 +838,30 @@ namespace AgriVerse.Client
 
         private void CloseReading()
         {
-            State = Episode3DAlphaState.Complete;
             readingPanel.SetActive(false);
             dialoguePanel.SetActive(false);
-            hotspot.SetFocused(false);
-            SetMovement(true);
+            activeHotspot?.SetFocused(false);
+            bool complete =
+                investigation.RecordedReadingCount >=
+                investigation.Scenario.test_sites.Length;
+            State = complete
+                ? Episode3DAlphaState.Complete
+                : Episode3DAlphaState.Exploring;
             PlayMai("Mai_Idle");
-            SetObjective(
-                "First sample recorded. Continue along the canal to the next test.");
+            if (complete)
+            {
+                SetObjective(
+                    "Investigation complete. Walk to the community meeting points.");
+                SetMovement(true);
+            }
+            else
+            {
+                SetMovement(true);
+                SetObjective(
+                    $"{investigation.RecordedReadingCount} of " +
+                    $"{investigation.Scenario.test_sites.Length} samples recorded. " +
+                    "Continue to the next field station.");
+            }
         }
 
         private void RefreshProgress()
@@ -590,6 +946,10 @@ namespace AgriVerse.Client
             if (walker != null)
             {
                 walker.SetMovementEnabled(enabled);
+                if (enabled)
+                {
+                    walker.CaptureCursor();
+                }
             }
         }
 
@@ -650,9 +1010,10 @@ namespace AgriVerse.Client
                 typeof(Canvas),
                 typeof(CanvasScaler));
             canvasObject.transform.SetParent(transform, false);
+            hudRoot = canvasObject;
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 5000;
+            canvas.sortingOrder = 20;
             CanvasScaler scaler =
                 canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode =
@@ -769,13 +1130,12 @@ namespace AgriVerse.Client
                 new Vector2(.965f, .86f),
                 new Color(.018f, .11f, .12f, .97f));
             notebookPanel = notebook.gameObject;
-            notebookText = Label(
+            notebookText = RuntimeScrollableContent.Create(
                 notebook.transform,
-                font,
-                16,
-                TextAnchor.UpperLeft,
+                "EvidenceEntries",
                 new Vector2(.06f, .06f),
-                new Vector2(.94f, .94f));
+                new Vector2(.94f, .94f),
+                16);
             notebookPanel.SetActive(false);
 
             controlsText = Label(
@@ -916,6 +1276,44 @@ namespace AgriVerse.Client
             ToggleNotebook();
             yield return new WaitForSecondsRealtime(.35f);
             yield return Capture(directory, "05_evidence.png");
+            ToggleNotebook();
+            ContinueAfterReadingForTesting();
+            for (int index = 1;
+                 index < configuredSiteIds.Length;
+                 index++)
+            {
+                SelectConfiguredSiteForTesting(
+                    configuredSiteIds[index]);
+                BeginSiteInteraction();
+                ChoosePrediction(0);
+                BeginCollection();
+                while (State == Episode3DAlphaState.Sampling)
+                {
+                    yield return null;
+                }
+                ContinueAfterReadingForTesting();
+            }
+            InterviewController interviews =
+                FindFirstObjectByType<InterviewController>();
+            if (interviews != null &&
+                interviews.BeginInterviews() &&
+                interviews.Scenario.stakeholders.Length > 0)
+            {
+                StakeholderDto stakeholder =
+                    interviews.Scenario.stakeholders[
+                        interviews.Scenario.stakeholders.Length - 1];
+                interviews.SelectStakeholder(stakeholder.id);
+                yield return new WaitForSecondsRealtime(.8f);
+                EpisodePresentationController presentation =
+                    FindFirstObjectByType<
+                        EpisodePresentationController>();
+                presentation?.DismissGuideForTesting();
+                presentation?.DismissGuideForTesting();
+                yield return new WaitForSecondsRealtime(.35f);
+                yield return Capture(
+                    directory,
+                    "06_interview_selected.png");
+            }
             yield return new WaitForSecondsRealtime(.4f);
             Application.Quit(0);
         }

@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Episode3DWorldConfig
   m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.Episode3DWorldConfig
   scenarioId: vietnam-mekong-salinity
-  arrivalSiteId: upstream
   maiPosition: {x: -0.25, y: 0, z: -36.3}
-  hotspotPosition: {x: -7.35, y: 0.735, z: -14}
-  approachPosition: {x: -4.6, y: 0, z: -16.4}
-  approachHeading: 300
+  siteAnchors:
+  - siteId: upstream
+    hotspotPosition: {x: -7.35, y: 0.735, z: -14}
+    approachPosition: {x: -4.6, y: 0, z: -16.4}
+    approachHeading: 300
+  - siteId: mid
+    hotspotPosition: {x: -7.35, y: 0.735, z: 4}
+    approachPosition: {x: -4.6, y: 0, z: 1.6}
+    approachHeading: 300
+  - siteId: coastal
+    hotspotPosition: {x: -7.35, y: 0.735, z: 22}
+    approachPosition: {x: -4.6, y: 0, z: 19.6}
+    approachHeading: 300
+  stakeholderAnchors:
+  - stakeholderId: farmer
+    position: {x: 10, y: 0.82, z: -5}
+  - stakeholderId: researcher
+    position: {x: 18, y: 0.82, z: -23}
+  - stakeholderId: official
+    position: {x: -4.4, y: 0.82, z: 12}

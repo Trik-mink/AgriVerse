@@ -26,7 +26,7 @@ namespace AgriVerse.Client.Editor
         [MenuItem("AgriVerse/Build/macOS Release")]
         public static void BuildRelease()
         {
-            Build("AgriVerse.app", SampleScenePath);
+            Build("AgriVerse.app", AlphaScenePath);
         }
 
         [MenuItem("AgriVerse/Build/macOS Character Lab")]

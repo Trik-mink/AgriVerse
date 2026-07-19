@@ -120,7 +120,7 @@ namespace AgriVerse.Client
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
 
-            contentText = RuntimeScrollableContent.Create(canvas.transform, "ConsequencesContent", new Vector2(.03f, .1f), new Vector2(.62f, .82f), 13);
+            contentText = RuntimeScrollableContent.Create(canvas.transform, "ConsequencesContent", new Vector2(.03f, .1f), new Vector2(.62f, .82f), 15);
             previousButton = Button(canvas.transform, "PreviousYear", "Previous year");
             Stretch(previousButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.21f, .08f));
             previousButton.onClick.AddListener(PreviousYear);
@@ -191,7 +191,7 @@ namespace AgriVerse.Client
             text.transform.SetParent(parent, false);
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
-            text.color = Color.white;
+            text.color = EpisodeUiFactory.OffWhite;
             text.raycastTarget = false;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             return text;
@@ -202,9 +202,9 @@ namespace AgriVerse.Client
             Button button = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
             button.transform.SetParent(parent, false);
             Image image = button.GetComponent<Image>();
-            image.color = new Color(.4f, .4f, .4f);
+            image.color = EpisodeUiFactory.RiverTeal;
             button.targetGraphic = image;
-            Text text = Text(button.transform, "Label", 13);
+            Text text = Text(button.transform, "Label", 14);
             text.text = label;
             text.alignment = TextAnchor.MiddleCenter;
             Stretch(text.rectTransform, Vector2.zero, Vector2.one);

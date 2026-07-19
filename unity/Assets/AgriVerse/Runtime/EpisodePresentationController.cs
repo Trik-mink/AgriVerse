@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace AgriVerse.Client
         private EpisodeSession session;
         private string selectedAvatarId = string.Empty;
         private bool missionStarted;
+        [SerializeField] private bool showArrivalGuideCues = true;
 
         public bool LandingVisible => view != null && view.LandingVisible;
         public bool GuideVisible => view != null && view.GuideVisible;
@@ -26,6 +28,14 @@ namespace AgriVerse.Client
         public bool CertificateAvailable { get; private set; }
         public bool CertificateVisible =>
             view != null && view.CertificateVisible;
+        public bool MissionStarted => missionStarted;
+        public bool InputBlocked =>
+            view != null &&
+            (view.LandingVisible ||
+             view.GuideVisible ||
+             view.GlossaryVisible ||
+             view.JudgeVisible ||
+             view.CertificateVisible);
         public string GuideTextForTesting => view?.GuideText ?? string.Empty;
         public string GlossaryTextForTesting => view?.GlossaryText ?? string.Empty;
         public string CertificateTextForTesting =>
@@ -42,6 +52,15 @@ namespace AgriVerse.Client
                     investigation.LoadState == InvestigationLoadState.Ready)
                 {
                     ConfigureScenario(investigation.Scenario);
+                    string captureDirectory =
+                        LandingCaptureDirectory(
+                            Environment.GetCommandLineArgs());
+                    if (!string.IsNullOrWhiteSpace(
+                            captureDirectory))
+                    {
+                        yield return CaptureLanding(
+                            captureDirectory);
+                    }
                     yield break;
                 }
                 yield return null;
@@ -128,6 +147,11 @@ namespace AgriVerse.Client
             return BeginMission();
         }
 
+        public void ConfigureFor3D(bool showAuthoredArrivalCues)
+        {
+            showArrivalGuideCues = showAuthoredArrivalCues;
+        }
+
         public void ToggleGlossary()
         {
             if (view == null || !missionStarted) return;
@@ -142,6 +166,14 @@ namespace AgriVerse.Client
         public void RefreshForTesting()
         {
             RefreshPresentationState();
+        }
+
+        public void DismissGuideForTesting()
+        {
+            if (view != null && view.GuideVisible)
+            {
+                DismissGuide();
+            }
         }
 
         public void OpenCertificate()
@@ -183,6 +215,9 @@ namespace AgriVerse.Client
             scenario = source;
             session = EpisodeSession.GetOrCreate();
             session.ConfigureScenario(scenario.id);
+            view.SetLandingLocation(
+                scenario.location?.country,
+                scenario.location?.region);
         }
 
         private void SelectAvatar(string avatarId)
@@ -212,12 +247,16 @@ namespace AgriVerse.Client
             missionStarted = true;
             view.HideLanding();
             RefreshPresentationState();
-            QueueCue(
-                "arrival",
-                SaltLineNarrative.Arrival(session.Progress.PlayerName));
-            QueueCue(
-                "investigation-intro",
-                SaltLineNarrative.InvestigationIntro);
+            if (showArrivalGuideCues)
+            {
+                QueueCue(
+                    "arrival",
+                    SaltLineNarrative.Arrival(
+                        session.Progress.PlayerName));
+                QueueCue(
+                    "investigation-intro",
+                    SaltLineNarrative.InvestigationIntro);
+            }
             return true;
         }
 
@@ -267,6 +306,10 @@ namespace AgriVerse.Client
         {
             if (view == null) return;
             PlanSession plan = PlanSession.GetOrCreate();
+            view.SetJudgeAvailable(
+                missionStarted &&
+                plan.SimulatorResult != null &&
+                !view.JudgeVisible);
             CertificateAvailable =
                 missionStarted &&
                 !string.IsNullOrWhiteSpace(plan.PolicyBriefResultJson);
@@ -356,6 +399,20 @@ namespace AgriVerse.Client
                     "return-home",
                     SaltLineNarrative.Ending(session.Progress.PlayerName));
             }
+            else
+            {
+                RuntimePanelManager manager =
+                    FindFirstObjectByType<RuntimePanelManager>();
+                manager?.Clear();
+                Episode3DAlphaController world =
+                    FindFirstObjectByType<
+                        Episode3DAlphaController>();
+                world?.BeginFreeExploration();
+                QueueCue(
+                    "stay-another-season",
+                    SaltLineNarrative.Ending(
+                        session.Progress.PlayerName));
+            }
         }
 
         private static string JoinNonEmpty(string first, string second)
@@ -363,6 +420,39 @@ namespace AgriVerse.Client
             if (string.IsNullOrWhiteSpace(first)) return second ?? string.Empty;
             if (string.IsNullOrWhiteSpace(second)) return first;
             return first + ", " + second;
+        }
+
+        private static string LandingCaptureDirectory(
+            string[] arguments)
+        {
+            if (arguments == null) return null;
+            for (int index = 0;
+                 index < arguments.Length - 1;
+                 index++)
+            {
+                if (string.Equals(
+                        arguments[index],
+                        "-agriverse-landing-capture-dir",
+                        StringComparison.Ordinal))
+                {
+                    return arguments[index + 1];
+                }
+            }
+            return null;
+        }
+
+        private static IEnumerator CaptureLanding(
+            string directory)
+        {
+            Directory.CreateDirectory(directory);
+            yield return new WaitForSecondsRealtime(1.1f);
+            yield return new WaitForEndOfFrame();
+            ScreenCapture.CaptureScreenshot(
+                Path.Combine(
+                    directory,
+                    "00_globe_identity.png"));
+            yield return new WaitForSecondsRealtime(.5f);
+            Application.Quit(0);
         }
     }
 }

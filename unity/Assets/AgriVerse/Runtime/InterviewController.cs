@@ -32,6 +32,8 @@ namespace AgriVerse.Client
     {
         [SerializeField] private string editorApiBaseUrl = "http://localhost:8787";
         [SerializeField] private string webApiBaseUrl = "http://localhost:8787";
+        [SerializeField] private bool createRuntimeMarkers = true;
+        [SerializeField] private bool autoActivate = true;
 
         private ScenarioDto scenario;
         private InterviewNotebookSession notebookSession;
@@ -61,6 +63,8 @@ namespace AgriVerse.Client
         public ScenarioDto Scenario => scenario;
         public int MarkerCount => markers.Count;
         public bool IsBusy => busy;
+        public bool CreatesRuntimeMarkers => createRuntimeMarkers;
+        public bool AutoActivates => autoActivate;
         public bool InterviewsVisible => RuntimePanelManager.GetOrCreate().IsShowing(RuntimeActivityStage.Interviews);
         public bool PlanUnlocked => scenario != null && notebookSession?.Notebook != null &&
                                   notebookSession.Notebook.AreAllStakeholdersInterviewed(scenario.stakeholders);
@@ -72,7 +76,10 @@ namespace AgriVerse.Client
 
         private void Update()
         {
-            if (LoadState == InvestigationLoadState.Ready && !InterviewsVisible && !planningHandoffCompleted)
+            if (autoActivate &&
+                LoadState == InvestigationLoadState.Ready &&
+                !InterviewsVisible &&
+                !planningHandoffCompleted)
             {
                 if (InvestigationComplete()) ActivateInterviewStage();
                 return;
@@ -107,7 +114,10 @@ namespace AgriVerse.Client
             notebookSession.ConfigureScenario(scenario.id);
             interviewStage = new GameObject("InterviewStage");
             interviewStage.transform.SetParent(transform, false);
-            CreateMarkers();
+            if (createRuntimeMarkers)
+            {
+                CreateMarkers();
+            }
             CreateInterface();
             RuntimePanelManager.GetOrCreate().Register(RuntimeActivityStage.Interviews, interviewStage);
             LoadState = InvestigationLoadState.Ready;
@@ -178,6 +188,41 @@ namespace AgriVerse.Client
         {
             editorApiBaseUrl = editorBaseUrl;
             webApiBaseUrl = webBaseUrl;
+        }
+
+        public void ConfigurePresentation(
+            bool createMarkers,
+            bool activateAutomatically)
+        {
+            createRuntimeMarkers = createMarkers;
+            autoActivate = activateAutomatically;
+        }
+
+        public bool BeginInterviews()
+        {
+            if (LoadState != InvestigationLoadState.Ready ||
+                planningHandoffCompleted ||
+                !InvestigationComplete())
+            {
+                return false;
+            }
+            ActivateInterviewStage();
+            return true;
+        }
+
+        public void ReturnToField()
+        {
+            if (busy || PlanUnlocked || autoActivate)
+            {
+                return;
+            }
+            AnGiangRealitySpikeController spike =
+                FindAnyObjectByType<AnGiangRealitySpikeController>();
+            if (spike != null)
+            {
+                spike.SetCinematicInterviewActive(false);
+            }
+            RuntimePanelManager.GetOrCreate().Clear();
         }
 
         private IEnumerator SendQuestion(StakeholderDto stakeholder, string question)
@@ -255,7 +300,14 @@ namespace AgriVerse.Client
             EnsureInputSystemEventSystem();
             presentation = new GameObject("CinematicInterviewPresentation").AddComponent<CinematicInterviewPresentation>();
             presentation.transform.SetParent(interviewStage.transform, false);
-            presentation.Build(interviewStage.transform, scenario, SelectStakeholder, AskSelectedStakeholder, RetryLastQuestion, null);
+            presentation.Build(
+                interviewStage.transform,
+                scenario,
+                SelectStakeholder,
+                AskSelectedStakeholder,
+                RetryLastQuestion,
+                null,
+                autoActivate ? null : ReturnToField);
             questionInput = presentation.QuestionInput;
             portrait = presentation.SelectedPortrait;
             portraitBadge = presentation.PortraitFallback;

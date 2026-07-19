@@ -38,7 +38,7 @@ namespace AgriVerse.Client.Tests
         }
 
         [Test]
-        public void AlphaSceneReusesWorldMaiAndInvestigationWithoutLegacyMarkers()
+        public void AlphaSceneReusesWorldAndCompleteLoopWithoutLegacyMarkers()
         {
             Scene scene = EditorSceneManager.OpenScene(
                 ScenePath,
@@ -51,28 +51,68 @@ namespace AgriVerse.Client.Tests
                     FindInScene<InvestigationController>(scene);
                 FirstPersonWalker walker =
                     FindInScene<FirstPersonWalker>(scene);
-                WaterSampleHotspot hotspot =
-                    FindInScene<WaterSampleHotspot>(scene);
+                WaterSampleHotspot[] hotspots =
+                    FindAllInScene<WaterSampleHotspot>(scene);
+                StakeholderHotspot[] stakeholderHotspots =
+                    FindAllInScene<StakeholderHotspot>(scene);
                 MaiGuideController mai =
                     FindInScene<MaiGuideController>(scene);
+                InterviewController interviews =
+                    FindInScene<InterviewController>(scene);
 
                 Assert.That(alpha, Is.Not.Null);
                 Episode3DWorldConfig config =
                     AssetDatabase.LoadAssetAtPath<
                         Episode3DWorldConfig>(ConfigPath);
                 Assert.That(config, Is.Not.Null);
-                Assert.That(config.ArrivalSiteId, Is.Not.Empty);
+                Assert.That(config.SiteAnchors, Has.Length.EqualTo(3));
                 Assert.That(
-                    alpha.ConfiguredSiteId,
-                    Is.EqualTo(config.ArrivalSiteId));
+                    config.StakeholderAnchors,
+                    Has.Length.EqualTo(3));
+                Assert.That(
+                    config.SiteAnchors.Select(anchor => anchor.SiteId),
+                    Is.Unique);
+                Assert.That(
+                    alpha.ConfiguredSiteCount,
+                    Is.EqualTo(config.SiteAnchors.Length));
+                Assert.That(
+                    alpha.ConfiguredStakeholderCount,
+                    Is.EqualTo(
+                        config.StakeholderAnchors.Length));
                 Assert.That(investigation, Is.Not.Null);
                 Assert.That(investigation.CreatesRuntimeUi, Is.False);
                 Assert.That(investigation.CreatesRuntimeMarkers, Is.False);
-                Assert.That(walker, Is.Not.Null);
-                Assert.That(hotspot, Is.Not.Null);
+                Assert.That(interviews, Is.Not.Null);
+                Assert.That(interviews.CreatesRuntimeMarkers, Is.False);
+                Assert.That(interviews.AutoActivates, Is.False);
                 Assert.That(
-                    hotspot.GetComponentInChildren<MeshFilter>(true),
+                    FindInScene<PlanController>(scene),
                     Is.Not.Null);
+                Assert.That(
+                    FindInScene<ConsequencesController>(scene),
+                    Is.Not.Null);
+                Assert.That(
+                    FindInScene<FeedbackController>(scene),
+                    Is.Not.Null);
+                Assert.That(
+                    FindInScene<PolicyBriefController>(scene),
+                    Is.Not.Null);
+                Assert.That(
+                    FindInScene<EpisodePresentationController>(scene),
+                    Is.Not.Null);
+                Assert.That(
+                    FindInScene<Episode3DFutureWalkController>(scene),
+                    Is.Not.Null);
+                Assert.That(walker, Is.Not.Null);
+                Assert.That(hotspots, Has.Length.EqualTo(3));
+                Assert.That(
+                    stakeholderHotspots,
+                    Has.Length.EqualTo(3));
+                Assert.That(
+                    hotspots.All(hotspot =>
+                        hotspot.GetComponentInChildren<MeshFilter>(true) !=
+                        null),
+                    Is.True);
                 Assert.That(mai, Is.Not.Null);
                 Assert.That(mai.Animator, Is.Not.Null);
                 Assert.That(mai.Animator.avatar.isHuman, Is.True);
@@ -111,5 +151,12 @@ namespace AgriVerse.Client.Tests
             }
             return null;
         }
+
+        private static T[] FindAllInScene<T>(Scene scene)
+            where T : Component =>
+            scene.GetRootGameObjects()
+                .SelectMany(root =>
+                    root.GetComponentsInChildren<T>(true))
+                .ToArray();
     }
 }

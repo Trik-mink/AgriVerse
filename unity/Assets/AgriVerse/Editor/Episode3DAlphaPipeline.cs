@@ -77,11 +77,41 @@ namespace AgriVerse.Client.Editor
                 .026f,
                 20);
 
-            WaterSampleHotspot hotspot = CreateHotspot(
-                scene,
-                ringMesh,
-                ringMaterial,
-                config.HotspotPosition);
+            Episode3DSiteAnchor[] anchors =
+                config.SiteAnchors;
+            if (anchors.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "Episode 3D world config has no site anchors.");
+            }
+            WaterSampleHotspot[] hotspots =
+                new WaterSampleHotspot[anchors.Length];
+            for (int index = 0; index < anchors.Length; index++)
+            {
+                hotspots[index] = CreateHotspot(
+                    scene,
+                    ringMesh,
+                    ringMaterial,
+                    anchors[index].HotspotPosition,
+                    anchors[index].SiteId);
+            }
+            Episode3DStakeholderAnchor[] stakeholderAnchors =
+                config.StakeholderAnchors;
+            StakeholderHotspot[] stakeholderHotspots =
+                new StakeholderHotspot[
+                    stakeholderAnchors.Length];
+            for (int index = 0;
+                 index < stakeholderAnchors.Length;
+                 index++)
+            {
+                stakeholderHotspots[index] =
+                    CreateStakeholderHotspot(
+                        scene,
+                        ringMesh,
+                        ringMaterial,
+                        stakeholderAnchors[index].Position,
+                        stakeholderAnchors[index].StakeholderId);
+            }
             Animator maiAnimator = CreateMai(
                 scene,
                 terrain,
@@ -105,25 +135,53 @@ namespace AgriVerse.Client.Editor
             investigation.ConfigurePresentation(
                 createUi: false,
                 createMarkers: false);
+            InterviewController interviews =
+                alphaRoot.AddComponent<InterviewController>();
+            interviews.ConfigurePresentation(
+                createMarkers: false,
+                activateAutomatically: false);
+            alphaRoot.AddComponent<PlanController>();
+            alphaRoot.AddComponent<ConsequencesController>();
+            alphaRoot.AddComponent<FeedbackController>();
+            alphaRoot.AddComponent<PolicyBriefController>();
+            EpisodePresentationController episodePresentation =
+                alphaRoot.AddComponent<
+                    EpisodePresentationController>();
+            episodePresentation.ConfigureFor3D(
+                showAuthoredArrivalCues: false);
+            Episode3DFutureWalkController futureWalk =
+                alphaRoot.AddComponent<
+                    Episode3DFutureWalkController>();
+            futureWalk.Configure(
+                scene.GetRootGameObjects()
+                    .SelectMany(root =>
+                        root.GetComponentsInChildren<
+                            InstancedVegetationField>(true))
+                    .ToArray());
             Episode3DAlphaController alpha =
                 alphaRoot.AddComponent<Episode3DAlphaController>();
 
             Vector3 approach = GroundPosition(
                 terrain,
-                config.ApproachPosition);
+                anchors[0].ApproachPosition);
             alpha.Configure(
                 investigation,
                 walker,
-                hotspot,
-                config.ArrivalSiteId,
+                hotspots,
+                anchors.Select(anchor => anchor.SiteId).ToArray(),
                 maiAnimator,
                 vial,
                 fill,
                 approach,
-                config.ApproachHeading,
+                anchors[0].ApproachHeading,
                 LoadClip("WaterScoop_01.wav"),
                 LoadClip("VialHandle_01.wav"),
                 LoadClip("VialCap_01.wav"));
+            alpha.ConfigureStakeholders(
+                stakeholderHotspots,
+                stakeholderAnchors
+                    .Select(anchor => anchor.StakeholderId)
+                    .ToArray());
 
             EditorSceneManager.SaveScene(scene, AlphaScene);
             AssetDatabase.SaveAssets();
@@ -137,10 +195,11 @@ namespace AgriVerse.Client.Editor
             Scene scene,
             Mesh mesh,
             Material material,
-            Vector3 position)
+            Vector3 position,
+            string siteId)
         {
             GameObject root = new GameObject(
-                "WaterSampleHotspot",
+                "WaterSampleHotspot_" + siteId,
                 typeof(SphereCollider),
                 typeof(WaterSampleHotspot));
             SceneManager.MoveGameObjectToScene(root, scene);
@@ -168,6 +227,50 @@ namespace AgriVerse.Client.Editor
             WaterSampleHotspot hotspot =
                 root.GetComponent<WaterSampleHotspot>();
             hotspot.Configure(renderer, 3.8f);
+            return hotspot;
+        }
+
+        private static StakeholderHotspot CreateStakeholderHotspot(
+            Scene scene,
+            Mesh mesh,
+            Material material,
+            Vector3 position,
+            string stakeholderId)
+        {
+            GameObject root = new GameObject(
+                "StakeholderHotspot_" + stakeholderId,
+                typeof(SphereCollider),
+                typeof(StakeholderHotspot));
+            SceneManager.MoveGameObjectToScene(root, scene);
+            root.layer = 0;
+            root.transform.position = position;
+            SphereCollider collider =
+                root.GetComponent<SphereCollider>();
+            collider.center = new Vector3(0f, .65f, 0f);
+            collider.radius = .86f;
+            collider.isTrigger = true;
+
+            GameObject ring = new GameObject(
+                "MeetingFocusRing",
+                typeof(MeshFilter),
+                typeof(MeshRenderer));
+            ring.layer = 0;
+            ring.transform.SetParent(root.transform, false);
+            ring.transform.localPosition =
+                new Vector3(0f, .025f, 0f);
+            ring.transform.localScale =
+                Vector3.one * .82f;
+            ring.GetComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer =
+                ring.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode =
+                ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+
+            StakeholderHotspot hotspot =
+                root.GetComponent<StakeholderHotspot>();
+            hotspot.Configure(renderer, 4.2f);
             return hotspot;
         }
 
@@ -513,11 +616,37 @@ namespace AgriVerse.Client.Editor
                     Episode3DWorldConfig>();
             config.Configure(
                 "vietnam-mekong-salinity",
-                "upstream",
                 new Vector3(-.25f, 0f, -36.3f),
-                new Vector3(-7.35f, .735f, -14f),
-                new Vector3(-4.6f, 0f, -16.4f),
-                300f);
+                new[]
+                {
+                    new Episode3DSiteAnchor(
+                        "upstream",
+                        new Vector3(-7.35f, .735f, -14f),
+                        new Vector3(-4.6f, 0f, -16.4f),
+                        300f),
+                    new Episode3DSiteAnchor(
+                        "mid",
+                        new Vector3(-7.35f, .735f, 4f),
+                        new Vector3(-4.6f, 0f, 1.6f),
+                        300f),
+                    new Episode3DSiteAnchor(
+                        "coastal",
+                        new Vector3(-7.35f, .735f, 22f),
+                        new Vector3(-4.6f, 0f, 19.6f),
+                        300f)
+                },
+                new[]
+                {
+                    new Episode3DStakeholderAnchor(
+                        "farmer",
+                        new Vector3(10f, .82f, -5f)),
+                    new Episode3DStakeholderAnchor(
+                        "researcher",
+                        new Vector3(18f, .82f, -23f)),
+                    new Episode3DStakeholderAnchor(
+                        "official",
+                        new Vector3(-4.4f, .82f, 12f))
+                });
             AssetDatabase.CreateAsset(config, ConfigPath);
             return config;
         }

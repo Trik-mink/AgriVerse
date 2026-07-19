@@ -22,6 +22,7 @@ namespace AgriVerse.Client
         private Action ask;
         private Action retry;
         private Action toggleEvidence;
+        private Action returnToField;
         private GameObject selectionArea;
         private GameObject identityArea;
         private GameObject dialogueArea;
@@ -40,6 +41,7 @@ namespace AgriVerse.Client
         private Button askButton;
         private Button retryButton;
         private Button drawerContinueButton;
+        private Button returnToFieldButton;
         private Text askLabel;
         private RawImage selectedPortrait;
         private bool selectedShowing;
@@ -51,13 +53,14 @@ namespace AgriVerse.Client
         public bool EvidenceVisible => evidenceDrawer != null && evidenceDrawer.activeSelf;
         public bool RetryVisible => retryButton != null && retryButton.gameObject.activeSelf;
 
-        public void Build(Transform parent, ScenarioDto source, Action<string> onSelect, Action onAsk, Action onRetry, Action onToggleEvidence)
+        public void Build(Transform parent, ScenarioDto source, Action<string> onSelect, Action onAsk, Action onRetry, Action onToggleEvidence, Action onReturnToField = null)
         {
             scenario = source;
             select = onSelect;
             ask = onAsk;
             retry = onRetry;
             toggleEvidence = onToggleEvidence;
+            returnToField = onReturnToField;
             GameObject canvasObject = new GameObject("CinematicInterviewCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvasObject.transform.SetParent(parent, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>();
@@ -121,6 +124,8 @@ namespace AgriVerse.Client
             retryButton.gameObject.SetActive(canRetry);
             retryButton.interactable = !busy && canRetry;
             drawerContinueButton.gameObject.SetActive(planUnlocked);
+            returnToFieldButton.gameObject.SetActive(
+                returnToField != null && !busy && !planUnlocked);
         }
 
         private static string StatusForPresentation(string value, bool busy, bool planUnlocked)
@@ -213,6 +218,20 @@ namespace AgriVerse.Client
             retryButton = Button(dialogueArea.transform, "RetryAction", "RETRY", RiverTeal, 11);
             Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.75f, .285f), new Vector2(.95f, .385f));
             retryButton.onClick.AddListener(() => retry?.Invoke());
+
+            returnToFieldButton = Button(
+                root,
+                "ReturnToField",
+                "RETURN TO FIELD",
+                RiverTeal,
+                12);
+            Stretch(
+                returnToFieldButton.GetComponent<RectTransform>(),
+                new Vector2(.82f, .055f),
+                new Vector2(.965f, .115f));
+            returnToFieldButton.onClick.AddListener(
+                () => returnToField?.Invoke());
+            returnToFieldButton.gameObject.SetActive(false);
         }
 
         private void BuildEvidenceDrawer(Transform root)

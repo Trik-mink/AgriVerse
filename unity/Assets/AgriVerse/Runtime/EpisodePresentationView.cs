@@ -24,6 +24,9 @@ namespace AgriVerse.Client
         private Text judgeText;
         private Text certificateText;
         private Text landingError;
+        private Text landingCountry;
+        private Text landingRegion;
+        private Texture2D globeTexture;
         private Action beginMission;
         private Action dismissGuide;
         private Action toggleGlossary;
@@ -100,12 +103,29 @@ namespace AgriVerse.Client
         {
             landing.SetActive(false);
             glossaryButton.gameObject.SetActive(true);
-            judgeButton.gameObject.SetActive(true);
+            judgeButton.gameObject.SetActive(false);
         }
 
         internal void ShowLandingError(string value)
         {
             landingError.text = value ?? string.Empty;
+        }
+
+        internal void SetLandingLocation(
+            string country,
+            string region)
+        {
+            if (landingCountry != null)
+            {
+                landingCountry.text =
+                    string.IsNullOrWhiteSpace(country)
+                        ? "FIELD EPISODE"
+                        : country.ToUpperInvariant();
+            }
+            if (landingRegion != null)
+            {
+                landingRegion.text = region ?? string.Empty;
+            }
         }
 
         internal void ShowGuide(string value)
@@ -133,7 +153,16 @@ namespace AgriVerse.Client
         internal void SetJudgeVisible(bool visible)
         {
             judge.SetActive(visible);
-            judgeButton.gameObject.SetActive(!visible && !LandingVisible);
+            if (visible)
+            {
+                judgeButton.gameObject.SetActive(false);
+            }
+        }
+
+        internal void SetJudgeAvailable(bool available)
+        {
+            judgeButton.gameObject.SetActive(
+                available && !LandingVisible && !JudgeVisible);
         }
 
         internal void SetCertificateAvailable(bool available)
@@ -258,6 +287,143 @@ namespace AgriVerse.Client
                 new Vector2(.07f, .04f),
                 new Vector2(.93f, .12f));
             start.onClick.AddListener(() => beginMission?.Invoke());
+
+            BuildGlobe(landing.transform);
+        }
+
+        private void BuildGlobe(Transform root)
+        {
+            Text eyebrow = EpisodeUiFactory.Text(
+                root,
+                "GlobeEyebrow",
+                14,
+                TextAnchor.MiddleCenter,
+                EpisodeUiFactory.Amber);
+            eyebrow.text = "AGRIVERSE FIELD NETWORK";
+            EpisodeUiFactory.Stretch(
+                eyebrow.rectTransform,
+                new Vector2(.62f, .82f),
+                new Vector2(.94f, .88f));
+
+            RawImage globe = new GameObject(
+                "ArrivalGlobe",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(RawImage)).GetComponent<RawImage>();
+            globe.transform.SetParent(root, false);
+            globeTexture = CreateGlobeTexture(256);
+            globe.texture = globeTexture;
+            globe.color = Color.white;
+            globe.raycastTarget = false;
+            EpisodeUiFactory.Stretch(
+                globe.rectTransform,
+                new Vector2(.64f, .29f),
+                new Vector2(.92f, .79f));
+
+            landingCountry = EpisodeUiFactory.Text(
+                root,
+                "LandingCountry",
+                25,
+                TextAnchor.MiddleCenter,
+                EpisodeUiFactory.OffWhite);
+            landingCountry.text = "FIELD EPISODE";
+            EpisodeUiFactory.Stretch(
+                landingCountry.rectTransform,
+                new Vector2(.60f, .20f),
+                new Vector2(.96f, .28f));
+            landingRegion = EpisodeUiFactory.Text(
+                root,
+                "LandingRegion",
+                16,
+                TextAnchor.UpperCenter,
+                EpisodeUiFactory.Amber);
+            EpisodeUiFactory.Stretch(
+                landingRegion.rectTransform,
+                new Vector2(.60f, .13f),
+                new Vector2(.96f, .21f));
+
+            Text future = EpisodeUiFactory.Text(
+                root,
+                "FutureEpisodes",
+                13,
+                TextAnchor.MiddleCenter,
+                new Color(.86f, .85f, .78f, .72f));
+            future.text = "More regions unlock in future field episodes";
+            EpisodeUiFactory.Stretch(
+                future.rectTransform,
+                new Vector2(.60f, .06f),
+                new Vector2(.96f, .12f));
+        }
+
+        private static Texture2D CreateGlobeTexture(int size)
+        {
+            var texture = new Texture2D(
+                size,
+                size,
+                TextureFormat.RGBA32,
+                false,
+                true)
+            {
+                name = "AgriVerseProceduralGlobe",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                float ny = (y + .5f) / size * 2f - 1f;
+                for (int x = 0; x < size; x++)
+                {
+                    float nx = (x + .5f) / size * 2f - 1f;
+                    float radiusSquared = nx * nx + ny * ny;
+                    int index = y * size + x;
+                    if (radiusSquared > 1f)
+                    {
+                        pixels[index] =
+                            new Color32(0, 0, 0, 0);
+                        continue;
+                    }
+                    float z = Mathf.Sqrt(1f - radiusSquared);
+                    float longitude =
+                        Mathf.Atan2(nx, z) / Mathf.PI;
+                    float latitude =
+                        Mathf.Asin(ny) / Mathf.PI;
+                    float grid =
+                        Mathf.Min(
+                            Mathf.Abs(
+                                Mathf.Sin(longitude * Mathf.PI * 12f)),
+                            Mathf.Abs(
+                                Mathf.Sin(latitude * Mathf.PI * 12f)));
+                    float light = Mathf.Clamp01(
+                        .34f + z * .58f - nx * .08f + ny * .06f);
+                    Color baseColor = Color.Lerp(
+                        new Color(.018f, .10f, .12f, 1f),
+                        new Color(.05f, .34f, .35f, 1f),
+                        light);
+                    if (grid < .045f)
+                    {
+                        baseColor = Color.Lerp(
+                            baseColor,
+                            new Color(.92f, .61f, .23f, 1f),
+                            .38f);
+                    }
+                    float edge =
+                        Mathf.SmoothStep(0f, .08f, 1f - radiusSquared);
+                    baseColor.a = edge;
+                    pixels[index] = baseColor;
+                }
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return texture;
+        }
+
+        private void OnDestroy()
+        {
+            if (globeTexture != null)
+            {
+                Destroy(globeTexture);
+            }
         }
 
         private void BuildAvatarChoices(Transform card)
@@ -422,8 +588,8 @@ namespace AgriVerse.Client
                 12);
             EpisodeUiFactory.Stretch(
                 judgeButton.GetComponent<RectTransform>(),
-                new Vector2(.015f, .80f),
-                new Vector2(.125f, .852f));
+                new Vector2(.67f, .92f),
+                new Vector2(.79f, .972f));
             judgeButton.onClick.AddListener(() => toggleJudge?.Invoke());
             judgeButton.gameObject.SetActive(false);
 
@@ -486,8 +652,8 @@ namespace AgriVerse.Client
                 12);
             EpisodeUiFactory.Stretch(
                 certificateButton.GetComponent<RectTransform>(),
-                new Vector2(.015f, .735f),
-                new Vector2(.14f, .787f));
+                new Vector2(.80f, .92f),
+                new Vector2(.94f, .972f));
             certificateButton.onClick.AddListener(
                 () => openCertificate?.Invoke());
             certificateButton.gameObject.SetActive(false);

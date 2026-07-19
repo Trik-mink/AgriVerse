@@ -150,6 +150,39 @@ namespace AgriVerse.Client.Tests
             Object.DestroyImmediate(root);
         }
 
+        [Test]
+        public void FutureWalkVisualStateUsesAuthoritativeYearWithoutChangingDisplayTokens()
+        {
+            var year = new FutureYearPresentation
+            {
+                Year = "3",
+                SalinityValue = "4.2500",
+                SalinityUnit = "g/L",
+                IncomeScore = "61",
+                SustainabilityScore = "72",
+                CostLevel = "medium",
+                Narrative = "Authoritative narrative",
+                EvidenceSourceIds = new[] { "S2", "S7" }
+            };
+            var metric = new KeyMetricDto
+            {
+                unit = "g/L",
+                direction_of_harm = "higher",
+                danger_threshold =
+                    new MetricThresholdDto { value = 4f }
+            };
+
+            FutureWalkVisualState state =
+                FutureWalkVisualMapper.Map(year, metric);
+
+            Assert.That(state.Year, Is.EqualTo("3"));
+            Assert.That(state.SalinityValue, Is.EqualTo("4.2500"));
+            Assert.That(state.SalinityUnit, Is.EqualTo("g/L"));
+            Assert.That(state.EvidenceSourceIds, Is.EqualTo(
+                new[] { "S2", "S7" }));
+            Assert.That(state.FieldDensity, Is.InRange(.45f, 1f));
+        }
+
         private static string SimulatorJson()
         {
             var years = new StringBuilder();

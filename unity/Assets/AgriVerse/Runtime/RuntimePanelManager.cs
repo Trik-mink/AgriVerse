@@ -18,6 +18,7 @@ namespace AgriVerse.Client
         private readonly Dictionary<RuntimeActivityStage, GameObject> panels = new Dictionary<RuntimeActivityStage, GameObject>();
         private Text instructionText;
         private Canvas instructionCanvas;
+        private bool cinematicMode;
 
         public RuntimeActivityStage? ActiveStage { get; private set; }
         public int ActivePanelCount
@@ -31,6 +32,9 @@ namespace AgriVerse.Client
         }
 
         public int ActiveInstructionTextCount => instructionText != null && instructionText.gameObject.activeInHierarchy ? 1 : 0;
+        public bool InstructionCanvasVisible =>
+            instructionCanvas != null &&
+            instructionCanvas.enabled;
 
         /// <summary>Every active long-form content region must use the shared scroll contract.</summary>
         public int ActiveScrollableContentCount => FindObjectsByType<ScrollRect>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
@@ -65,10 +69,25 @@ namespace AgriVerse.Client
         /// <summary>The cinematic interview shell owns its own compact HUD and status slot.</summary>
         public void SetCinematicMode(bool active)
         {
+            cinematicMode = active;
             if (instructionCanvas != null) instructionCanvas.enabled = !active;
         }
 
         public bool IsShowing(RuntimeActivityStage stage) => ActiveStage.HasValue && ActiveStage.Value == stage;
+
+        public void Clear()
+        {
+            ActiveStage = null;
+            foreach (GameObject panel in panels.Values)
+            {
+                if (panel != null) panel.SetActive(false);
+            }
+            if (instructionCanvas != null)
+            {
+                instructionCanvas.enabled = false;
+            }
+            cinematicMode = false;
+        }
 
         public void SetInstruction(string value)
         {
@@ -83,12 +102,28 @@ namespace AgriVerse.Client
             canvasObject.transform.SetParent(transform, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 18;
             instructionCanvas = canvas;
+            instructionCanvas.enabled = !cinematicMode;
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
+            Image instructionCard = new GameObject(
+                "RuntimeInstructionCard",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image)).GetComponent<Image>();
+            instructionCard.transform.SetParent(canvas.transform, false);
+            instructionCard.color =
+                new Color(.018f, .075f, .08f, .90f);
+            instructionCard.raycastTarget = false;
+            RectTransform cardRect = instructionCard.rectTransform;
+            cardRect.anchorMin = new Vector2(.025f, .85f);
+            cardRect.anchorMax = new Vector2(.64f, .92f);
+            cardRect.offsetMin = Vector2.zero;
+            cardRect.offsetMax = Vector2.zero;
             instructionText = new GameObject("RuntimeInstruction", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
-            instructionText.transform.SetParent(canvas.transform, false);
+            instructionText.transform.SetParent(instructionCard.transform, false);
             instructionText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             instructionText.fontSize = 18;
             instructionText.color = Color.white;
@@ -96,8 +131,8 @@ namespace AgriVerse.Client
             instructionText.verticalOverflow = VerticalWrapMode.Overflow;
             instructionText.raycastTarget = false;
             RectTransform rect = instructionText.rectTransform;
-            rect.anchorMin = new Vector2(.03f, .86f);
-            rect.anchorMax = new Vector2(.97f, .91f);
+            rect.anchorMin = new Vector2(.035f, .08f);
+            rect.anchorMax = new Vector2(.965f, .92f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
         }
