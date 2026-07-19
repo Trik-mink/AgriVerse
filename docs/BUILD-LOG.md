@@ -332,3 +332,8 @@ Format per entry:
 - What Codex did: Integrated three licensed Humanoid stakeholders, physical field stations and planning table, cinematic focus/gesture states, a tabbed Field Journal, accessibility controls, and a compact environment-first Future Walk into the complete 3D journey.
 - Human decision: Required a first-person unseen player, text-first conversations with body gestures, a premium field-journal interface, and completion of the full loop before final polish.
 - GPT-5.6 technique used: Kept live role-separated dialogue and every validated structured output authoritative while changing only presentation, navigation, and scenario-configured world placement.
+
+### 2026-07-19 - AgriVerse macOS release candidate
+- What Codex did: Completed the live arrival-to-brief regression, universal fullscreen Metal build, 1280x720 and 1920x1080 visual checks, performance/error scan, asset-hash/LFS/attribution audit, and native AgriVerse bundle identity.
+- Human decision: Required one complete release candidate after the full loop, with no avatar body or voice pipeline and no intermediate visual gates.
+- GPT-5.6 technique used: Verified all four real runtime systems live once for completion while using deterministic tests for repeated contract, citation, fallback, and presentation checks.

@@ -5,10 +5,10 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Release-candidate hardening - the complete standalone journey now uses licensed Humanoid
-stakeholders, physical field stations, a field-journal interface, a planning-table handoff,
-and the NASA globe while retaining every approved fallback. Final live-loop, missing-asset,
-resolution, attribution, and release-build checks are in progress.
+Human Gate C - the complete premium standalone journey is built and verified from globe and
+name entry through the revised future, policy brief, named certificate, and ending choice.
+The universal fullscreen macOS release candidate, screenshots, performance evidence,
+attribution audit, and final human-verification script are ready for approval.
 
 ## Completed tasks
 
@@ -66,6 +66,9 @@ resolution, attribution, and release-build checks are in progress.
   reflection stations without intercepting learning raycasts.
 - Consequences and original-versus-revised Future Walk presentation now preserve most of the
   3D landscape while exact canonical values remain scrollable and unchanged.
+- The macOS bundle now identifies itself as `AgriVerse` with application identifier
+  `org.agriverse.episode1`; the release helper restores developer project settings after
+  applying fullscreen/native-resolution release metadata.
 
 ## Current blockers
 
@@ -183,6 +186,35 @@ footstep rows remain documented below without blocking the current build.
   five-second window.
 - macOS build: non-development universal release build succeeded at
   `unity/Builds/macOS/AgriVerse.app` (approximately 277 MiB on disk).
+- Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
+  API contracts, ProjectSettings, and tags remained unchanged.
+
+### Final premium macOS release candidate
+
+- Unity EditMode: 73 passed, 0 failed, 1 existing connectivity test ignored.
+- Focused 3D PlayMode: 3 passed, covering all three investigations, Field Journal/world
+  return, stakeholder handoff, original/revised Future Walk, and exact result preservation.
+- Live complete loop: passed in 160.4 seconds against the real Express/OpenAI service,
+  including three role-separated stakeholder replies, initial simulation, grounded
+  feedback, editable revision, replacement simulation, second feedback, and policy brief.
+- Backend deterministic suite: 22 passed across sanitized scenario/CORS, validation,
+  journey state, prompt loading, structured contracts, and invalid-input boundaries.
+- Release build: succeeded at `unity/Builds/macOS/AgriVerse.app` (289,679,450 bytes,
+  universal arm64/x86_64, non-development, fullscreen-native configuration).
+- Bundle audit: product/executable name `AgriVerse`, identifier
+  `org.agriverse.episode1`, version `0.1.0`, macOS minimum `12.0`, ad-hoc local signature.
+- Metal visual checks: clean 1280x720 field/interview/Field Journal captures and clean
+  1920x1080 globe/name-entry capture; no runtime, shader, rendering, missing-reference, or
+  magenta-material errors.
+- Performance: Apple M4 Metal reported 198.3 average FPS over the instrumented five-second
+  1280x720 sample.
+- Asset audit: premium source SHA-256 manifest passed, Git LFS fsck passed, source FBXs
+  remained byte-identical, and Tripo, Poly Haven, CC0 audio, NASA, GEBCO, ESA/Gaia/DPAC,
+  and photographic acknowledgements remain preserved.
+- Fallback boundary: missing photo retains the procedural view; stakeholder presentation
+  retains portraits/interaction rings; optional field dressing is non-blocking; missing
+  globe assets retain the procedural globe. GPT-backed mechanics expose readable retry
+  states but require the existing backend and are not replaced by fabricated offline scores.
 - Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
   API contracts, ProjectSettings, and tags remained unchanged.
 

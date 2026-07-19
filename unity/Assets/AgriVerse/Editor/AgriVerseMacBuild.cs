@@ -9,6 +9,11 @@ namespace AgriVerse.Client.Editor
 {
     public static class AgriVerseMacBuild
     {
+        public const string ReleaseProductName = "AgriVerse";
+        public const string ReleaseCompanyName = "AgriVerse";
+        public const string ReleaseApplicationIdentifier =
+            "org.agriverse.episode1";
+
         private const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
         private const string CharacterLabScenePath =
             "Assets/Scenes/CharacterLab.unity";
@@ -63,9 +68,23 @@ namespace AgriVerse.Client.Editor
                 PlayerSettings.fullScreenMode;
             bool previousNativeResolution =
                 PlayerSettings.defaultIsNativeResolution;
+            string previousProductName =
+                PlayerSettings.productName;
+            string previousCompanyName =
+                PlayerSettings.companyName;
+            string previousApplicationIdentifier =
+                PlayerSettings.GetApplicationIdentifier(
+                    NamedBuildTarget.Standalone);
             BuildReport report;
             try
             {
+                PlayerSettings.productName =
+                    ReleaseProductName;
+                PlayerSettings.companyName =
+                    ReleaseCompanyName;
+                PlayerSettings.SetApplicationIdentifier(
+                    NamedBuildTarget.Standalone,
+                    ReleaseApplicationIdentifier);
                 PlayerSettings.fullScreenMode =
                     FullScreenMode.FullScreenWindow;
                 PlayerSettings.defaultIsNativeResolution = true;
@@ -84,6 +103,13 @@ namespace AgriVerse.Client.Editor
                     previousFullScreenMode;
                 PlayerSettings.defaultIsNativeResolution =
                     previousNativeResolution;
+                PlayerSettings.productName =
+                    previousProductName;
+                PlayerSettings.companyName =
+                    previousCompanyName;
+                PlayerSettings.SetApplicationIdentifier(
+                    NamedBuildTarget.Standalone,
+                    previousApplicationIdentifier);
             }
             if (report.summary.result != BuildResult.Succeeded)
             {
