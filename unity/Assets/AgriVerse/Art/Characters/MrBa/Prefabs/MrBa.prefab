@@ -246,6 +246,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38cbf96e896a241708087931ada758a3, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 2230352081921230934}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38cbf96e896a241708087931ada758a3, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 6112232171483528481}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38cbf96e896a241708087931ada758a3, type: 3}
       insertIndex: -1
@@ -256,6 +259,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 38cbf96e896a241708087931ada758a3, type: 3}
   m_PrefabInstance: {fileID: 1548180711054257083}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2230352081921230934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854735338145912554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ebc818bb52a4e89baee2f565697ff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.StakeholderCharacterController
+  animator: {fileID: 4906297472743151146}
+  lookTarget: {fileID: 0}
+  lookWeight: 0.68
 --- !u!205 &6112232171483528481
 LODGroup:
   m_ObjectHideFlags: 0
@@ -299,6 +317,11 @@ CapsuleCollider:
   m_Height: 1.6697253
   m_Direction: 1
   m_Center: {x: -0.065874554, y: 0.79311365, z: 0.027675964}
+--- !u!95 &4906297472743151146 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 38cbf96e896a241708087931ada758a3, type: 3}
+  m_PrefabInstance: {fileID: 1548180711054257083}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &7259226679824854805 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -1026317056162691922, guid: 38cbf96e896a241708087931ada758a3, type: 3}

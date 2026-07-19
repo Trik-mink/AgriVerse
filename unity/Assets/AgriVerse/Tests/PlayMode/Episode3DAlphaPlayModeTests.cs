@@ -126,6 +126,16 @@ namespace AgriVerse.Client.Tests
             Assert.That(
                 alpha.ObjectiveTextForTesting,
                 Does.Contain("Press N to close"));
+            alpha.SelectJournalSectionForTesting(
+                FieldJournalSection.People);
+            Assert.That(
+                alpha.JournalTextForTesting,
+                Does.StartWith("PEOPLE"));
+            alpha.SelectJournalSectionForTesting(
+                FieldJournalSection.Sources);
+            Assert.That(
+                alpha.JournalTextForTesting,
+                Does.StartWith("SOURCES"));
 
             Object.Destroy(root);
             foreach (GameObject hotspotObject in hotspotObjects)
@@ -238,6 +248,20 @@ namespace AgriVerse.Client.Tests
             Assert.That(
                 manager.ActiveStage,
                 Is.EqualTo(RuntimeActivityStage.Interviews));
+
+            InterviewNotebook notebook =
+                InterviewNotebookSession.GetOrCreate().Notebook;
+            foreach (StakeholderDto stakeholder in
+                     interviews.Scenario.stakeholders)
+            {
+                notebook.AddQuestion(
+                    stakeholder.id,
+                    "What should the plan consider?");
+                notebook.AddReply(
+                    stakeholder.id,
+                    "Recorded perspective.");
+            }
+            Assert.That(interviews.PlanUnlocked, Is.True);
 
             interviews.ReturnToField();
             Assert.That(manager.ActiveStage, Is.Null);

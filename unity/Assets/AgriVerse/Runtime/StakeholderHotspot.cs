@@ -10,6 +10,8 @@ namespace AgriVerse.Client
     public sealed class StakeholderHotspot : MonoBehaviour
     {
         [SerializeField] private Renderer focusRenderer;
+        [SerializeField]
+        private StakeholderCharacterController character;
         [SerializeField] private float interactionRange = 3.8f;
         [SerializeField] private Color idleColor =
             new Color(.94f, .72f, .30f, .04f);
@@ -23,12 +25,22 @@ namespace AgriVerse.Client
             string.Empty;
         public float InteractionRange => interactionRange;
         public bool IsFocused => focused;
+        public StakeholderCharacterController Character => character;
 
         public void Configure(
             Renderer sourceRenderer,
             float range = 3.8f)
         {
+            Configure(sourceRenderer, null, range);
+        }
+
+        public void Configure(
+            Renderer sourceRenderer,
+            StakeholderCharacterController sourceCharacter,
+            float range = 3.8f)
+        {
             focusRenderer = sourceRenderer;
+            character = sourceCharacter;
             interactionRange = Mathf.Max(.5f, range);
             RefreshVisual();
         }
@@ -42,6 +54,7 @@ namespace AgriVerse.Client
         {
             if (focused == value) return;
             focused = value;
+            character?.SetFocused(value);
             RefreshVisual();
         }
 

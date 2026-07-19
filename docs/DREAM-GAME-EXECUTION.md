@@ -5,10 +5,10 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Post-Gate-C production expansion - the complete standalone journey remains integrated and
-playable while licensed stakeholder, field-station, and globe assets replace approved
-fallback presentation. Asset intake and identity simplification are verified; full scene
-integration and concentrated release polish are in progress.
+Release-candidate hardening - the complete standalone journey now uses licensed Humanoid
+stakeholders, physical field stations, a field-journal interface, a planning-table handoff,
+and the NASA globe while retaining every approved fallback. Final live-loop, missing-asset,
+resolution, attribution, and release-build checks are in progress.
 
 ## Completed tasks
 
@@ -56,6 +56,16 @@ integration and concentrated release polish are in progress.
   runtime assets.
 - Player avatar selection was removed by human direction. Name entry remains authoritative
   for Mai's greeting and the certificate; the player is an unseen first-person observer.
+- All three licensed stakeholder prefabs are integrated at scenario-configured meeting
+  points with shared Humanoid idle, listening, talking, gesture, and look-at states.
+- The exploration-to-interview-to-planning handoff is physical: interviews return to the
+  walkable world and the licensed planning table opens the existing proposal workflow.
+- The persistent notebook is now a keyboard-accessible Field Journal with Sites, People,
+  Plan, and Sources sections, plus text scale, high-contrast, and reduced-motion controls.
+- Premium structures and props establish research, district-office, planning, sampling, and
+  reflection stations without intercepting learning raycasts.
+- Consequences and original-versus-revised Future Walk presentation now preserve most of the
+  3D landscape while exact canonical values remain scrollable and unchanged.
 
 ## Current blockers
 
@@ -155,6 +165,24 @@ footstep rows remain documented below without blocking the current build.
 - Metal player: clean 1280x720 journey captures and a clean 1920x1080 identity capture;
   Player.log contained no runtime, shader, rendering, magenta-material, or missing-asset
   errors.
+- Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
+  API contracts, ProjectSettings, and tags remained unchanged.
+
+### Premium 3D stakeholder journey checkpoint
+
+- EditMode: 73 passed, 0 failed, 1 existing connectivity test ignored.
+- Focused PlayMode: 3 passed, covering all configured water sites, return-to-field
+  stakeholder flow, Field Journal sections, physical planning handoff, and exact Future Walk
+  state preservation.
+- Humanoid presentation: Mr. Ba, Dr. Linh, and Ms. Hoa use explicit URP materials, valid
+  Humanoid avatars, retargeted approved body animation, eye-level focus, and portrait
+  fallbacks.
+- Metal player: the 1280x720 stakeholder capture rendered the licensed 3D character behind
+  the cinematic interview interface with no magenta, shader, rendering, or runtime errors.
+- Performance: the Apple M4 Metal player reported 185.8 average FPS over the instrumented
+  five-second window.
+- macOS build: non-development universal release build succeeded at
+  `unity/Builds/macOS/AgriVerse.app` (approximately 277 MiB on disk).
 - Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
   API contracts, ProjectSettings, and tags remained unchanged.
 

@@ -294,8 +294,8 @@ namespace AgriVerse.Client
                 true);
             EpisodeUiFactory.Stretch(
                 card.rectTransform,
-                new Vector2(.65f, .11f),
-                new Vector2(.975f, .84f));
+                new Vector2(.66f, .49f),
+                new Vector2(.975f, .88f));
             Text title = EpisodeUiFactory.Text(
                 card.transform,
                 "FutureWalkTitle",
@@ -339,6 +339,7 @@ namespace AgriVerse.Client
                 15);
             panel = canvasObject;
             panel.SetActive(false);
+            EpisodeAccessibility.ApplyAll();
         }
     }
 }

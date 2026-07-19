@@ -55,6 +55,8 @@ namespace AgriVerse.Client.Tests
                     FindAllInScene<WaterSampleHotspot>(scene);
                 StakeholderHotspot[] stakeholderHotspots =
                     FindAllInScene<StakeholderHotspot>(scene);
+                PlanningHotspot planningHotspot =
+                    FindInScene<PlanningHotspot>(scene);
                 MaiGuideController mai =
                     FindInScene<MaiGuideController>(scene);
                 InterviewController interviews =
@@ -69,6 +71,13 @@ namespace AgriVerse.Client.Tests
                 Assert.That(
                     config.StakeholderAnchors,
                     Has.Length.EqualTo(3));
+                Assert.That(
+                    config.StakeholderPresentationPrefabs,
+                    Has.Length.EqualTo(
+                        config.StakeholderAnchors.Length));
+                Assert.That(
+                    config.StakeholderPresentationPrefabs,
+                    Has.All.Not.Null);
                 Assert.That(
                     config.SiteAnchors.Select(anchor => anchor.SiteId),
                     Is.Unique);
@@ -103,11 +112,64 @@ namespace AgriVerse.Client.Tests
                 Assert.That(
                     FindInScene<Episode3DFutureWalkController>(scene),
                     Is.Not.Null);
+                Assert.That(
+                    FindInScene<PlayerPerformanceReporter>(scene),
+                    Is.Not.Null);
                 Assert.That(walker, Is.Not.Null);
                 Assert.That(hotspots, Has.Length.EqualTo(3));
                 Assert.That(
                     stakeholderHotspots,
                     Has.Length.EqualTo(3));
+                Assert.That(planningHotspot, Is.Not.Null);
+                Assert.That(alpha.HasPlanningHotspot, Is.True);
+                Assert.That(
+                    planningHotspot.GetComponentInChildren<
+                        MeshFilter>(true),
+                    Is.Not.Null);
+                Assert.That(
+                    stakeholderHotspots.All(hotspot =>
+                    {
+                        Animator animator =
+                            hotspot.GetComponentInChildren<Animator>(true);
+                        return animator != null &&
+                               animator.avatar != null &&
+                               animator.avatar.isHuman &&
+                               hotspot.Character != null &&
+                               hotspot.Character.LookTarget ==
+                                   walker.ViewCamera.transform;
+                    }),
+                    Is.True,
+                    "Each scenario-configured meeting point must retain " +
+                    "its verified Humanoid presentation.");
+                Assert.That(
+                    stakeholderHotspots
+                        .SelectMany(hotspot =>
+                            hotspot.GetComponentsInChildren<
+                                Renderer>(true))
+                        .Where(renderer =>
+                            renderer.gameObject.name !=
+                            "MeetingFocusRing")
+                        .All(renderer =>
+                            renderer.gameObject.layer == 2),
+                    Is.True,
+                    "Character visuals must remain outside marker raycasts.");
+                GameObject premiumStations =
+                    scene.GetRootGameObjects()
+                        .FirstOrDefault(root =>
+                            root.name == "PremiumFieldStations");
+                Assert.That(premiumStations, Is.Not.Null);
+                Assert.That(
+                    premiumStations.GetComponentsInChildren<
+                        LODGroup>(true),
+                    Has.Length.GreaterThanOrEqualTo(9));
+                Assert.That(
+                    premiumStations.GetComponentsInChildren<
+                        Collider>(true)
+                        .All(collider =>
+                            collider.gameObject.layer == 2),
+                    Is.True,
+                    "Set dressing may collide with the player but must " +
+                    "never intercept learning raycasts.");
                 Assert.That(
                     hotspots.All(hotspot =>
                         hotspot.GetComponentInChildren<MeshFilter>(true) !=

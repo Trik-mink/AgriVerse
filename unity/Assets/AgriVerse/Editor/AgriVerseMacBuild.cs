@@ -59,14 +59,32 @@ namespace AgriVerse.Client.Editor
                 applicationName);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
-            BuildReport report = BuildPipeline.BuildPlayer(
-                new BuildPlayerOptions
-                {
-                    scenes = new[] { scenePath },
-                    locationPathName = outputPath,
-                    target = BuildTarget.StandaloneOSX,
-                    options = BuildOptions.None
-                });
+            FullScreenMode previousFullScreenMode =
+                PlayerSettings.fullScreenMode;
+            bool previousNativeResolution =
+                PlayerSettings.defaultIsNativeResolution;
+            BuildReport report;
+            try
+            {
+                PlayerSettings.fullScreenMode =
+                    FullScreenMode.FullScreenWindow;
+                PlayerSettings.defaultIsNativeResolution = true;
+                report = BuildPipeline.BuildPlayer(
+                    new BuildPlayerOptions
+                    {
+                        scenes = new[] { scenePath },
+                        locationPathName = outputPath,
+                        target = BuildTarget.StandaloneOSX,
+                        options = BuildOptions.None
+                    });
+            }
+            finally
+            {
+                PlayerSettings.fullScreenMode =
+                    previousFullScreenMode;
+                PlayerSettings.defaultIsNativeResolution =
+                    previousNativeResolution;
+            }
             if (report.summary.result != BuildResult.Succeeded)
             {
                 throw new BuildFailedException(

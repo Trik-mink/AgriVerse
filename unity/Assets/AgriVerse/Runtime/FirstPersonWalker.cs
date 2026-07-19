@@ -27,6 +27,8 @@ namespace AgriVerse.Client
         public bool MovementEnabled => movementEnabled;
         public bool CursorIsCaptured =>
             Cursor.lockState == CursorLockMode.Locked;
+        public float ViewHeading => yaw;
+        public float ViewPitch => pitch;
 
         public void Configure(
             Camera camera,
@@ -63,6 +65,18 @@ namespace AgriVerse.Client
             }
             character.enabled = wasEnabled;
             verticalSpeed = 0f;
+        }
+
+        public void SetViewAngles(float heading, float verticalLook)
+        {
+            yaw = heading;
+            pitch = Mathf.Clamp(verticalLook, -82f, 82f);
+            transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            if (viewCamera != null)
+            {
+                viewCamera.transform.localRotation =
+                    Quaternion.Euler(pitch, 0f, 0f);
+            }
         }
 
         public void CaptureCursor()

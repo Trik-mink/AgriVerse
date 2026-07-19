@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace AgriVerse.Client
@@ -42,9 +43,17 @@ namespace AgriVerse.Client
         private Button retryButton;
         private Button drawerContinueButton;
         private Button returnToFieldButton;
+        private Button customQuestionButton;
+        private GameObject suggestedQuestionArea;
+        private GameObject customQuestionArea;
+        private readonly List<Button> suggestedQuestionButtons =
+            new List<Button>();
+        private string[] suggestedQuestions = Array.Empty<string>();
         private Text askLabel;
         private RawImage selectedPortrait;
         private bool selectedShowing;
+        private bool customQuestionShowing;
+        private string suggestedForStakeholderId = string.Empty;
 
         public InputField QuestionInput { get; private set; }
         public RawImage SelectedPortrait => selectedPortrait;
@@ -52,6 +61,11 @@ namespace AgriVerse.Client
         public bool SelectionVisible => selectionArea != null && selectionArea.activeSelf;
         public bool EvidenceVisible => evidenceDrawer != null && evidenceDrawer.activeSelf;
         public bool RetryVisible => retryButton != null && retryButton.gameObject.activeSelf;
+        public int SuggestedQuestionCount =>
+            suggestedQuestionButtons.Count;
+        public bool FreeTextVisible =>
+            customQuestionArea != null &&
+            customQuestionArea.activeSelf;
 
         public void Build(Transform parent, ScenarioDto source, Action<string> onSelect, Action onAsk, Action onRetry, Action onToggleEvidence, Action onReturnToField = null)
         {
@@ -75,9 +89,16 @@ namespace AgriVerse.Client
             BuildSelection(canvas.transform);
             BuildDialogue(canvas.transform);
             BuildEvidenceDrawer(canvas.transform);
+            EpisodeAccessibility.ApplyAll();
         }
 
         public RawImage PortraitSlotFor(string stakeholderId) => cardPortraits.TryGetValue(stakeholderId, out RawImage slot) ? slot : null;
+
+        public void SelectSuggestedQuestionForTesting(int index) =>
+            SelectSuggestedQuestion(index);
+
+        public void SelectCustomQuestionForTesting() =>
+            ShowCustomQuestion();
 
         public void ToggleEvidenceDrawer()
         {
@@ -115,12 +136,23 @@ namespace AgriVerse.Client
             RuntimeScrollableContent.SetText(evidence, evidenceText);
             if (!hasSelection) return;
 
+            UpdateSuggestedQuestions(selected);
             identity.text = selected.name + "\n" + selected.role;
             status.text = StatusForPresentation(statusText, busy, planUnlocked);
             RuntimeScrollableContent.SetText(conversation, conversationText);
             askLabel.text = planUnlocked ? "CONTINUE" : busy ? "LISTENING…" : "ASK";
             askButton.interactable = !busy && (planUnlocked || hasSelection);
             QuestionInput.interactable = !busy && !planUnlocked;
+            suggestedQuestionArea.SetActive(
+                !planUnlocked && !customQuestionShowing);
+            customQuestionArea.SetActive(
+                planUnlocked || customQuestionShowing);
+            foreach (Button questionButton in
+                     suggestedQuestionButtons)
+            {
+                questionButton.interactable = !busy;
+            }
+            customQuestionButton.interactable = !busy;
             retryButton.gameObject.SetActive(canRetry);
             retryButton.interactable = !busy && canRetry;
             drawerContinueButton.gameObject.SetActive(planUnlocked);
@@ -132,9 +164,88 @@ namespace AgriVerse.Client
         {
             if (string.IsNullOrWhiteSpace(value)) return string.Empty;
             if (busy || planUnlocked || value.StartsWith("Could not", StringComparison.Ordinal) ||
+                value.StartsWith("Added to Field Journal", StringComparison.Ordinal) ||
                 value.StartsWith("Reply could", StringComparison.Ordinal) || value.StartsWith("The stakeholder returned", StringComparison.Ordinal) ||
                 value.StartsWith("Enter a question", StringComparison.Ordinal) || value.StartsWith("Questions must", StringComparison.Ordinal)) return value;
             return string.Empty;
+        }
+
+        private void Update()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                if (EvidenceVisible)
+                {
+                    ToggleEvidenceDrawer();
+                }
+                else
+                {
+                    returnToField?.Invoke();
+                }
+                return;
+            }
+            if (customQuestionShowing &&
+                QuestionInput != null &&
+                QuestionInput.isFocused &&
+                keyboard.enterKey.wasPressedThisFrame)
+            {
+                ask?.Invoke();
+            }
+        }
+
+        private void UpdateSuggestedQuestions(
+            StakeholderDto stakeholder)
+        {
+            if (stakeholder == null ||
+                string.Equals(
+                    stakeholder.id,
+                    suggestedForStakeholderId,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            suggestedForStakeholderId =
+                stakeholder.id ?? string.Empty;
+            customQuestionShowing = false;
+            suggestedQuestions = new[]
+            {
+                "What changes are you seeing in your work as " +
+                stakeholder.role + "?",
+                "Which evidence should the community weigh most?",
+                "What would make a plan workable from your perspective?"
+            };
+            for (int index = 0;
+                 index < suggestedQuestionButtons.Count;
+                 index++)
+            {
+                Text label =
+                    suggestedQuestionButtons[index]
+                        .GetComponentInChildren<Text>();
+                label.text = suggestedQuestions[index];
+            }
+        }
+
+        private void SelectSuggestedQuestion(int index)
+        {
+            if (index < 0 ||
+                index >= suggestedQuestions.Length ||
+                QuestionInput == null)
+            {
+                return;
+            }
+            QuestionInput.text = suggestedQuestions[index];
+            ask?.Invoke();
+        }
+
+        private void ShowCustomQuestion()
+        {
+            customQuestionShowing = true;
+            suggestedQuestionArea?.SetActive(false);
+            customQuestionArea?.SetActive(true);
+            QuestionInput?.ActivateInputField();
         }
 
         private void BuildHud(Transform root)
@@ -205,16 +316,73 @@ namespace AgriVerse.Client
             Stretch(identity.rectTransform, new Vector2(.46f, .15f), new Vector2(.94f, .86f));
 
             dialogueArea = Panel(root, "InterviewDialogue", DeepTeal, false).gameObject;
-            Stretch(dialogueArea.GetComponent<RectTransform>(), new Vector2(.29f, .055f), new Vector2(.81f, .43f));
-            conversation = RuntimeScrollableContent.Create(dialogueArea.transform, "InterviewConversation", new Vector2(.045f, .42f), new Vector2(.955f, .94f), 15);
+            Stretch(dialogueArea.GetComponent<RectTransform>(), new Vector2(.29f, .055f), new Vector2(.81f, .49f));
+            conversation = RuntimeScrollableContent.Create(dialogueArea.transform, "InterviewConversation", new Vector2(.045f, .45f), new Vector2(.955f, .94f), 15);
             status = Text(dialogueArea.transform, "InterviewStatus", 13, TextAnchor.MiddleLeft, new Color(OffWhite.r, OffWhite.g, OffWhite.b, .9f));
-            Stretch(status.rectTransform, new Vector2(.055f, .31f), new Vector2(.945f, .39f));
-            QuestionInput = Input(dialogueArea.transform);
+            Stretch(status.rectTransform, new Vector2(.055f, .34f), new Vector2(.72f, .42f));
+
+            suggestedQuestionArea =
+                new GameObject(
+                    "SuggestedQuestions",
+                    typeof(RectTransform));
+            suggestedQuestionArea.transform.SetParent(
+                dialogueArea.transform,
+                false);
+            Stretch(
+                suggestedQuestionArea
+                    .GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one);
+            for (int index = 0; index < 3; index++)
+            {
+                Button suggested = Button(
+                    suggestedQuestionArea.transform,
+                    "SuggestedQuestion_" + (index + 1),
+                    "Suggested question",
+                    RiverTeal,
+                    12);
+                float left = .05f + index * .305f;
+                Stretch(
+                    suggested.GetComponent<RectTransform>(),
+                    new Vector2(left, .065f),
+                    new Vector2(left + .285f, .255f));
+                int selectedIndex = index;
+                suggested.onClick.AddListener(
+                    () =>
+                        SelectSuggestedQuestion(selectedIndex));
+                suggestedQuestionButtons.Add(suggested);
+            }
+            customQuestionButton = Button(
+                suggestedQuestionArea.transform,
+                "AskYourOwnQuestion",
+                "ASK YOUR OWN QUESTION",
+                DeepTeal,
+                11);
+            Stretch(
+                customQuestionButton.GetComponent<RectTransform>(),
+                new Vector2(.69f, .25f),
+                new Vector2(.95f, .325f));
+            customQuestionButton.onClick.AddListener(
+                ShowCustomQuestion);
+
+            customQuestionArea =
+                new GameObject(
+                    "CustomQuestion",
+                    typeof(RectTransform));
+            customQuestionArea.transform.SetParent(
+                dialogueArea.transform,
+                false);
+            Stretch(
+                customQuestionArea.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one);
+            QuestionInput = Input(customQuestionArea.transform);
             Stretch(QuestionInput.GetComponent<RectTransform>(), new Vector2(.05f, .065f), new Vector2(.72f, .265f));
-            askButton = Button(dialogueArea.transform, "AskAction", "ASK", Amber, 15);
+            askButton = Button(customQuestionArea.transform, "AskAction", "ASK", Amber, 15);
             askLabel = askButton.GetComponentInChildren<Text>();
             Stretch(askButton.GetComponent<RectTransform>(), new Vector2(.75f, .065f), new Vector2(.95f, .265f));
             askButton.onClick.AddListener(() => ask?.Invoke());
+            customQuestionArea.SetActive(false);
             retryButton = Button(dialogueArea.transform, "RetryAction", "RETRY", RiverTeal, 11);
             Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.75f, .285f), new Vector2(.95f, .385f));
             retryButton.onClick.AddListener(() => retry?.Invoke());
@@ -241,7 +409,7 @@ namespace AgriVerse.Client
             evidenceDrawer = Panel(root, "EvidenceDrawer", DeepTeal, false).gameObject;
             Stretch(evidenceDrawer.GetComponent<RectTransform>(), new Vector2(.27f, .12f), new Vector2(.93f, .87f));
             Text title = Text(evidenceDrawer.transform, "EvidenceTitle", 19, TextAnchor.MiddleLeft, OffWhite);
-            title.text = "EVIDENCE NOTEBOOK";
+            title.text = "FIELD JOURNAL · SITES";
             Stretch(title.rectTransform, new Vector2(.07f, .91f), new Vector2(.79f, .98f));
             Button close = Button(evidenceDrawer.transform, "CloseEvidence", "×", RiverTeal, 19);
             Stretch(close.GetComponent<RectTransform>(), new Vector2(.83f, .91f), new Vector2(.94f, .98f));
@@ -306,7 +474,7 @@ namespace AgriVerse.Client
             placeholder.text = "Ask a focused question…";
             Stretch(placeholder.rectTransform, new Vector2(.05f, .08f), new Vector2(.94f, .92f));
             input.placeholder = placeholder;
-            input.lineType = InputField.LineType.MultiLineNewline;
+            input.lineType = InputField.LineType.MultiLineSubmit;
             return input;
         }
 

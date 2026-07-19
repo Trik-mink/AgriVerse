@@ -246,11 +246,19 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 7289681393609440436}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 8070507983719333756}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7881117900566303973}
   m_SourcePrefab: {fileID: 100100000, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
+--- !u!95 &1290739355935895952 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
+  m_PrefabInstance: {fileID: 4648617733333470209}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &3011905058379968175 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7588383418750919342, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
@@ -261,6 +269,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 360c439dcb54445a4901f8cf0b01a605, type: 3}
   m_PrefabInstance: {fileID: 4648617733333470209}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7289681393609440436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5495056625773408592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ebc818bb52a4e89baee2f565697ff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.StakeholderCharacterController
+  animator: {fileID: 1290739355935895952}
+  lookTarget: {fileID: 0}
+  lookWeight: 0.68
 --- !u!205 &8070507983719333756
 LODGroup:
   m_ObjectHideFlags: 0

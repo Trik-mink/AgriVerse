@@ -64,6 +64,9 @@ namespace AgriVerse.Client
         [SerializeField]
         private Episode3DStakeholderAnchor[] stakeholderAnchors =
             Array.Empty<Episode3DStakeholderAnchor>();
+        [SerializeField] private GameObject[]
+            stakeholderPresentationPrefabs =
+                Array.Empty<GameObject>();
 
         public string ScenarioId => scenarioId;
         public Vector3 MaiPosition => maiPosition;
@@ -72,6 +75,9 @@ namespace AgriVerse.Client
         public Episode3DStakeholderAnchor[] StakeholderAnchors =>
             stakeholderAnchors ??
             Array.Empty<Episode3DStakeholderAnchor>();
+        public GameObject[] StakeholderPresentationPrefabs =>
+            stakeholderPresentationPrefabs ??
+            Array.Empty<GameObject>();
 
         public void Configure(
             string configuredScenarioId,
@@ -88,6 +94,14 @@ namespace AgriVerse.Client
             stakeholderAnchors =
                 configuredStakeholderAnchors ??
                 Array.Empty<Episode3DStakeholderAnchor>();
+        }
+
+        public void ConfigureStakeholderPresentation(
+            GameObject[] presentationPrefabs)
+        {
+            stakeholderPresentationPrefabs =
+                presentationPrefabs ??
+                Array.Empty<GameObject>();
         }
     }
 }

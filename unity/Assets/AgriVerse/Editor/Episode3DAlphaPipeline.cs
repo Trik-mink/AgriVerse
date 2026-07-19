@@ -26,6 +26,40 @@ namespace AgriVerse.Client.Editor
             Root + "Episode3DWorldConfig.asset";
         private const string AudioRoot =
             "Assets/AgriVerse/Art/Audio/SFX/Water/";
+        private static readonly string[]
+            StakeholderPrefabPaths =
+            {
+                "Assets/AgriVerse/Art/Characters/MrBa/Prefabs/" +
+                "MrBa.prefab",
+                "Assets/AgriVerse/Art/Characters/DrLinh/Prefabs/" +
+                "DrLinh.prefab",
+                "Assets/AgriVerse/Art/Characters/MsHoa/Prefabs/" +
+                "MsHoa.prefab"
+            };
+        private static readonly string[]
+            PremiumSetPiecePaths =
+            {
+                "Assets/AgriVerse/Art/Environment/Structures/" +
+                "ResearchPost_A/Prefabs/ResearchPost_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Structures/" +
+                "DistrictOffice_A/Prefabs/DistrictOffice_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Structures/" +
+                "ReflectionPavilion_A/Prefabs/" +
+                "ReflectionPavilion_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "ResearchWorkstation_A/Prefabs/" +
+                "ResearchWorkstation_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "SamplingKit_A/Prefabs/SamplingKit_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "PlanningTable_A/Prefabs/PlanningTable_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "WovenBasket_A/Prefabs/WovenBasket_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "Hoe_A/Prefabs/Hoe_A.prefab",
+                "Assets/AgriVerse/Art/Environment/Props/" +
+                "Shovel_A/Prefabs/Shovel_A.prefab"
+            };
 
         [MenuItem("AgriVerse/Art/Build Episode 3D Alpha")]
         public static void BuildEpisode3DAlpha()
@@ -45,6 +79,11 @@ namespace AgriVerse.Client.Editor
             }
             Episode3DWorldConfig config =
                 LoadOrCreateConfig();
+            GameObject[] stakeholderPrefabs =
+                LoadPrefabs(StakeholderPrefabPaths);
+            config.ConfigureStakeholderPresentation(
+                stakeholderPrefabs);
+            EditorUtility.SetDirty(config);
 
             Material ringMaterial = TransparentUnlit(
                 Materials + "SamplingRing_URP.mat",
@@ -109,9 +148,23 @@ namespace AgriVerse.Client.Editor
                         scene,
                         ringMesh,
                         ringMaterial,
+                        terrain,
+                        walker.ViewCamera.transform,
                         stakeholderAnchors[index].Position,
-                        stakeholderAnchors[index].StakeholderId);
+                        stakeholderAnchors[index].StakeholderId,
+                        stakeholderPrefabs[index]);
             }
+            CreatePremiumSetPieces(
+                scene,
+                terrain,
+                LoadPrefabs(PremiumSetPiecePaths));
+            PlanningHotspot planningHotspot =
+                CreatePlanningHotspot(
+                    scene,
+                    ringMesh,
+                    ringMaterial,
+                    terrain,
+                    new Vector3(3.2f, 0f, -31f));
             Animator maiAnimator = CreateMai(
                 scene,
                 terrain,
@@ -160,6 +213,7 @@ namespace AgriVerse.Client.Editor
                     .ToArray());
             Episode3DAlphaController alpha =
                 alphaRoot.AddComponent<Episode3DAlphaController>();
+            alphaRoot.AddComponent<PlayerPerformanceReporter>();
 
             Vector3 approach = GroundPosition(
                 terrain,
@@ -182,6 +236,7 @@ namespace AgriVerse.Client.Editor
                 stakeholderAnchors
                     .Select(anchor => anchor.StakeholderId)
                     .ToArray());
+            alpha.ConfigurePlanning(planningHotspot);
 
             EditorSceneManager.SaveScene(scene, AlphaScene);
             AssetDatabase.SaveAssets();
@@ -234,8 +289,11 @@ namespace AgriVerse.Client.Editor
             Scene scene,
             Mesh mesh,
             Material material,
+            Terrain terrain,
+            Transform lookTarget,
             Vector3 position,
-            string stakeholderId)
+            string stakeholderId,
+            GameObject characterPrefab)
         {
             GameObject root = new GameObject(
                 "StakeholderHotspot_" + stakeholderId,
@@ -243,7 +301,8 @@ namespace AgriVerse.Client.Editor
                 typeof(StakeholderHotspot));
             SceneManager.MoveGameObjectToScene(root, scene);
             root.layer = 0;
-            root.transform.position = position;
+            root.transform.position =
+                GroundPosition(terrain, position);
             SphereCollider collider =
                 root.GetComponent<SphereCollider>();
             collider.center = new Vector3(0f, .65f, 0f);
@@ -270,8 +329,141 @@ namespace AgriVerse.Client.Editor
 
             StakeholderHotspot hotspot =
                 root.GetComponent<StakeholderHotspot>();
-            hotspot.Configure(renderer, 4.2f);
+            StakeholderCharacterController character =
+                CreateStakeholderCharacter(
+                    root.transform,
+                    characterPrefab,
+                    lookTarget);
+            hotspot.Configure(renderer, character, 4.2f);
             return hotspot;
+        }
+
+        private static StakeholderCharacterController
+            CreateStakeholderCharacter(
+                Transform parent,
+                GameObject prefab,
+                Transform lookTarget)
+        {
+            if (prefab == null) return null;
+            GameObject character =
+                PrefabUtility.InstantiatePrefab(prefab, parent)
+                    as GameObject;
+            if (character == null) return null;
+            character.name =
+                "StakeholderCharacter_" + prefab.name;
+            character.transform.localPosition = Vector3.zero;
+            character.transform.localRotation =
+                Quaternion.Euler(0f, 180f, 0f);
+            Animator animator =
+                character.GetComponentInChildren<Animator>(true);
+            StakeholderCharacterController presentation =
+                character.GetComponent<
+                    StakeholderCharacterController>();
+            if (presentation == null)
+            {
+                presentation =
+                    character.AddComponent<
+                        StakeholderCharacterController>();
+            }
+            presentation.Configure(animator, lookTarget);
+            return presentation;
+        }
+
+        private static void CreatePremiumSetPieces(
+            Scene scene,
+            Terrain terrain,
+            GameObject[] prefabs)
+        {
+            Vector3[] positions =
+            {
+                new Vector3(21f, 0f, -25f),
+                new Vector3(-1f, 0f, 16f),
+                new Vector3(16f, 0f, 26f),
+                new Vector3(18.5f, 0f, -22f),
+                new Vector3(-5.4f, 0f, -14f),
+                new Vector3(3.2f, 0f, -31f),
+                new Vector3(10.8f, 0f, -4.3f),
+                new Vector3(11.4f, 0f, -4.8f),
+                new Vector3(12f, 0f, -4.4f)
+            };
+            float[] headings =
+            {
+                205f, 165f, 190f, 225f, 90f, 15f, 25f, 82f, 76f
+            };
+
+            GameObject root =
+                new GameObject("PremiumFieldStations");
+            SceneManager.MoveGameObjectToScene(root, scene);
+            for (int index = 0;
+                 index < prefabs.Length &&
+                 index < positions.Length;
+                 index++)
+            {
+                if (prefabs[index] == null) continue;
+                GameObject instance =
+                    PrefabUtility.InstantiatePrefab(
+                        prefabs[index],
+                        root.transform) as GameObject;
+                if (instance == null) continue;
+                instance.name = "FieldStation_" + prefabs[index].name;
+                instance.transform.position =
+                    GroundPosition(terrain, positions[index]);
+                instance.transform.rotation =
+                    Quaternion.Euler(0f, headings[index], 0f);
+            }
+        }
+
+        private static PlanningHotspot CreatePlanningHotspot(
+            Scene scene,
+            Mesh mesh,
+            Material material,
+            Terrain terrain,
+            Vector3 position)
+        {
+            GameObject root = new GameObject(
+                "PlanningTableHotspot",
+                typeof(SphereCollider),
+                typeof(PlanningHotspot));
+            SceneManager.MoveGameObjectToScene(root, scene);
+            root.transform.position =
+                GroundPosition(terrain, position);
+            SphereCollider collider =
+                root.GetComponent<SphereCollider>();
+            collider.center = new Vector3(0f, .7f, 0f);
+            collider.radius = 1.15f;
+            collider.isTrigger = true;
+
+            GameObject ring = new GameObject(
+                "PlanningFocusRing",
+                typeof(MeshFilter),
+                typeof(MeshRenderer));
+            ring.transform.SetParent(root.transform, false);
+            ring.transform.localPosition =
+                new Vector3(0f, .025f, 0f);
+            ring.transform.localScale = Vector3.one * 1.05f;
+            ring.GetComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer =
+                ring.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode =
+                ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            PlanningHotspot hotspot =
+                root.GetComponent<PlanningHotspot>();
+            hotspot.Configure(renderer, 4.4f);
+            return hotspot;
+        }
+
+        private static GameObject[] LoadPrefabs(string[] paths)
+        {
+            GameObject[] prefabs = new GameObject[paths.Length];
+            for (int index = 0; index < paths.Length; index++)
+            {
+                prefabs[index] =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        paths[index]);
+            }
+            return prefabs;
         }
 
         private static Animator CreateMai(

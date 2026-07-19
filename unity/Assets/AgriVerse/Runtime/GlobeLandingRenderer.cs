@@ -118,7 +118,9 @@ namespace AgriVerse.Client
             float arrival = Mathf.SmoothStep(
                 0f,
                 1f,
-                Mathf.Clamp01(elapsed / 1.8f));
+                EpisodeAccessibility.ReducedMotion
+                    ? 1f
+                    : Mathf.Clamp01(elapsed / 1.8f));
             if (globeCamera != null)
             {
                 globeCamera.transform.localPosition =
@@ -127,18 +129,21 @@ namespace AgriVerse.Client
                         0f,
                         Mathf.Lerp(-4.15f, -3.38f, arrival));
             }
-            globeRoot.Rotate(
-                0f,
-                Time.unscaledDeltaTime * 1.8f,
-                0f,
-                Space.Self);
-            if (cloudShell != null)
+            if (!EpisodeAccessibility.ReducedMotion)
             {
-                cloudShell.Rotate(
+                globeRoot.Rotate(
                     0f,
-                    Time.unscaledDeltaTime * .8f,
+                    Time.unscaledDeltaTime * 1.8f,
                     0f,
                     Space.Self);
+                if (cloudShell != null)
+                {
+                    cloudShell.Rotate(
+                        0f,
+                        Time.unscaledDeltaTime * .8f,
+                        0f,
+                        Space.Self);
+                }
             }
         }
 

@@ -11,6 +11,7 @@ namespace AgriVerse.Client.Tests
         {
             GameObject root = new GameObject("CinematicInterviewTest");
             CinematicInterviewPresentation presentation = root.AddComponent<CinematicInterviewPresentation>();
+            int asks = 0;
             ScenarioDto scenario = new ScenarioDto
             {
                 title = "Scenario title",
@@ -22,7 +23,13 @@ namespace AgriVerse.Client.Tests
                     new StakeholderDto { id = "three", name = "Three", role = "Role", persona = "Persona" }
                 }
             };
-            presentation.Build(root.transform, scenario, _ => { }, () => { }, () => { }, null);
+            presentation.Build(
+                root.transform,
+                scenario,
+                _ => { },
+                () => asks++,
+                () => { },
+                null);
             presentation.Refresh(null, string.Empty, "No samples recorded.", "Choose a perspective.", 0, 1, 0, 3, false, false, false);
 
             Assert.That(presentation.SelectionVisible, Is.True);
@@ -34,6 +41,17 @@ namespace AgriVerse.Client.Tests
             Assert.That(presentation.SelectionVisible, Is.False);
             Assert.That(presentation.QuestionInput.interactable, Is.True);
             Assert.That(presentation.RetryVisible, Is.True);
+            Assert.That(presentation.SuggestedQuestionCount, Is.EqualTo(3));
+            Assert.That(presentation.FreeTextVisible, Is.False);
+
+            presentation.SelectSuggestedQuestionForTesting(1);
+            Assert.That(
+                presentation.QuestionInput.text,
+                Does.Contain("evidence"));
+            Assert.That(asks, Is.EqualTo(1));
+
+            presentation.SelectCustomQuestionForTesting();
+            Assert.That(presentation.FreeTextVisible, Is.True);
 
             presentation.ToggleEvidenceDrawer();
             Assert.That(presentation.EvidenceVisible, Is.True);

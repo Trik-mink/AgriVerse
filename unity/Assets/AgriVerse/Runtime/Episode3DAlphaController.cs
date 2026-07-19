@@ -39,6 +39,7 @@ namespace AgriVerse.Client
                 Array.Empty<StakeholderHotspot>();
         [SerializeField] private string[] configuredStakeholderIds =
             Array.Empty<string>();
+        [SerializeField] private PlanningHotspot planningHotspot;
         [SerializeField] private Animator maiAnimator;
         [SerializeField] private GameObject sampleVial;
         [SerializeField] private GameObject sampleFill;
@@ -61,6 +62,10 @@ namespace AgriVerse.Client
         private Text readingText;
         private GameObject notebookPanel;
         private Text notebookText;
+        private Button[] journalTabs = Array.Empty<Button>();
+        private Text accessibilityStatus;
+        private FieldJournalSection journalSection =
+            FieldJournalSection.Sites;
         private Text controlsText;
         private AudioSource oneShotAudio;
         private TestSiteDto activeSite;
@@ -72,7 +77,12 @@ namespace AgriVerse.Client
         private Vector3 vialRestPosition;
         private Quaternion vialRestRotation;
         private Coroutine sampleRoutine;
+        private Coroutine stakeholderFocusRoutine;
         private bool worldInputWasBlocked;
+        private string animatedStakeholderId = string.Empty;
+        private bool animatedStakeholderBusy;
+        private int animatedStakeholderReplyCount = -1;
+        private bool planningHandoffActive;
 
         public Episode3DAlphaState State { get; private set; } =
             Episode3DAlphaState.Loading;
@@ -84,12 +94,20 @@ namespace AgriVerse.Client
         public int ConfiguredSiteCount => configuredSiteIds.Length;
         public int ConfiguredStakeholderCount =>
             configuredStakeholderIds.Length;
+        public bool HasPlanningHotspot =>
+            planningHotspot != null;
         public bool SampleRecorded =>
             investigation != null &&
             investigation.RecordedReadingCount > 0;
         public string ReadingTextForTesting =>
             readingText == null ? string.Empty : readingText.text;
         public bool NotebookOpenForTesting => notebookOpen;
+        public FieldJournalSection JournalSectionForTesting =>
+            journalSection;
+        public string JournalTextForTesting =>
+            notebookText == null
+                ? string.Empty
+                : notebookText.text;
         public bool ReadingPanelVisibleForTesting =>
             readingPanel != null && readingPanel.activeSelf;
         public bool DialogueVisibleForTesting =>
@@ -172,6 +190,36 @@ namespace AgriVerse.Client
             configuredStakeholderIds =
                 stakeholderIds ??
                 Array.Empty<string>();
+        }
+
+        public void ConfigurePlanning(
+            PlanningHotspot sourceHotspot)
+        {
+            planningHotspot = sourceHotspot;
+        }
+
+        public bool BeginPlanningHandoff()
+        {
+            if (planningHotspot == null ||
+                State != Episode3DAlphaState.Complete)
+            {
+                return false;
+            }
+            planningHandoffActive = true;
+            activeStakeholderHotspot?.SetFocused(false);
+            RuntimePanelManager.GetOrCreate().Clear();
+            RuntimePanelManager.GetOrCreate().SetCinematicMode(false);
+            AnGiangRealitySpikeController spike =
+                FindAnyObjectByType<
+                    AnGiangRealitySpikeController>();
+            if (spike != null)
+            {
+                spike.SetCinematicInterviewActive(false);
+            }
+            SetObjective(
+                "Meet at the planning table to build the community proposal.");
+            SetMovement(true);
+            return true;
         }
 
         private void Awake()
@@ -292,6 +340,7 @@ namespace AgriVerse.Client
 
         private void Update()
         {
+            RefreshStakeholderAnimation();
             if (WorldInputIsBlocked())
             {
                 worldInputWasBlocked = true;
@@ -327,7 +376,14 @@ namespace AgriVerse.Client
             {
                 ToggleNotebook();
             }
-            if (notebookOpen) return;
+            if (notebookOpen)
+            {
+                if (keyboard.escapeKey.wasPressedThisFrame)
+                {
+                    ToggleNotebook();
+                }
+                return;
+            }
 
             if (State == Episode3DAlphaState.Intro)
             {
@@ -344,7 +400,14 @@ namespace AgriVerse.Client
             {
                 if (State == Episode3DAlphaState.Complete)
                 {
-                    UpdateStakeholderFocus();
+                    if (planningHandoffActive)
+                    {
+                        UpdatePlanningFocus();
+                    }
+                    else
+                    {
+                        UpdateStakeholderFocus();
+                    }
                 }
                 else
                 {
@@ -356,6 +419,13 @@ namespace AgriVerse.Client
                     keyboard.eKey.wasPressedThisFrame)
                 {
                     BeginSiteInteraction();
+                }
+                else if (planningHandoffActive &&
+                         planningHotspot != null &&
+                         planningHotspot.IsFocused &&
+                         keyboard.eKey.wasPressedThisFrame)
+                {
+                    BeginPlanningAtTable();
                 }
                 else if (activeStakeholderHotspot != null &&
                          State == Episode3DAlphaState.Complete &&
@@ -432,9 +502,9 @@ namespace AgriVerse.Client
                 readingText.text = FormatReading(activeSite);
                 dialoguePanel.SetActive(true);
                 dialogueText.text =
-                    "This field reading is already recorded in the Evidence Notebook.";
+                    "This field reading is already recorded in the Field Journal.";
                 dialogueHint.text =
-                    "Press E to return · Press N for the Evidence Notebook";
+                    "Press E to return · Press N for the Field Journal";
             }
             else
             {
@@ -498,11 +568,10 @@ namespace AgriVerse.Client
             notebookPanel.SetActive(notebookOpen);
             if (notebookOpen)
             {
-                RuntimeScrollableContent.SetText(
-                    notebookText,
-                    FormatNotebook());
+                RefreshJournal();
                 SetMovement(false);
-                SetObjective("Evidence notebook · Press N to close");
+                SetObjective(
+                    "Field Journal · Press N to close · Escape also closes");
                 dialoguePanel.SetActive(false);
                 readingPanel.SetActive(false);
                 promptText.gameObject.SetActive(false);
@@ -537,6 +606,62 @@ namespace AgriVerse.Client
                     SetMovement(true);
                 }
             }
+        }
+
+        public void SelectJournalSectionForTesting(
+            FieldJournalSection section)
+        {
+            SelectJournalSection(section);
+        }
+
+        private void SelectJournalSection(
+            FieldJournalSection section)
+        {
+            journalSection = section;
+            RefreshJournal();
+        }
+
+        private void RefreshJournal()
+        {
+            if (notebookText == null) return;
+            EvidenceNotebookSession evidenceSession =
+                FindFirstObjectByType<EvidenceNotebookSession>();
+            InterviewNotebookSession interviewSession =
+                FindFirstObjectByType<InterviewNotebookSession>();
+            PlanSession planSession =
+                FindFirstObjectByType<PlanSession>();
+            RuntimeScrollableContent.SetText(
+                notebookText,
+                FieldJournalFormatter.Format(
+                    journalSection,
+                    investigation?.Scenario,
+                    evidenceSession?.Notebook,
+                    interviewSession?.Notebook,
+                    FieldJournalPlanState.From(planSession)));
+            for (int index = 0;
+                 index < journalTabs.Length;
+                 index++)
+            {
+                Image background =
+                    journalTabs[index]?.GetComponent<Image>();
+                if (background != null)
+                {
+                    background.color =
+                        index == (int)journalSection
+                            ? new Color(1f, .67f, .24f, 1f)
+                            : new Color(.025f, .20f, .20f, .96f);
+                }
+            }
+            RefreshAccessibilityStatus();
+        }
+
+        private void RefreshAccessibilityStatus()
+        {
+            if (accessibilityStatus == null) return;
+            accessibilityStatus.text =
+                $"TEXT {EpisodeAccessibility.TextScale:0.00}×  ·  " +
+                $"CONTRAST {(EpisodeAccessibility.HighContrast ? "ON" : "OFF")}  ·  " +
+                $"REDUCED MOTION {(EpisodeAccessibility.ReducedMotion ? "ON" : "OFF")}";
         }
 
         private void BeginIntro()
@@ -684,12 +809,122 @@ namespace AgriVerse.Client
                   "Press E to begin the interview";
         }
 
-        private void BeginStakeholderInteraction()
+        private void UpdatePlanningFocus()
         {
-            if (activeStakeholderHotspot == null)
+            if (walker?.ViewCamera == null ||
+                planningHotspot == null)
             {
                 return;
             }
+            Ray ray = walker.ViewCamera.ViewportPointToRay(
+                new Vector3(.5f, .5f, 0f));
+            bool focused = false;
+            foreach (RaycastHit hit in Physics.RaycastAll(
+                         ray,
+                         6f,
+                         Physics.DefaultRaycastLayers,
+                         QueryTriggerInteraction.Collide))
+            {
+                PlanningHotspot candidate =
+                    hit.collider.GetComponentInParent<
+                        PlanningHotspot>();
+                if (candidate == planningHotspot &&
+                    hit.distance <=
+                    planningHotspot.InteractionRange)
+                {
+                    focused = true;
+                    break;
+                }
+            }
+            planningHotspot.SetFocused(focused);
+            reticleText.color = focused
+                ? new Color(1f, .74f, .30f, 1f)
+                : new Color(.94f, .94f, .88f, .68f);
+            promptText.text = focused
+                ? "Planning table\nPress E to build the proposal"
+                : string.Empty;
+        }
+
+        private void BeginPlanningAtTable()
+        {
+            PlanController plan =
+                FindFirstObjectByType<PlanController>();
+            if (plan == null || !plan.BeginPlanning())
+            {
+                SetObjective(
+                    "The planning table is still loading.");
+                return;
+            }
+            planningHandoffActive = false;
+            planningHotspot.SetFocused(false);
+        }
+
+        private void BeginStakeholderInteraction()
+        {
+            if (activeStakeholderHotspot == null ||
+                stakeholderFocusRoutine != null)
+            {
+                return;
+            }
+            stakeholderFocusRoutine =
+                StartCoroutine(
+                    FocusAndBeginStakeholderInteraction(
+                        activeStakeholderHotspot));
+        }
+
+        private IEnumerator FocusAndBeginStakeholderInteraction(
+            StakeholderHotspot hotspot)
+        {
+            SetMovement(false);
+            Vector3 target =
+                hotspot.Character != null
+                    ? hotspot.Character.FocusPoint
+                    : hotspot.transform.position + Vector3.up * 1.5f;
+            if (walker != null && walker.ViewCamera != null)
+            {
+                Vector3 direction =
+                    target - walker.ViewCamera.transform.position;
+                float targetHeading =
+                    Mathf.Atan2(direction.x, direction.z) *
+                    Mathf.Rad2Deg;
+                float planarDistance =
+                    new Vector2(direction.x, direction.z).magnitude;
+                float targetPitch =
+                    -Mathf.Atan2(direction.y, planarDistance) *
+                    Mathf.Rad2Deg;
+                float startHeading = walker.ViewHeading;
+                float startPitch = walker.ViewPitch;
+                float duration =
+                    EpisodeAccessibility.ReducedMotion
+                        ? 0f
+                        : .22f;
+                if (duration <= 0f)
+                {
+                    walker.SetViewAngles(
+                        targetHeading,
+                        targetPitch);
+                }
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float blend = Mathf.SmoothStep(
+                        0f,
+                        1f,
+                        Mathf.Clamp01(elapsed / duration));
+                    walker.SetViewAngles(
+                        Mathf.LerpAngle(
+                            startHeading,
+                            targetHeading,
+                            blend),
+                        Mathf.Lerp(
+                            startPitch,
+                            targetPitch,
+                            blend));
+                    yield return null;
+                }
+            }
+
             InterviewController interviews =
                 FindFirstObjectByType<InterviewController>();
             if (interviews == null ||
@@ -697,11 +932,74 @@ namespace AgriVerse.Client
             {
                 SetObjective(
                     "The interview station is still loading.");
-                return;
+                SetMovement(true);
+                stakeholderFocusRoutine = null;
+                yield break;
             }
             interviews.SelectStakeholder(
-                activeStakeholderHotspot.StakeholderId);
-            activeStakeholderHotspot.SetFocused(false);
+                hotspot.StakeholderId);
+            hotspot.SetFocused(false);
+            stakeholderFocusRoutine = null;
+        }
+
+        private void RefreshStakeholderAnimation()
+        {
+            InterviewController interviews =
+                FindFirstObjectByType<InterviewController>();
+            string selectedId =
+                interviews != null && interviews.InterviewsVisible
+                    ? interviews.SelectedStakeholderId
+                    : string.Empty;
+            bool isBusy =
+                interviews != null &&
+                interviews.InterviewsVisible &&
+                interviews.IsBusy;
+            int replyCount =
+                CountStakeholderReplies(selectedId);
+            if (string.Equals(
+                    selectedId,
+                    animatedStakeholderId,
+                    StringComparison.Ordinal) &&
+                isBusy == animatedStakeholderBusy &&
+                replyCount == animatedStakeholderReplyCount)
+            {
+                return;
+            }
+
+            animatedStakeholderId = selectedId;
+            animatedStakeholderBusy = isBusy;
+            animatedStakeholderReplyCount = replyCount;
+            foreach (StakeholderHotspot hotspot in
+                     stakeholderHotspots)
+            {
+                if (hotspot?.Character == null) continue;
+                bool selected = string.Equals(
+                    hotspot.StakeholderId,
+                    selectedId,
+                    StringComparison.Ordinal);
+                hotspot.Character.SetConversationState(
+                    selected && isBusy,
+                    selected && !isBusy && replyCount > 0);
+            }
+        }
+
+        private static int CountStakeholderReplies(
+            string stakeholderId)
+        {
+            if (string.IsNullOrWhiteSpace(stakeholderId))
+            {
+                return 0;
+            }
+            InterviewNotebook notebook =
+                InterviewNotebookSession.GetOrCreate().Notebook;
+            if (notebook == null) return 0;
+            int count = 0;
+            foreach (ConversationTurnDto turn in
+                     notebook.ConversationFor(stakeholderId))
+            {
+                if (turn.role == "stakeholder") count++;
+            }
+            return count;
         }
 
         private StakeholderDto StakeholderById(string stakeholderId)
@@ -802,7 +1100,7 @@ namespace AgriVerse.Client
             dialoguePanel.SetActive(true);
             dialogueText.text = SaltLineNarrative.AfterReading;
             dialogueHint.text =
-                "Press E to continue · Press N for the Evidence Notebook";
+                "Added to Field Journal · Press E to continue · Press N to open";
             SetObjective("Review the reading, then continue to the next test.");
             RefreshProgress();
             PlayMai("Mai_Talk");
@@ -894,44 +1192,6 @@ namespace AgriVerse.Client
                 $"SOURCE IDs  {sources}";
         }
 
-        private string FormatNotebook()
-        {
-            EvidenceNotebook notebook =
-                EvidenceNotebookSession.GetOrCreate().Notebook;
-            var text = new StringBuilder("EVIDENCE NOTEBOOK\n\n");
-            if (notebook == null ||
-                notebook.RecordedReadings.Count == 0)
-            {
-                return text.Append(
-                    "No field readings recorded yet.").ToString();
-            }
-
-            string unit =
-                investigation.Scenario.units?.salinity ??
-                string.Empty;
-            foreach (RecordedReading reading in
-                     notebook.RecordedReadings)
-            {
-                text.Append(reading.label).Append('\n')
-                    .Append("Salinity  ")
-                    .Append(
-                        reading.salinity_gL.ToString(
-                            "0.##",
-                            CultureInfo.InvariantCulture))
-                    .Append(' ').Append(unit).Append('\n')
-                    .Append("Season  ").Append(reading.season).Append('\n')
-                    .Append("Salt pattern  ")
-                    .Append(Humanize(reading.seasonal_pattern)).Append('\n')
-                    .Append("Freshwater access  ")
-                    .Append(reading.freshwater_access).Append('\n')
-                    .Append(reading.note).Append('\n')
-                    .Append("Source IDs  ")
-                    .Append(string.Join(", ", reading.source_ids))
-                    .Append("\n\n");
-            }
-            return text.ToString().TrimEnd();
-        }
-
         private string PlayerName()
         {
             EpisodeSession session = EpisodeSession.GetOrCreate();
@@ -974,6 +1234,12 @@ namespace AgriVerse.Client
         private IEnumerator FadeFromBlack(float duration)
         {
             if (fade == null) yield break;
+            if (EpisodeAccessibility.ReducedMotion)
+            {
+                fade.alpha = 0f;
+                fade.blocksRaycasts = false;
+                yield break;
+            }
             float elapsed = 0f;
             while (elapsed < duration)
             {
@@ -1125,17 +1391,110 @@ namespace AgriVerse.Client
 
             Image notebook = Panel(
                 canvas.transform,
-                "EvidenceDrawer",
-                new Vector2(.50f, .18f),
-                new Vector2(.965f, .86f),
+                "FieldJournal",
+                new Vector2(.16f, .11f),
+                new Vector2(.94f, .89f),
                 new Color(.018f, .11f, .12f, .97f));
             notebookPanel = notebook.gameObject;
+            Text journalTitle = Label(
+                notebook.transform,
+                font,
+                20,
+                TextAnchor.MiddleLeft,
+                new Vector2(.05f, .91f),
+                new Vector2(.72f, .97f));
+            journalTitle.text = "FIELD JOURNAL";
+            journalTitle.color =
+                new Color(1f, .76f, .34f, 1f);
+            string[] tabLabels =
+                { "SITES", "PEOPLE", "PLAN", "SOURCES" };
+            journalTabs = new Button[tabLabels.Length];
+            for (int index = 0;
+                 index < tabLabels.Length;
+                 index++)
+            {
+                int selectedIndex = index;
+                journalTabs[index] = JournalButton(
+                    notebook.transform,
+                    font,
+                    "Journal_" + tabLabels[index],
+                    tabLabels[index],
+                    new Vector2(.05f + index * .17f, .82f),
+                    new Vector2(.205f + index * .17f, .895f));
+                journalTabs[index].onClick.AddListener(
+                    () =>
+                        SelectJournalSection(
+                            (FieldJournalSection)selectedIndex));
+            }
+            Button closeJournal = JournalButton(
+                notebook.transform,
+                font,
+                "CloseFieldJournal",
+                "CLOSE  N",
+                new Vector2(.80f, .91f),
+                new Vector2(.95f, .97f));
+            closeJournal.onClick.AddListener(ToggleNotebook);
             notebookText = RuntimeScrollableContent.Create(
                 notebook.transform,
-                "EvidenceEntries",
-                new Vector2(.06f, .06f),
-                new Vector2(.94f, .94f),
+                "FieldJournalEntries",
+                new Vector2(.05f, .06f),
+                new Vector2(.95f, .79f),
                 16);
+            Button textSmaller = JournalButton(
+                notebook.transform,
+                font,
+                "JournalTextSmaller",
+                "A−",
+                new Vector2(.05f, .012f),
+                new Vector2(.115f, .052f));
+            textSmaller.onClick.AddListener(() =>
+            {
+                EpisodeAccessibility.ChangeTextScale(-.1f);
+                RefreshAccessibilityStatus();
+            });
+            Button textLarger = JournalButton(
+                notebook.transform,
+                font,
+                "JournalTextLarger",
+                "A+",
+                new Vector2(.125f, .012f),
+                new Vector2(.19f, .052f));
+            textLarger.onClick.AddListener(() =>
+            {
+                EpisodeAccessibility.ChangeTextScale(.1f);
+                RefreshAccessibilityStatus();
+            });
+            Button contrast = JournalButton(
+                notebook.transform,
+                font,
+                "JournalContrast",
+                "CONTRAST",
+                new Vector2(.205f, .012f),
+                new Vector2(.33f, .052f));
+            contrast.onClick.AddListener(() =>
+            {
+                EpisodeAccessibility.ToggleHighContrast();
+                RefreshAccessibilityStatus();
+            });
+            Button motion = JournalButton(
+                notebook.transform,
+                font,
+                "JournalReducedMotion",
+                "MOTION",
+                new Vector2(.345f, .012f),
+                new Vector2(.455f, .052f));
+            motion.onClick.AddListener(() =>
+            {
+                EpisodeAccessibility.ToggleReducedMotion();
+                RefreshAccessibilityStatus();
+            });
+            accessibilityStatus = Label(
+                notebook.transform,
+                font,
+                11,
+                TextAnchor.MiddleRight,
+                new Vector2(.47f, .008f),
+                new Vector2(.95f, .055f));
             notebookPanel.SetActive(false);
 
             controlsText = Label(
@@ -1146,7 +1505,7 @@ namespace AgriVerse.Client
                 new Vector2(.20f, .008f),
                 new Vector2(.80f, .045f));
             controlsText.text =
-                "WASD MOVE   ·   MOUSE LOOK   ·   E INTERACT   ·   N EVIDENCE   ·   ESC RELEASE CURSOR";
+                "WASD MOVE   ·   MOUSE LOOK   ·   E INTERACT   ·   N FIELD JOURNAL   ·   ESC RELEASE CURSOR";
             controlsText.color =
                 new Color(.93f, .92f, .84f, .78f);
 
@@ -1159,6 +1518,7 @@ namespace AgriVerse.Client
             fade = fadeImage.gameObject.AddComponent<CanvasGroup>();
             fade.alpha = 1f;
             fade.blocksRaycasts = true;
+            EpisodeAccessibility.ApplyAll();
         }
 
         private void SetObjective(string value)
@@ -1213,6 +1573,40 @@ namespace AgriVerse.Client
             text.raycastTarget = false;
             Stretch(text.rectTransform, anchorMin, anchorMax);
             return text;
+        }
+
+        private static Button JournalButton(
+            Transform parent,
+            Font font,
+            string name,
+            string value,
+            Vector2 anchorMin,
+            Vector2 anchorMax)
+        {
+            GameObject item = new GameObject(
+                name,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            item.transform.SetParent(parent, false);
+            Image image = item.GetComponent<Image>();
+            image.color = new Color(.025f, .20f, .20f, .96f);
+            Button button = item.GetComponent<Button>();
+            button.targetGraphic = image;
+            Text label = Label(
+                item.transform,
+                font,
+                13,
+                TextAnchor.MiddleCenter,
+                Vector2.zero,
+                Vector2.one);
+            label.text = value;
+            Stretch(
+                item.GetComponent<RectTransform>(),
+                anchorMin,
+                anchorMax);
+            return button;
         }
 
         private static void Stretch(
@@ -1299,6 +1693,41 @@ namespace AgriVerse.Client
                 interviews.BeginInterviews() &&
                 interviews.Scenario.stakeholders.Length > 0)
             {
+                StakeholderHotspot captureHotspot =
+                    stakeholderHotspots.Length == 0
+                        ? null
+                        : stakeholderHotspots[
+                            stakeholderHotspots.Length - 1];
+                if (captureHotspot != null && walker != null)
+                {
+                    Vector3 position =
+                        captureHotspot.transform.position +
+                        Vector3.back * 2.8f;
+                    position.y =
+                        captureHotspot.transform.position.y;
+                    walker.Teleport(position, 0f, 0f);
+                    Vector3 focusPoint =
+                        captureHotspot.Character != null
+                            ? captureHotspot.Character.FocusPoint
+                            : captureHotspot.transform.position +
+                              Vector3.up * 1.5f;
+                    Vector3 direction =
+                        focusPoint -
+                        walker.ViewCamera.transform.position;
+                    float heading =
+                        Mathf.Atan2(
+                            direction.x,
+                            direction.z) *
+                        Mathf.Rad2Deg;
+                    float pitch =
+                        -Mathf.Atan2(
+                            direction.y,
+                            new Vector2(
+                                direction.x,
+                                direction.z).magnitude) *
+                        Mathf.Rad2Deg;
+                    walker.SetViewAngles(heading, pitch);
+                }
                 StakeholderDto stakeholder =
                     interviews.Scenario.stakeholders[
                         interviews.Scenario.stakeholders.Length - 1];

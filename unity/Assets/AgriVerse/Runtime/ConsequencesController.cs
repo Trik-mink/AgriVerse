@@ -120,16 +120,39 @@ namespace AgriVerse.Client
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
 
-            contentText = RuntimeScrollableContent.Create(canvas.transform, "ConsequencesContent", new Vector2(.03f, .1f), new Vector2(.62f, .82f), 15);
+            bool immersive =
+                FindFirstObjectByType<
+                    Episode3DFutureWalkController>() != null;
+            Vector2 contentMin =
+                immersive
+                    ? new Vector2(.025f, .50f)
+                    : new Vector2(.03f, .1f);
+            Vector2 contentMax =
+                immersive
+                    ? new Vector2(.41f, .86f)
+                    : new Vector2(.62f, .82f);
+            contentText = RuntimeScrollableContent.Create(
+                canvas.transform,
+                "ConsequencesContent",
+                contentMin,
+                contentMax,
+                15);
+            Vector2 previousMin = immersive ? new Vector2(.025f, .445f) : new Vector2(.03f, .04f);
+            Vector2 previousMax = immersive ? new Vector2(.145f, .485f) : new Vector2(.21f, .08f);
+            Vector2 nextMin = immersive ? new Vector2(.155f, .445f) : new Vector2(.23f, .04f);
+            Vector2 nextMax = immersive ? new Vector2(.275f, .485f) : new Vector2(.41f, .08f);
+            Vector2 feedbackMin = immersive ? new Vector2(.285f, .445f) : new Vector2(.43f, .04f);
+            Vector2 feedbackMax = immersive ? new Vector2(.41f, .485f) : new Vector2(.62f, .08f);
             previousButton = Button(canvas.transform, "PreviousYear", "Previous year");
-            Stretch(previousButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.21f, .08f));
+            Stretch(previousButton.GetComponent<RectTransform>(), previousMin, previousMax);
             previousButton.onClick.AddListener(PreviousYear);
             nextButton = Button(canvas.transform, "NextYear", "Next year");
-            Stretch(nextButton.GetComponent<RectTransform>(), new Vector2(.23f, .04f), new Vector2(.41f, .08f));
+            Stretch(nextButton.GetComponent<RectTransform>(), nextMin, nextMax);
             nextButton.onClick.AddListener(NextYear);
             feedbackButton = Button(canvas.transform, "GetFeedback", "Get feedback");
-            Stretch(feedbackButton.GetComponent<RectTransform>(), new Vector2(.43f, .04f), new Vector2(.62f, .08f));
+            Stretch(feedbackButton.GetComponent<RectTransform>(), feedbackMin, feedbackMax);
             feedbackButton.onClick.AddListener(UnlockFeedback);
+            EpisodeAccessibility.ApplyAll();
         }
 
         private void Refresh()

@@ -34,3 +34,7 @@ MonoBehaviour:
     position: {x: 18, y: 0.82, z: -23}
   - stakeholderId: official
     position: {x: -4.4, y: 0.82, z: 12}
+  stakeholderPresentationPrefabs:
+  - {fileID: 1854735338145912554, guid: 595e933cd9c774bbb919b3a6fae53fd6, type: 3}
+  - {fileID: 5495056625773408592, guid: 9fcbf7d168a5c47cdae2e6d5a7fc33be, type: 3}
+  - {fileID: 3420600922589507919, guid: f65fcaf8f114f44f89f4a1a55057546e, type: 3}

@@ -161,6 +161,13 @@ namespace AgriVerse.Client
         public void ContinueToPlanning()
         {
             if (!PlanUnlocked) return;
+            Episode3DAlphaController alpha =
+                FindFirstObjectByType<Episode3DAlphaController>();
+            if (alpha != null && alpha.BeginPlanningHandoff())
+            {
+                ShowPlanActivity();
+                return;
+            }
             PlanController plan = FindFirstObjectByType<PlanController>();
             if (plan == null || !plan.BeginPlanning())
             {
@@ -212,7 +219,7 @@ namespace AgriVerse.Client
 
         public void ReturnToField()
         {
-            if (busy || PlanUnlocked || autoActivate)
+            if (busy || autoActivate)
             {
                 return;
             }
@@ -258,7 +265,13 @@ namespace AgriVerse.Client
                 questionInput.text = string.Empty;
                 lastFailedQuestion = string.Empty;
                 lastFailedStakeholderId = string.Empty;
-                SetStatus(PlanUnlocked ? "All stakeholder responses are recorded. Continue to planning when you finish reading." : $"Recorded {stakeholder.name}'s response.");
+                SetStatus(
+                    "Added to Field Journal · " +
+                    stakeholder.name +
+                    "'s perspective." +
+                    (PlanUnlocked
+                        ? " All interviews are complete."
+                        : string.Empty));
                 Refresh();
             }
         }

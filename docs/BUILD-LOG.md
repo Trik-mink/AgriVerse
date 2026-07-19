@@ -327,3 +327,8 @@ Format per entry:
   entry and an unseen first-person participant, and kept dialogue text-first without voice.
 - GPT-5.6 technique used: Preserved the existing grounded stakeholder agents and all scored
   contracts while changing only local presentation identity and licensed art.
+
+### 2026-07-19 - Premium 3D stakeholder journey
+- What Codex did: Integrated three licensed Humanoid stakeholders, physical field stations and planning table, cinematic focus/gesture states, a tabbed Field Journal, accessibility controls, and a compact environment-first Future Walk into the complete 3D journey.
+- Human decision: Required a first-person unseen player, text-first conversations with body gestures, a premium field-journal interface, and completion of the full loop before final polish.
+- GPT-5.6 technique used: Kept live role-separated dialogue and every validated structured output authoritative while changing only presentation, navigation, and scenario-configured world placement.

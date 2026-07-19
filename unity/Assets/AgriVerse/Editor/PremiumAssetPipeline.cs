@@ -290,6 +290,16 @@ namespace AgriVerse.Client.Editor
                 animator.cullingMode =
                     AnimatorCullingMode.CullUpdateTransforms;
 
+                StakeholderCharacterController character =
+                    instance.GetComponent<
+                        StakeholderCharacterController>();
+                if (character == null)
+                {
+                    character =
+                        instance.AddComponent<
+                            StakeholderCharacterController>();
+                }
+                character.Configure(animator, null);
                 AddCullingLod(instance, renderers, .025f);
                 AddCapsuleCollider(instance, renderers);
                 SetLayerRecursively(instance, 2);
