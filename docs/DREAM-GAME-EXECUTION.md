@@ -228,3 +228,5 @@ footstep rows remain documented below without blocking the current build.
 - `814868d` - Complete 3D journey and macOS release candidate.
 - `9d98317` - Licensed stakeholder, field-station, and NASA globe asset intake with
   name-only first-person identity.
+- `87880e6` - Premium 3D stakeholder journey, physical planning handoff, Field Journal,
+  accessibility controls, and compact Future Walk presentation.
