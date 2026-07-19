@@ -162,3 +162,4 @@ footstep rows remain documented below without blocking the current build.
 - `adc011b` - Original/revised futures, Judge View, certificate, and ending choices.
 - `c731041` - Licensed source-art intake and verified Mai CharacterLab.
 - `ccf7daa` - Isolated true-3D AnGiangWorldLab, optimized vegetation, movement, and ambience.
+- `6e90ca1` - Human-approved playable 3D investigation vertical slice.
