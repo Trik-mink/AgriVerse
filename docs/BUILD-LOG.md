@@ -303,3 +303,8 @@ Format per entry:
 - What Codex did: Preserved and provenance-recorded the supplied Tripo, Poly Haven CC0, and CC0 audio sources; added deterministic Unity import rules plus an isolated URP CharacterLab validating Mai's Humanoid rig, materials, look-at behavior, and five named motions.
 - Human decision: Confirmed redistribution and derivative rights for the Tripo models, supplied the complete art/audio bundle, and required the original rice and grass FBX files to remain unchanged while optimized derivatives are built separately.
 - GPT-5.6 technique used: Kept the character and asset pipeline presentation-only, isolated from prompts, scenario facts, validated outputs, and all four runtime GPT systems.
+
+### 2026-07-18 - Unity An Giang 3D WorldLab
+- What Codex did: Built an isolated walkable canal-and-paddy lab with matte CC0 PBR terrain, GPU-instanced three-LOD rice/grass, correctly oriented authored vegetation and structures, coherent wind, water, atmosphere, collision, and layered CC0 ambience.
+- Human decision: Supplied the licensed art/audio set, required source rice and grass FBXs to remain unchanged, and prioritized a compact grounded first-person world over another procedural-primitive presentation.
+- GPT-5.6 technique used: Kept the quality lab and asset derivatives separate from scenario facts, prompts, backend contracts, deterministic outputs, and the four live GPT systems.

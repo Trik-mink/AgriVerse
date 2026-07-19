@@ -12,6 +12,8 @@ namespace AgriVerse.Client.Editor
         private const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
         private const string CharacterLabScenePath =
             "Assets/Scenes/CharacterLab.unity";
+        private const string WorldLabScenePath =
+            "Assets/Scenes/AnGiangWorldLab.unity";
 
         [MenuItem("AgriVerse/Build/macOS Checkpoint")]
         public static void BuildCheckpoint()
@@ -29,6 +31,12 @@ namespace AgriVerse.Client.Editor
         public static void BuildCharacterLab()
         {
             Build("CharacterLab.app", CharacterLabScenePath);
+        }
+
+        [MenuItem("AgriVerse/Build/macOS An Giang World Lab")]
+        public static void BuildWorldLab()
+        {
+            Build("AnGiangWorldLab.app", WorldLabScenePath);
         }
 
         private static void Build(string applicationName, string scenePath)

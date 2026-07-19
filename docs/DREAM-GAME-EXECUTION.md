@@ -5,8 +5,9 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Phase 3 - Mai has passed the isolated CharacterLab; the supplied licensed assets are now
-being assembled and optimized in the separate AnGiangWorldLab.
+Phase 4 - Mai and the isolated true-3D AnGiangWorldLab have passed their quality labs. The
+next checkpoint integrates the first walkable Mai-to-water-test vertical slice without
+replacing the stable SampleScene.
 
 ## Completed tasks
 
@@ -29,6 +30,9 @@ being assembled and optimized in the separate AnGiangWorldLab.
   deterministic import settings, and Git LFS coverage.
 - Mai CharacterLab completed with an explicit URP material, valid Humanoid avatar, restrained
   look-at behavior, and visually verified idle, walk, talk, wave, and hat-adjust motions.
+- AnGiangWorldLab completed as an isolated 120-by-120-meter true-3D field location with a
+  walkable canal/dike layout, dense instanced rice and bank vegetation, authored rural
+  structures, coherent wind, layered CC0 ambience, matte PBR ground, and Metal-safe URP art.
 
 ## Current blockers
 
@@ -87,6 +91,20 @@ footstep rows remain documented below without blocking the current build.
 - CharacterLab macOS build: succeeded at `unity/Builds/macOS/CharacterLab.app`.
 - SampleScene macOS checkpoint build: succeeded at
   `unity/Builds/macOS/AgriVerseCheckpoint.app`; startup log was clean on Apple M4 Metal.
+
+### AnGiangWorldLab checkpoint
+
+- Derived art: source FBXs stayed unchanged; rice and grass gained explicit LOD0/card/
+  billboard derivatives, while the fan palm and boat gained bounded optimized meshes.
+- EditMode: 51 passed, 0 failed, 1 existing connectivity test ignored; WorldLab-specific
+  coverage includes triangle budgets, physical scale, 7,000-plus instances, matte terrain,
+  authored-model orientation, three LODs, and scene isolation.
+- PlayMode: first-person eye height, forward movement, CharacterController collision, and
+  cursor release passed.
+- Metal player: four 1280x720 views rendered without magenta/shader/runtime errors at roughly
+  137-200 FPS after warm-up on Apple M4.
+- macOS build: succeeded at `unity/Builds/macOS/AnGiangWorldLab.app`; SampleScene remained
+  unchanged.
 
 ### Cinematic stakeholder interview checkpoint
 

@@ -24,14 +24,19 @@ namespace AgriVerse.Client.Editor
             "Mai_Walk"
         };
 
-        public override uint GetVersion() => 3;
+        public override uint GetVersion() => 4;
 
         private bool IsEpisodeArt =>
             assetPath.StartsWith(ArtRoot, StringComparison.Ordinal);
 
         private void OnPreprocessModel()
         {
-            if (!IsEpisodeArt || !assetPath.Contains("/Source/")) return;
+            if (!IsEpisodeArt ||
+                (!assetPath.Contains("/Source/") &&
+                 !assetPath.Contains("/Derived/")))
+            {
+                return;
+            }
             if (!(assetImporter is ModelImporter importer)) return;
 
             bool isMai = assetPath.Contains(
@@ -42,7 +47,9 @@ namespace AgriVerse.Client.Editor
             importer.importVisibility = false;
             importer.materialImportMode =
                 ModelImporterMaterialImportMode.None;
-            importer.globalScale = SourceModelScale(assetPath);
+            importer.globalScale = assetPath.Contains("/Source/")
+                ? SourceModelScale(assetPath)
+                : 1f;
             importer.meshCompression = ModelImporterMeshCompression.Off;
             importer.isReadable = false;
             importer.optimizeMeshPolygons = true;
@@ -81,19 +88,31 @@ namespace AgriVerse.Client.Editor
                 filename.EndsWith("_0_3", StringComparison.OrdinalIgnoreCase);
             bool isColor =
                 filename.Contains("basecolor", StringComparison.OrdinalIgnoreCase) ||
-                filename.EndsWith("_0_0", StringComparison.OrdinalIgnoreCase);
+                filename.EndsWith("_0_0", StringComparison.OrdinalIgnoreCase) ||
+                filename.EndsWith("_Card", StringComparison.OrdinalIgnoreCase);
+            bool isCard = filename.EndsWith(
+                "_Card",
+                StringComparison.OrdinalIgnoreCase);
 
             importer.textureType = isNormal
                 ? TextureImporterType.NormalMap
                 : TextureImporterType.Default;
             importer.sRGBTexture = isColor && !isNormal;
             importer.mipmapEnabled = true;
-            importer.wrapMode = TextureWrapMode.Repeat;
+            importer.wrapMode = isCard
+                ? TextureWrapMode.Clamp
+                : TextureWrapMode.Repeat;
             importer.filterMode = FilterMode.Trilinear;
             importer.anisoLevel = isColor ? 4 : 2;
             importer.maxTextureSize = 2048;
             importer.textureCompression =
                 TextureImporterCompression.CompressedHQ;
+            if (isCard)
+            {
+                importer.alphaSource =
+                    TextureImporterAlphaSource.FromInput;
+                importer.alphaIsTransparency = true;
+            }
         }
 
         private void OnPreprocessAudio()
