@@ -373,3 +373,8 @@ Format per entry:
 - What Codex did: Consolidated the verified release onto `main`, published the privacy-audited source and LFS history with preserved milestone tags, and prepared judge, video, Devpost, and troubleshooting documentation.
 - Human decision: Authorized the first public GitHub publication while reserving YouTube, Devpost, `/feedback`, and any cloud billing confirmation for the human.
 - GPT-5.6 technique used: Documented the four live runtime systems and distinguished the one authoritative live journey from recorded presentation replays used to conserve the judge budget.
+
+### 2026-07-20 - Render production-build dependency correction
+- What Codex did: Diagnosed the first Blueprint deploy failure, made the production build install compile-time TypeScript dependencies before pruning them, and added a release-configuration regression test.
+- Human decision: Added the authorized Render billing method and applied the single-service Blueprint without expanding the approved cloud scope.
+- GPT-5.6 technique used: Preserved the secured Responses API runtime unchanged while repairing only its deterministic production compilation path.
