@@ -97,7 +97,11 @@ namespace AgriVerse.Client
             SetStatus("Requesting grounded feedback…");
             RefreshButtons();
             string requestJson = BuildRequestJson();
-            string url = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/') + "/api/feedback";
+            string url = ScenarioEndpoint.ApiRouteForPlatform(
+                IsWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                "/api/feedback");
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
             {
                 request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestJson));

@@ -7,24 +7,98 @@ namespace AgriVerse.Client
     public static class ScenarioEndpoint
     {
         private const string ScenarioPath = "/api/scenario";
+        public const string ProductionApiBaseUrl =
+            "https://agriverse-judge-api.onrender.com";
 
         public static string ForPlatform(
             bool isWebBuild,
             string editorApiBaseUrl,
             string webApiBaseUrl)
         {
-            string selectedBaseUrl = isWebBuild ? webApiBaseUrl : editorApiBaseUrl;
+            return ApiRouteForRuntime(
+                Application.isEditor,
+                isWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                ScenarioPath);
+        }
 
+        public static string ApiBaseForPlatform(
+            bool isWebBuild,
+            string editorApiBaseUrl,
+            string webApiBaseUrl)
+        {
+            return ApiBaseForRuntime(
+                Application.isEditor,
+                isWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl);
+        }
+
+        public static string ApiBaseForRuntime(
+            bool isEditor,
+            bool isWebBuild,
+            string editorApiBaseUrl,
+            string webApiBaseUrl)
+        {
+            string selectedBaseUrl = isWebBuild
+                ? webApiBaseUrl
+                : isEditor
+                    ? editorApiBaseUrl
+                    : ProductionApiBaseUrl;
             if (!Uri.TryCreate(selectedBaseUrl, UriKind.Absolute, out Uri baseUri) ||
                 (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps) ||
                 !string.IsNullOrEmpty(baseUri.UserInfo))
             {
                 throw new ArgumentException(
                     "The API base URL must be an absolute HTTP or HTTPS origin.",
-                    isWebBuild ? nameof(webApiBaseUrl) : nameof(editorApiBaseUrl));
+                    isWebBuild
+                        ? nameof(webApiBaseUrl)
+                        : isEditor
+                            ? nameof(editorApiBaseUrl)
+                            : nameof(ProductionApiBaseUrl));
             }
 
-            return selectedBaseUrl.TrimEnd('/') + ScenarioPath;
+            return selectedBaseUrl.TrimEnd('/');
+        }
+
+        public static string ApiRouteForPlatform(
+            bool isWebBuild,
+            string editorApiBaseUrl,
+            string webApiBaseUrl,
+            string route)
+        {
+            return ApiRouteForRuntime(
+                Application.isEditor,
+                isWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                route);
+        }
+
+        public static string ApiRouteForRuntime(
+            bool isEditor,
+            bool isWebBuild,
+            string editorApiBaseUrl,
+            string webApiBaseUrl,
+            string route)
+        {
+            if (string.IsNullOrWhiteSpace(route) ||
+                route[0] != '/' ||
+                route.Contains("?") ||
+                route.Contains("#"))
+            {
+                throw new ArgumentException(
+                    "The API route must be an absolute path without a query or fragment.",
+                    nameof(route));
+            }
+
+            return ApiBaseForRuntime(
+                       isEditor,
+                       isWebBuild,
+                       editorApiBaseUrl,
+                       webApiBaseUrl) +
+                   route;
         }
     }
 

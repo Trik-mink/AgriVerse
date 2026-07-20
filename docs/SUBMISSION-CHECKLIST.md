@@ -110,8 +110,8 @@ tests.
 - [x] Clean milestone tags and reachable Git LFS objects published.
 - [x] Apache-2.0 source-code license and third-party notices published.
 - [x] Publication secret, privacy, history, and LFS scan passed before first push.
-- [ ] Add Render billing information so the single authorized service can be created.
-- [ ] Deploy and verify the secured temporary judge backend.
+- [x] Render billing added for the single authorized service within the US$8 cap.
+- [x] Secured temporary judge backend deployed and healthy over HTTPS.
 - [ ] Rebuild Unity with the hosted HTTPS endpoint.
 - [ ] Complete the one final live hosted journey.
 - [ ] Create and verify `v1.0.0-build-week` and the GitHub Release.

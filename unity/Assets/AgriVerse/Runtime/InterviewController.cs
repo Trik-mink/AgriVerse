@@ -239,8 +239,11 @@ namespace AgriVerse.Client
             lastFailedStakeholderId = stakeholder.id;
             SetStatus($"Listening to {stakeholder.name}…");
             Refresh();
-            string baseUrl = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/');
-            string url = $"{baseUrl}/api/stakeholders/{UnityWebRequest.EscapeURL(stakeholder.id)}/messages";
+            string url = ScenarioEndpoint.ApiRouteForPlatform(
+                IsWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                $"/api/stakeholders/{UnityWebRequest.EscapeURL(stakeholder.id)}/messages");
             ConversationTurnDto[] history = RecentConversation(stakeholder.id);
             string json = JsonUtility.ToJson(new StakeholderMessageRequestDto { message = question, conversation = history });
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
@@ -367,7 +370,10 @@ namespace AgriVerse.Client
 
         private string[] PortraitUrls(StakeholderDto stakeholder)
         {
-            string baseUrl = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/');
+            string baseUrl = ScenarioEndpoint.ApiBaseForPlatform(
+                IsWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl);
             string assetName = stakeholder.name.ToLowerInvariant().Replace(".", string.Empty).Replace(" ", "-");
             return new[] { $"{baseUrl}/assets/characters/optimized/{assetName}.webp", $"{baseUrl}/assets/characters/optimized/{assetName}.jpg" };
         }

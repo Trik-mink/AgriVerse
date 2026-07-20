@@ -55,6 +55,8 @@ cost-bearing GPT requests no later than **August 6, 2026 at 8:00 pm Eastern
 The service uses strict validation, session and IP rate limits, bounded concurrency, a
 durable US$9 internal lifetime spending cap, and an explicit judging-window expiration.
 Scenario loading and the global Field Network remain available without a model call.
+Its secret-free readiness endpoint is
+`https://agriverse-judge-api.onrender.com/health`.
 
 ## Troubleshooting
 

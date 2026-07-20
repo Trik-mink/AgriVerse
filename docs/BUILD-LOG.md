@@ -378,3 +378,8 @@ Format per entry:
 - What Codex did: Diagnosed the first Blueprint deploy failure, made the production build install compile-time TypeScript dependencies before pruning them, and added a release-configuration regression test.
 - Human decision: Added the authorized Render billing method and applied the single-service Blueprint without expanding the approved cloud scope.
 - GPT-5.6 technique used: Preserved the secured Responses API runtime unchanged while repairing only its deterministic production compilation path.
+
+### 2026-07-20 - Secure hosted judge service
+- What Codex did: Deployed one Starter Render service with a 1 GB persistent budget ledger, verified secret-free health and scenario delivery, and centralized the macOS release client on its HTTPS origin while retaining localhost Editor overrides.
+- Human decision: Authorized a temporary non-sleeping judge service under the US$8 Render cap and a durable US$9 OpenAI application ceiling.
+- GPT-5.6 technique used: Kept the API key in the linked server-side secret group and preserved the four validated Responses API systems without client-side prompts, secrets, or fabricated fallbacks.

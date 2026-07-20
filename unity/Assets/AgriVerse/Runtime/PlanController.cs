@@ -88,7 +88,11 @@ namespace AgriVerse.Client
                 target_site_id = session.TargetSiteId,
                 proposal = new ProposalRequestDto { intervention_ids = session.InterventionIds, support_measures = session.SupportMeasures, rationale = session.Rationale, parameters = new PlanParametersDto { student_parameters = session.ParametersText } }
             };
-            string url = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/') + "/api/simulations";
+            string url = ScenarioEndpoint.ApiRouteForPlatform(
+                IsWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                "/api/simulations");
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
             {
                 request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(body))); request.downloadHandler = new DownloadHandlerBuffer(); request.SetRequestHeader("Content-Type", "application/json"); JudgeRequestSession.Apply(request);

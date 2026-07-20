@@ -28,6 +28,51 @@ namespace AgriVerse.Client.Tests
             Assert.That(url, Is.EqualTo("https://api.example.test/api/scenario"));
         }
 
+        [Test]
+        public void StandaloneReleaseUsesTheHostedJudgeOrigin()
+        {
+            string baseUrl = ScenarioEndpoint.ApiBaseForRuntime(
+                isEditor: false,
+                isWebBuild: false,
+                editorApiBaseUrl: "http://localhost:8787",
+                webApiBaseUrl: "http://localhost:8787");
+
+            Assert.That(
+                baseUrl,
+                Is.EqualTo(ScenarioEndpoint.ProductionApiBaseUrl));
+            StringAssert.StartsWith("https://", baseUrl);
+            StringAssert.DoesNotContain("localhost", baseUrl);
+        }
+
+        [Test]
+        public void EditorRuntimeKeepsTheLocalDevelopmentOverride()
+        {
+            string baseUrl = ScenarioEndpoint.ApiBaseForRuntime(
+                isEditor: true,
+                isWebBuild: false,
+                editorApiBaseUrl: "http://localhost:8787/",
+                webApiBaseUrl: "https://unused.example");
+
+            Assert.That(baseUrl, Is.EqualTo("http://localhost:8787"));
+        }
+
+        [Test]
+        public void ApiRouteForRuntimeUsesTheSameStandaloneOrigin()
+        {
+            string url = ScenarioEndpoint.ApiRouteForRuntime(
+                isEditor: false,
+                isWebBuild: false,
+                editorApiBaseUrl: "http://localhost:8787",
+                webApiBaseUrl: "http://localhost:8787",
+                route: "/api/feedback");
+
+            Assert.That(
+                url,
+                Is.EqualTo(
+                    ScenarioEndpoint.ProductionApiBaseUrl +
+                    "/api/feedback"));
+        }
+
         [TestCase("/relative")]
         [TestCase("file:///tmp/scenario.json")]
         public void ForPlatformRejectsUnsafeApiBaseUrls(string apiBaseUrl)

@@ -60,7 +60,11 @@ namespace AgriVerse.Client
         private IEnumerator SendBrief()
         {
             busy=true;retryAvailable=false;SetStatus("Generating the policy brief…");RefreshButtons();
-            string url=(IsWebBuild?webApiBaseUrl:editorApiBaseUrl).TrimEnd('/')+"/api/policy-briefs";
+            string url=ScenarioEndpoint.ApiRouteForPlatform(
+                IsWebBuild,
+                editorApiBaseUrl,
+                webApiBaseUrl,
+                "/api/policy-briefs");
             using(var request=new UnityWebRequest(url,UnityWebRequest.kHttpVerbPOST))
             {
                 request.uploadHandler=new UploadHandlerRaw(Encoding.UTF8.GetBytes(BuildRequestJson()));request.downloadHandler=new DownloadHandlerBuffer();request.SetRequestHeader("Content-Type","application/json");JudgeRequestSession.Apply(request);

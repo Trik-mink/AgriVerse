@@ -74,6 +74,8 @@ that deadline a missing ledger disables AI access.
 - Node pinned by `.node-version`
 - Deterministic `npm ci` and compiled production server
 - Judge expiration: `2026-08-07T00:00:00Z`
+- Public base URL: `https://agriverse-judge-api.onrender.com`
+- Secret-free health URL: `https://agriverse-judge-api.onrender.com/health`
 
 Render's published price on July 20, 2026 was US$7/month for Starter plus
 US$0.25/GB/month for the disk. Render states compute is prorated by the second. Even a
