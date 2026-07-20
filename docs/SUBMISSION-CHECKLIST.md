@@ -75,7 +75,7 @@ tests.
 
 - [x] `npm ci` on supported Node 24
 - [x] Type checking and production web/server build
-- [x] Backend tests, including hosted-service security boundaries: 44/44 passed
+- [x] Backend and release tests, including hosted-service security boundaries: 45/45 passed
 - [x] Dependency vulnerability audit: 0 findings
 - [x] Unity EditMode: 134 passed, 0 failed, 1 intentionally skipped live-connectivity test
 - [x] Focused non-GPT Unity PlayMode: field-network reliability, world-lab, and revised Future

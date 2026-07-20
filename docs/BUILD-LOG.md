@@ -392,3 +392,7 @@ Format per entry:
 - What Codex did: Verified the universal hosted-service macOS package, completed one live globe-to-return journey, captured the human-readable Judge View and certificate, and prepared the public release, checksum, judge guide, video script, and Devpost draft.
 - Human decision: Authorized one bounded live hosted journey and reserved the YouTube upload, `/feedback` confirmation, and Devpost submission for the human.
 - GPT-5.6 technique used: Exercised all four real Responses API systems exactly once through the secured hosted boundary, then used deterministic captures and regressions for repeated presentation evidence.
+
+### 2026-07-20 - Portable release checksum
+- What Codex did: Corrected the release packager so its SHA-256 manifest names the downloaded archive rather than a repository-relative path, then added a regression for download-directory verification.
+- GPT-5.6 technique used: No model call; this was deterministic release-engineering verification.

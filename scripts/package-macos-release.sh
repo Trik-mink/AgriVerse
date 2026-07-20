@@ -14,7 +14,10 @@ fi
 "$script_dir/verify-macos-release.sh" "$app_path"
 
 ditto -c -k --sequesterRsrc --keepParent "$app_path" "$archive_path"
-shasum -a 256 "$archive_path" > "$checksum_path"
+checksum="$(shasum -a 256 "$archive_path" | awk '{print $1}')"
+printf '%s  %s\n' \
+  "$checksum" \
+  "$(basename -- "$archive_path")" > "$checksum_path"
 
 extract_dir="$(mktemp -d "${TMPDIR:-/tmp}/agriverse-release.XXXXXX")"
 trap 'rm -rf "$extract_dir"' EXIT HUP INT TERM
@@ -23,7 +26,6 @@ ditto -x -k "$archive_path" "$extract_dir"
 
 uncompressed_bytes="$(du -sk "$app_path" | awk '{print $1 * 1024}')"
 compressed_bytes="$(stat -f '%z' "$archive_path")"
-checksum="$(awk '{print $1}' "$checksum_path")"
 
 printf 'Archive: %s\n' "$archive_path"
 printf 'SHA-256: %s\n' "$checksum"

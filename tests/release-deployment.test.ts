@@ -14,3 +14,19 @@ describe("Render release deployment", () => {
     expect(blueprint).toContain("value: production");
   });
 });
+
+describe("macOS release packaging", () => {
+  it("writes a checksum that verifies beside a downloaded archive", () => {
+    const packagingScript = readFileSync(
+      resolve("scripts/package-macos-release.sh"),
+      "utf8",
+    );
+
+    expect(packagingScript).toContain(
+      '$(basename -- "$archive_path")',
+    );
+    expect(packagingScript).not.toContain(
+      'shasum -a 256 "$archive_path" > "$checksum_path"',
+    );
+  });
+});
