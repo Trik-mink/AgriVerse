@@ -46,6 +46,10 @@ namespace AgriVerse.Client
         public string GlossaryTextForTesting => view?.GlossaryText ?? string.Empty;
         public string CertificateTextForTesting =>
             view?.CertificateText ?? string.Empty;
+        public bool JudgeVisibleForTesting =>
+            view != null && view.JudgeVisible;
+        public string JudgeTextForTesting =>
+            view?.JudgeText ?? string.Empty;
         public string SelectedFieldLocationIdForTesting =>
             view?.SelectedFieldLocationId ?? string.Empty;
         public bool IncomingLocationSelectedForTesting =>
@@ -317,6 +321,14 @@ namespace AgriVerse.Client
             view.SetGlossaryVisible(false);
             view.SetJudgeVisible(false);
             view.ShowCertificate(BuildCertificateText());
+        }
+
+        public void OpenJudgeForTesting()
+        {
+            if (view != null && !view.JudgeVisible)
+            {
+                ToggleJudge();
+            }
         }
 
         public void ChooseEndingForTesting(EpisodeEndingChoice choice)

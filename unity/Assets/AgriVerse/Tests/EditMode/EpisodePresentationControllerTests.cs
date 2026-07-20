@@ -238,8 +238,17 @@ namespace AgriVerse.Client.Tests
 
             controller.RefreshForTesting();
             Assert.That(controller.CertificateAvailable, Is.True);
+            controller.OpenJudgeForTesting();
+            Assert.That(controller.JudgeVisibleForTesting, Is.True);
+            Assert.That(
+                controller.JudgeTextForTesting,
+                Does.Contain("JUDGE VIEW"));
+            Assert.That(
+                controller.JudgeTextForTesting,
+                Does.Not.Contain("RAW VALIDATED JSON"));
             controller.OpenCertificate();
             Assert.That(controller.CertificateVisible, Is.True);
+            Assert.That(controller.JudgeVisibleForTesting, Is.False);
             Transform certificateCard =
                 root.transform.Find(
                     "EpisodePresentationView/" +

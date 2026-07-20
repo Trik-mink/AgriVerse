@@ -2175,11 +2175,45 @@ namespace AgriVerse.Client
                         "16_policy_brief.png");
 
                     presentation?.RefreshForTesting();
+                    presentation?.OpenJudgeForTesting();
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "17_judge_view.png");
+
                     presentation?.OpenCertificate();
                     yield return new WaitForSecondsRealtime(.45f);
                     yield return Capture(
                         directory,
-                        "17_certificate.png");
+                        "18_certificate.png");
+
+                    presentation?.ReturnToFieldNetworkForTesting();
+                    yield return new WaitForSecondsRealtime(.55f);
+                    if (presentation == null ||
+                        !presentation.SelectFieldLocationForTesting(
+                            investigation.Scenario.id))
+                    {
+                        Debug.LogError(
+                            "Gate C capture could not select Vietnam " +
+                            "after returning to the Field Network.");
+                    }
+                    presentation?.SetPlayerNameForTesting(
+                        "Second Field Advisor");
+                    yield return new WaitForSecondsRealtime(.45f);
+                    if (presentation == null ||
+                        !string.Equals(
+                            presentation.PlayerNameForTesting,
+                            "Second Field Advisor",
+                            StringComparison.Ordinal) ||
+                        !presentation.MissionStartInteractableForTesting)
+                    {
+                        Debug.LogError(
+                            "Gate C capture could not reuse the name " +
+                            "field after returning to the Field Network.");
+                    }
+                    yield return Capture(
+                        directory,
+                        "19_return_to_field_network.png");
                 }
             }
             yield return new WaitForSecondsRealtime(.4f);
