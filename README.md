@@ -250,11 +250,16 @@ contents are intentionally excluded.
 
 ## Attribution and licensing
 
+AgriVerse's original source code is licensed under the
+[Apache License 2.0](LICENSE).
+
+Third-party models, textures, photographs, audio, fonts, generated images, datasets, and
+other assets are **not relicensed** under Apache-2.0. They remain governed by
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and the individual licenses or terms
+identified in their adjacent provenance records. The Apache License does not override those
+third-party notices.
+
 See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md),
 [`unity/Assets/AgriVerse/Art/ASSET-PROVENANCE.md`](unity/Assets/AgriVerse/Art/ASSET-PROVENANCE.md),
 [`unity/ATTRIBUTIONS.md`](unity/ATTRIBUTIONS.md), and
 [`public/assets/ATTRIBUTIONS.md`](public/assets/ATTRIBUTIONS.md).
-
-No license has yet been assigned to AgriVerse's original source code. The owner must select
-one at the publication gate; third-party assets remain governed by their own notices and
-terms.
