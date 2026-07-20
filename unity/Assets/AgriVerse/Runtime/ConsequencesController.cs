@@ -125,11 +125,11 @@ namespace AgriVerse.Client
                     Episode3DFutureWalkController>() != null;
             Vector2 contentMin =
                 immersive
-                    ? new Vector2(.025f, .50f)
+                    ? new Vector2(.025f, .10f)
                     : new Vector2(.03f, .1f);
             Vector2 contentMax =
                 immersive
-                    ? new Vector2(.41f, .86f)
+                    ? new Vector2(.61f, .36f)
                     : new Vector2(.62f, .82f);
             contentText = RuntimeScrollableContent.Create(
                 canvas.transform,
@@ -137,19 +137,36 @@ namespace AgriVerse.Client
                 contentMin,
                 contentMax,
                 15);
-            Vector2 previousMin = immersive ? new Vector2(.025f, .445f) : new Vector2(.03f, .04f);
-            Vector2 previousMax = immersive ? new Vector2(.145f, .485f) : new Vector2(.21f, .08f);
-            Vector2 nextMin = immersive ? new Vector2(.155f, .445f) : new Vector2(.23f, .04f);
-            Vector2 nextMax = immersive ? new Vector2(.275f, .485f) : new Vector2(.41f, .08f);
-            Vector2 feedbackMin = immersive ? new Vector2(.285f, .445f) : new Vector2(.43f, .04f);
-            Vector2 feedbackMax = immersive ? new Vector2(.41f, .485f) : new Vector2(.62f, .08f);
-            previousButton = Button(canvas.transform, "PreviousYear", "Previous year");
+            if (immersive)
+            {
+                contentText.GetComponentInParent<ScrollRect>()
+                    .gameObject.SetActive(false);
+            }
+            Vector2 previousMin = immersive ? new Vector2(.025f, .045f) : new Vector2(.03f, .04f);
+            Vector2 previousMax = immersive ? new Vector2(.20f, .09f) : new Vector2(.21f, .08f);
+            Vector2 nextMin = immersive ? new Vector2(.21f, .045f) : new Vector2(.23f, .04f);
+            Vector2 nextMax = immersive ? new Vector2(.385f, .09f) : new Vector2(.41f, .08f);
+            Vector2 feedbackMin = immersive ? new Vector2(.395f, .045f) : new Vector2(.43f, .04f);
+            Vector2 feedbackMax = immersive ? new Vector2(.61f, .09f) : new Vector2(.62f, .08f);
+            previousButton = Button(
+                canvas.transform,
+                "PreviousYear",
+                "PREVIOUS YEAR",
+                EpisodeButtonStyle.Secondary);
             Stretch(previousButton.GetComponent<RectTransform>(), previousMin, previousMax);
             previousButton.onClick.AddListener(PreviousYear);
-            nextButton = Button(canvas.transform, "NextYear", "Next year");
+            nextButton = Button(
+                canvas.transform,
+                "NextYear",
+                "NEXT YEAR",
+                EpisodeButtonStyle.Secondary);
             Stretch(nextButton.GetComponent<RectTransform>(), nextMin, nextMax);
             nextButton.onClick.AddListener(NextYear);
-            feedbackButton = Button(canvas.transform, "GetFeedback", "Get feedback");
+            feedbackButton = Button(
+                canvas.transform,
+                "GetFeedback",
+                "GET GROUNDED FEEDBACK",
+                EpisodeButtonStyle.Primary);
             Stretch(feedbackButton.GetComponent<RectTransform>(), feedbackMin, feedbackMax);
             feedbackButton.onClick.AddListener(UnlockFeedback);
             EpisodeAccessibility.ApplyAll();
@@ -182,7 +199,9 @@ namespace AgriVerse.Client
             {
                 text.Append('\n').Append(tradeoff.Property("category").Text).Append(": ").Append(tradeoff.Property("summary").Text);
             }
-            RuntimeScrollableContent.SetText(contentText, text.ToString());
+            RuntimeScrollableContent.SetText(
+                contentText,
+                EpisodeUiFactory.FormatModelText(text.ToString()));
             previousButton.interactable = yearIndex > 0;
             nextButton.interactable = yearIndex < result.Property("years").Items.Count - 1;
         }
@@ -208,31 +227,17 @@ namespace AgriVerse.Client
             return text.ToString();
         }
 
-        private static Text Text(Transform parent, string name, int size)
-        {
-            Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = size;
-            text.color = EpisodeUiFactory.OffWhite;
-            text.raycastTarget = false;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            return text;
-        }
-
-        private static Button Button(Transform parent, string name, string label)
-        {
-            Button button = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
-            button.transform.SetParent(parent, false);
-            Image image = button.GetComponent<Image>();
-            image.color = EpisodeUiFactory.RiverTeal;
-            button.targetGraphic = image;
-            Text text = Text(button.transform, "Label", 14);
-            text.text = label;
-            text.alignment = TextAnchor.MiddleCenter;
-            Stretch(text.rectTransform, Vector2.zero, Vector2.one);
-            return button;
-        }
+        private static Button Button(
+            Transform parent,
+            string name,
+            string label,
+            EpisodeButtonStyle style) =>
+            EpisodeUiFactory.Button(
+                parent,
+                name,
+                label,
+                style,
+                14);
 
         private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)
         {

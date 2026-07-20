@@ -90,9 +90,18 @@ namespace AgriVerse.Client
             Array.Empty<InstancedVegetationField>();
 
         private GameObject panel;
+        private RectTransform cardRect;
         private Text content;
+        private Text originalComparison;
+        private Text revisedComparison;
+        private ScrollRect contentScroll;
+        private ScrollRect originalComparisonScroll;
+        private ScrollRect revisedComparisonScroll;
         private Button originalButton;
         private Button revisedButton;
+        private AtlasRouteGraphic originalRoute;
+        private AtlasRouteGraphic revisedRoute;
+        private readonly Text[] yearNodeLabels = new Text[5];
         private PlanSession session;
         private InvestigationController investigation;
         private ConsequencesController consequences;
@@ -136,6 +145,19 @@ namespace AgriVerse.Client
                     session.SimulatorResultJson);
             panel.SetActive(visible);
             if (!visible) return;
+            bool comparisonVisible = session.HasRevision;
+            cardRect.anchorMin = new Vector2(.025f, .045f);
+            cardRect.anchorMax =
+                new Vector2(.975f, .375f);
+            contentScroll.gameObject.SetActive(!comparisonVisible);
+            originalComparisonScroll.gameObject.SetActive(
+                comparisonVisible);
+            revisedComparisonScroll.gameObject.SetActive(
+                comparisonVisible);
+            originalRoute.gameObject.SetActive(
+                comparisonVisible || !showingRevised);
+            revisedRoute.gameObject.SetActive(
+                comparisonVisible || showingRevised);
 
             if (!string.Equals(
                     observedSimulatorJson,
@@ -205,6 +227,19 @@ namespace AgriVerse.Client
                 result.Years.Count - 1);
             FutureYearPresentation year =
                 result.Years[yearIndex];
+            for (int index = 0;
+                 index < yearNodeLabels.Length;
+                 index++)
+            {
+                yearNodeLabels[index].text =
+                    index < result.Years.Count
+                        ? "YEAR " + result.Years[index].Year
+                        : string.Empty;
+                yearNodeLabels[index].color =
+                    index == yearIndex
+                        ? EpisodeUiFactory.BrightAmber
+                        : EpisodeUiFactory.MutedSand;
+            }
             KeyMetricDto metric =
                 investigation?.Scenario?.crisis?.key_metric;
             FutureWalkVisualState visual =
@@ -216,14 +251,63 @@ namespace AgriVerse.Client
                     visual.FieldDensity);
             }
 
-            var text = new StringBuilder();
-            text.Append(
+            RuntimeScrollableContent.SetText(
+                content,
+                BuildSummary(
+                    result,
+                    year,
                     showingRevised
                         ? "REVISED FUTURE"
-                        : "ORIGINAL FUTURE")
+                        : "ORIGINAL FUTURE"));
+
+            if (session.HasRevision)
+            {
+                FutureWalkResult original =
+                    FutureWalkMapper.Map(
+                        session.OriginalSimulatorResultJson);
+                FutureWalkResult revised =
+                    FutureWalkMapper.Map(
+                        session.SimulatorResultJson);
+                int originalIndex = Mathf.Clamp(
+                    yearIndex,
+                    0,
+                    original.Years.Count - 1);
+                int revisedIndex = Mathf.Clamp(
+                    yearIndex,
+                    0,
+                    revised.Years.Count - 1);
+                RuntimeScrollableContent.SetText(
+                    originalComparison,
+                    BuildSummary(
+                        original,
+                        original.Years[originalIndex],
+                        "ORIGINAL FUTURE"));
+                RuntimeScrollableContent.SetText(
+                    revisedComparison,
+                    BuildSummary(
+                        revised,
+                        revised.Years[revisedIndex],
+                        "REVISED FUTURE"));
+            }
+
+            EpisodeUiFactory.SetButtonSelected(
+                originalButton,
+                !showingRevised);
+            EpisodeUiFactory.SetButtonSelected(
+                revisedButton,
+                showingRevised);
+        }
+
+        private static string BuildSummary(
+            FutureWalkResult result,
+            FutureYearPresentation year,
+            string heading)
+        {
+            var text = new StringBuilder();
+            text.Append(heading)
                 .Append(" · YEAR ")
                 .Append(year.Year)
-                .Append("\n\n")
+                .Append("\n")
                 .Append(result.Headline)
                 .Append("\n\nOverall fit  ")
                 .Append(result.OverallFit)
@@ -231,40 +315,29 @@ namespace AgriVerse.Client
                 .Append(year.SalinityValue)
                 .Append(' ')
                 .Append(year.SalinityUnit)
-                .Append("\nIncome score  ")
+                .Append("  ·  Income score  ")
                 .Append(year.IncomeScore)
-                .Append("\nSustainability score  ")
+                .Append("  ·  Sustainability  ")
                 .Append(year.SustainabilityScore)
-                .Append("\nCost level  ")
+                .Append("  ·  Cost  ")
                 .Append(year.CostLevel)
-                .Append("\n\nYields");
+                .Append("\nYields");
             foreach (FutureYieldItem item in year.YieldItems)
             {
-                text.Append("\n")
+                text.Append("  ·  ")
                     .Append(item.CommodityId)
-                    .Append("  ")
+                    .Append(' ')
                     .Append(item.Value)
                     .Append(' ')
                     .Append(item.Unit);
             }
-            text.Append("\n\n")
+            text.Append("\n")
                 .Append(year.Narrative)
-                .Append("\n\nEvidence source IDs  ")
+                .Append("\nEvidence source IDs  ")
                 .Append(string.Join(
                     ", ",
                     year.EvidenceSourceIds));
-            RuntimeScrollableContent.SetText(
-                content,
-                text.ToString());
-
-            originalButton.GetComponent<Image>().color =
-                showingRevised
-                    ? EpisodeUiFactory.RiverTeal
-                    : EpisodeUiFactory.Amber;
-            revisedButton.GetComponent<Image>().color =
-                showingRevised
-                    ? EpisodeUiFactory.Amber
-                    : EpisodeUiFactory.RiverTeal;
+            return text.ToString();
         }
 
         private void BuildInterface()
@@ -287,22 +360,25 @@ namespace AgriVerse.Client
                 new Vector2(1280f, 720f);
             scaler.matchWidthOrHeight = .5f;
 
-            Image card = EpisodeUiFactory.Panel(
+            AtlasSurfaceGraphic card =
+                EpisodeUiFactory.SmokedGlass(
                 canvas.transform,
                 "FutureWalkCard",
-                new Color(.018f, .11f, .12f, .92f),
-                true);
+                false);
             EpisodeUiFactory.Stretch(
                 card.rectTransform,
-                new Vector2(.66f, .49f),
-                new Vector2(.975f, .88f));
+                new Vector2(.025f, .045f),
+                new Vector2(.975f, .375f));
+            cardRect = card.rectTransform;
             Text title = EpisodeUiFactory.Text(
                 card.transform,
                 "FutureWalkTitle",
                 21,
                 TextAnchor.MiddleLeft,
                 EpisodeUiFactory.OffWhite);
-            title.text = "FUTURE WALK";
+            title.text =
+                "FUTURE WALK  ·  RIVER OF CONSEQUENCES";
+            title.color = EpisodeUiFactory.Amber;
             EpisodeUiFactory.Stretch(
                 title.rectTransform,
                 new Vector2(.06f, .89f),
@@ -312,7 +388,7 @@ namespace AgriVerse.Client
                 card.transform,
                 "OriginalFuture",
                 "ORIGINAL",
-                EpisodeUiFactory.Amber,
+                EpisodeButtonStyle.Tab,
                 13);
             EpisodeUiFactory.Stretch(
                 originalButton.GetComponent<RectTransform>(),
@@ -323,7 +399,7 @@ namespace AgriVerse.Client
                 card.transform,
                 "RevisedFuture",
                 "REVISED",
-                EpisodeUiFactory.RiverTeal,
+                EpisodeButtonStyle.Tab,
                 13);
             EpisodeUiFactory.Stretch(
                 revisedButton.GetComponent<RectTransform>(),
@@ -331,12 +407,93 @@ namespace AgriVerse.Client
                 new Vector2(.94f, .88f));
             revisedButton.onClick.AddListener(ShowRevised);
 
+            originalRoute =
+                EpisodeUiFactory.Route(
+                    card.transform,
+                    "OriginalRiverRoute",
+                    new[]
+                    {
+                        new Vector2(.02f, .44f),
+                        new Vector2(.25f, .60f),
+                        new Vector2(.50f, .46f),
+                        new Vector2(.74f, .65f),
+                        new Vector2(.98f, .54f)
+                    },
+                    new Color(
+                        EpisodeUiFactory.MutedSand.r,
+                        EpisodeUiFactory.MutedSand.g,
+                        EpisodeUiFactory.MutedSand.b,
+                        .78f),
+                    1.4f);
+            EpisodeUiFactory.Stretch(
+                originalRoute.rectTransform,
+                new Vector2(.06f, .58f),
+                new Vector2(.94f, .79f));
+            revisedRoute =
+                EpisodeUiFactory.Route(
+                    card.transform,
+                    "RevisedRiverRoute",
+                    new[]
+                    {
+                        new Vector2(.02f, .44f),
+                        new Vector2(.25f, .50f),
+                        new Vector2(.50f, .67f),
+                        new Vector2(.74f, .58f),
+                        new Vector2(.98f, .72f)
+                    },
+                    EpisodeUiFactory.BrightAmber,
+                    1.8f);
+            EpisodeUiFactory.Stretch(
+                revisedRoute.rectTransform,
+                new Vector2(.06f, .58f),
+                new Vector2(.94f, .79f));
+            for (int index = 0;
+                 index < yearNodeLabels.Length;
+                 index++)
+            {
+                Text label = EpisodeUiFactory.Text(
+                    card.transform,
+                    "YearNode_" + (index + 1),
+                    12,
+                    TextAnchor.MiddleCenter,
+                    EpisodeUiFactory.MutedSand);
+                float center = .07f + index * .215f;
+                EpisodeUiFactory.Stretch(
+                    label.rectTransform,
+                    new Vector2(center - .05f, .53f),
+                    new Vector2(center + .05f, .60f));
+                yearNodeLabels[index] = label;
+            }
             content = RuntimeScrollableContent.Create(
                 card.transform,
                 "FutureWalkContent",
-                new Vector2(.06f, .06f),
-                new Vector2(.94f, .78f),
+                new Vector2(.06f, .18f),
+                new Vector2(.94f, .52f),
                 15);
+            contentScroll =
+                content.GetComponentInParent<ScrollRect>();
+            originalComparison =
+                RuntimeScrollableContent.Create(
+                    card.transform,
+                    "OriginalFutureComparison",
+                    new Vector2(.035f, .18f),
+                    new Vector2(.49f, .52f),
+                    14);
+            originalComparisonScroll =
+                originalComparison.GetComponentInParent<
+                    ScrollRect>();
+            revisedComparison =
+                RuntimeScrollableContent.Create(
+                    card.transform,
+                    "RevisedFutureComparison",
+                    new Vector2(.51f, .18f),
+                    new Vector2(.965f, .52f),
+                    14);
+            revisedComparisonScroll =
+                revisedComparison.GetComponentInParent<
+                    ScrollRect>();
+            originalComparisonScroll.gameObject.SetActive(false);
+            revisedComparisonScroll.gameObject.SetActive(false);
             panel = canvasObject;
             panel.SetActive(false);
             EpisodeAccessibility.ApplyAll();

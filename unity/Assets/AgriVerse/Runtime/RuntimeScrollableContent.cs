@@ -16,8 +16,15 @@ namespace AgriVerse.Client
             scroll.transform.SetParent(parent, false);
             Stretch(scroll.GetComponent<RectTransform>(), anchorMin, anchorMax);
             Image viewportImage = scroll.GetComponent<Image>();
-            viewportImage.color =
-                new Color(.018f, .075f, .08f, .92f);
+            viewportImage.color = EpisodeUiFactory.DeepTeal;
+            Outline outline =
+                scroll.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(
+                EpisodeUiFactory.Amber.r,
+                EpisodeUiFactory.Amber.g,
+                EpisodeUiFactory.Amber.b,
+                .34f);
+            outline.effectDistance = new Vector2(1f, -1f);
             // Scrolling is handled by RuntimeScrollInput inside this card's rect. Keeping UI
             // graphics non-raycastable preserves the world-marker click path beneath the card.
             viewportImage.raycastTarget = false;
@@ -36,8 +43,8 @@ namespace AgriVerse.Client
             Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
             text.transform.SetParent(content, false);
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = fontSize;
-            text.color = new Color(.96f, .94f, .86f, 1f);
+            text.fontSize = Mathf.Max(14, fontSize);
+            text.color = EpisodeUiFactory.OffWhite;
             text.alignment = TextAnchor.UpperLeft;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.raycastTarget = false;
@@ -115,14 +122,14 @@ namespace AgriVerse.Client
             Scrollbar scrollbar = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Scrollbar)).GetComponent<Scrollbar>();
             scrollbar.transform.SetParent(parent, false);
             Image track = scrollbar.GetComponent<Image>();
-            track.color = new Color(.025f, .16f, .17f, .88f);
+            track.color = EpisodeUiFactory.SecondarySurface;
             track.raycastTarget = false;
             RectTransform barRect = scrollbar.GetComponent<RectTransform>();
             Stretch(barRect, new Vector2(.93f, .03f), new Vector2(.99f, .97f));
 
             Image handle = new GameObject("Handle", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             handle.transform.SetParent(scrollbar.transform, false);
-            handle.color = new Color(.92f, .61f, .23f, 1f);
+            handle.color = EpisodeUiFactory.Amber;
             handle.raycastTarget = false;
             Stretch(handle.rectTransform, Vector2.zero, Vector2.one);
             scrollbar.handleRect = handle.rectTransform;

@@ -58,10 +58,16 @@ namespace AgriVerse.Client
         private GameObject dialoguePanel;
         private Text dialogueText;
         private Text dialogueHint;
+        private Button[] predictionButtons =
+            Array.Empty<Button>();
         private GameObject readingPanel;
         private Text readingText;
+        private AtlasInstrumentGraphic salinityInstrument;
+        private RectTransform evidenceRecordedStamp;
+        private Coroutine readingRevealRoutine;
         private GameObject notebookPanel;
         private Text notebookText;
+        private Text journalRouteStampText;
         private Button[] journalTabs = Array.Empty<Button>();
         private Text accessibilityStatus;
         private FieldJournalSection journalSection =
@@ -247,10 +253,8 @@ namespace AgriVerse.Client
             SetMovement(false);
             SetObjective("Loading the field mission…");
             while (investigation != null &&
-                   (investigation.LoadState ==
-                        InvestigationLoadState.NotStarted ||
-                    investigation.LoadState ==
-                        InvestigationLoadState.Loading))
+                   investigation.LoadState !=
+                   InvestigationLoadState.Ready)
             {
                 yield return null;
             }
@@ -316,9 +320,14 @@ namespace AgriVerse.Client
                 {
                     while (!presentation.MissionStarted)
                     {
-                        presentation.BeginMissionForTesting(
-                            "Field Advisor",
-                            "river-teal");
+                        if (presentation
+                            .SelectFieldLocationForTesting(
+                                investigation.Scenario.id))
+                        {
+                            presentation.BeginMissionForTesting(
+                                "Field Advisor",
+                                "river-teal");
+                        }
                         yield return null;
                     }
                 }
@@ -347,11 +356,16 @@ namespace AgriVerse.Client
                 SetMovement(false);
                 if (hudRoot != null)
                 {
+                    EpisodePresentationController presentation =
+                        FindFirstObjectByType<
+                            EpisodePresentationController>();
                     RuntimePanelManager manager =
                         FindFirstObjectByType<RuntimePanelManager>();
                     hudRoot.SetActive(
-                        manager == null ||
-                        !manager.ActiveStage.HasValue);
+                        (presentation == null ||
+                         !presentation.LandingVisible) &&
+                        (manager == null ||
+                         !manager.ActiveStage.HasValue));
                 }
                 return;
             }
@@ -499,7 +513,7 @@ namespace AgriVerse.Client
             {
                 State = Episode3DAlphaState.Reading;
                 readingPanel.SetActive(true);
-                readingText.text = FormatReading(activeSite);
+                ShowReadingPresentation(activeSite);
                 dialoguePanel.SetActive(true);
                 dialogueText.text =
                     "This field reading is already recorded in the Field Journal.";
@@ -642,15 +656,9 @@ namespace AgriVerse.Client
                  index < journalTabs.Length;
                  index++)
             {
-                Image background =
-                    journalTabs[index]?.GetComponent<Image>();
-                if (background != null)
-                {
-                    background.color =
-                        index == (int)journalSection
-                            ? new Color(1f, .67f, .24f, 1f)
-                            : new Color(.025f, .20f, .20f, .96f);
-                }
+                EpisodeUiFactory.SetButtonSelected(
+                    journalTabs[index],
+                    index == (int)journalSection);
             }
             RefreshAccessibilityStatus();
         }
@@ -1043,13 +1051,28 @@ namespace AgriVerse.Client
             dialogueText.text =
                 SaltLineNarrative.PredictionPrompt(activeSiteIndex);
             dialogueHint.text =
-                $"1  {labels[0]}     2  {labels[1]}";
+                "Choose before the field reading is revealed.";
+            for (int index = 0;
+                 index < predictionButtons.Length;
+                 index++)
+            {
+                Button choice = predictionButtons[index];
+                choice.gameObject.SetActive(true);
+                Transform label =
+                    choice.transform.Find("ChoiceLabel");
+                if (label != null &&
+                    label.TryGetComponent(out Text text))
+                {
+                    text.text = labels[index];
+                }
+            }
             SetObjective("Predict the reading before testing the water.");
             PlayMai("Mai_Idle");
         }
 
         private void ShowCollectPrompt()
         {
+            HidePredictionButtons();
             dialoguePanel.SetActive(true);
             dialogueText.text =
                 "Prediction recorded. The measurement is still hidden.";
@@ -1057,8 +1080,17 @@ namespace AgriVerse.Client
             SetObjective("Collect the sample to reveal the field reading.");
         }
 
+        private void HidePredictionButtons()
+        {
+            foreach (Button button in predictionButtons)
+            {
+                button?.gameObject.SetActive(false);
+            }
+        }
+
         private IEnumerator CollectSample()
         {
+            HidePredictionButtons();
             State = Episode3DAlphaState.Sampling;
             dialoguePanel.SetActive(true);
             dialogueText.text = "Collecting a physical water sample…";
@@ -1096,7 +1128,7 @@ namespace AgriVerse.Client
             if (sampleVial != null) sampleVial.SetActive(false);
             State = Episode3DAlphaState.Reading;
             readingPanel.SetActive(true);
-            readingText.text = FormatReading(activeSite);
+            ShowReadingPresentation(activeSite);
             dialoguePanel.SetActive(true);
             dialogueText.text = SaltLineNarrative.AfterReading;
             dialogueHint.text =
@@ -1170,6 +1202,11 @@ namespace AgriVerse.Client
                 investigation?.RecordedReadingCount ?? 0;
             progressText.text =
                 $"EVIDENCE  {recorded}/{total}     FIELD WALK";
+            if (journalRouteStampText != null)
+            {
+                journalRouteStampText.text =
+                    $"SAMPLES  ·  {recorded}/{total}";
+            }
         }
 
         private string FormatReading(TestSiteDto site)
@@ -1190,6 +1227,75 @@ namespace AgriVerse.Client
                 $"FRESHWATER ACCESS  {site.freshwater_access}\n\n" +
                 $"{site.note}\n\n" +
                 $"SOURCE IDs  {sources}";
+        }
+
+        private void ShowReadingPresentation(TestSiteDto site)
+        {
+            if (site == null) return;
+            RuntimeScrollableContent.SetText(
+                readingText,
+                FormatReading(site));
+            float largest = Mathf.Max(site.salinity_gL, .01f);
+            TestSiteDto[] sites =
+                investigation?.Scenario?.test_sites;
+            if (sites != null)
+            {
+                foreach (TestSiteDto candidate in sites)
+                {
+                    largest = Mathf.Max(
+                        largest,
+                        candidate.salinity_gL);
+                }
+            }
+            float target =
+                Mathf.Clamp01(site.salinity_gL / largest);
+            if (readingRevealRoutine != null)
+            {
+                StopCoroutine(readingRevealRoutine);
+            }
+            readingRevealRoutine = StartCoroutine(
+                AnimateReadingInstrument(target));
+        }
+
+        private IEnumerator AnimateReadingInstrument(float target)
+        {
+            if (salinityInstrument == null) yield break;
+            if (EpisodeAccessibility.ReducedMotion)
+            {
+                salinityInstrument.SetMeasurement(target);
+                if (evidenceRecordedStamp != null)
+                {
+                    evidenceRecordedStamp.localScale = Vector3.one;
+                }
+                yield break;
+            }
+            salinityInstrument.SetMeasurement(0f);
+            if (evidenceRecordedStamp != null)
+            {
+                evidenceRecordedStamp.localScale =
+                    Vector3.one * 1.08f;
+            }
+            float elapsed = 0f;
+            const float duration = .62f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float amount = Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    Mathf.Clamp01(elapsed / duration));
+                salinityInstrument.SetMeasurement(
+                    Mathf.Lerp(0f, target, amount));
+                if (evidenceRecordedStamp != null)
+                {
+                    evidenceRecordedStamp.localScale =
+                        Vector3.one *
+                        Mathf.Lerp(1.08f, 1f, amount);
+                }
+                yield return null;
+            }
+            salinityInstrument.SetMeasurement(target);
+            readingRevealRoutine = null;
         }
 
         private string PlayerName()
@@ -1268,13 +1374,15 @@ namespace AgriVerse.Client
 
         private void BuildInterface()
         {
+            EpisodeUiFactory.EnsureEventSystem();
             Font font =
                 Resources.GetBuiltinResource<Font>(
                     "LegacyRuntime.ttf");
             GameObject canvasObject = new GameObject(
                 "Episode3DAlphaHUD",
                 typeof(Canvas),
-                typeof(CanvasScaler));
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
             canvasObject.transform.SetParent(transform, false);
             hudRoot = canvasObject;
             Canvas canvas = canvasObject.GetComponent<Canvas>();
@@ -1287,26 +1395,30 @@ namespace AgriVerse.Client
             scaler.referenceResolution = new Vector2(1280f, 720f);
             scaler.matchWidthOrHeight = .5f;
 
-            Image objective = Panel(
-                canvas.transform,
-                "Objective",
-                new Vector2(.025f, .90f),
-                new Vector2(.55f, .972f),
-                new Color(.025f, .15f, .16f, .86f));
+            AtlasSurfaceGraphic objective =
+                EpisodeUiFactory.AtlasLabel(
+                    canvas.transform,
+                    "Objective");
+            Stretch(
+                objective.rectTransform,
+                new Vector2(.025f, .91f),
+                new Vector2(.405f, .968f));
             objectiveText = Label(
                 objective.transform,
                 font,
-                18,
+                16,
                 TextAnchor.MiddleLeft,
                 new Vector2(.035f, .08f),
                 new Vector2(.965f, .92f));
 
-            Image progress = Panel(
-                canvas.transform,
-                "Progress",
-                new Vector2(.705f, .91f),
-                new Vector2(.975f, .968f),
-                new Color(.025f, .15f, .16f, .80f));
+            AtlasSurfaceGraphic progress =
+                EpisodeUiFactory.AtlasLabel(
+                    canvas.transform,
+                    "Progress");
+            Stretch(
+                progress.rectTransform,
+                new Vector2(.785f, .915f),
+                new Vector2(.975f, .968f));
             progressText = Label(
                 progress.transform,
                 font,
@@ -1315,7 +1427,7 @@ namespace AgriVerse.Client
                 new Vector2(.04f, .08f),
                 new Vector2(.96f, .92f));
             progressText.color =
-                new Color(1f, .78f, .34f, 1f);
+                EpisodeUiFactory.Amber;
 
             reticleText = Label(
                 canvas.transform,
@@ -1338,12 +1450,14 @@ namespace AgriVerse.Client
             promptText.color =
                 new Color(1f, .91f, .72f, 1f);
 
-            Image dialogue = Panel(
-                canvas.transform,
-                "MaiDialogue",
-                new Vector2(.12f, .055f),
-                new Vector2(.88f, .245f),
-                new Color(.018f, .11f, .12f, .91f));
+            AtlasSurfaceGraphic dialogue =
+                EpisodeUiFactory.SmokedGlass(
+                    canvas.transform,
+                    "MaiDialogue");
+            Stretch(
+                dialogue.rectTransform,
+                new Vector2(.095f, .035f),
+                new Vector2(.905f, .29f));
             dialoguePanel = dialogue.gameObject;
             Text identity = Label(
                 dialogue.transform,
@@ -1354,47 +1468,114 @@ namespace AgriVerse.Client
                 new Vector2(.965f, .94f));
             identity.text = "MAI  ·  FIELD COORDINATOR";
             identity.color =
-                new Color(1f, .72f, .28f, 1f);
+                EpisodeUiFactory.Amber;
             dialogueText = Label(
                 dialogue.transform,
                 font,
                 18,
                 TextAnchor.UpperLeft,
-                new Vector2(.035f, .25f),
+                new Vector2(.035f, .40f),
                 new Vector2(.965f, .76f));
             dialogueHint = Label(
                 dialogue.transform,
                 font,
-                15,
-                TextAnchor.MiddleRight,
-                new Vector2(.035f, .035f),
-                new Vector2(.965f, .25f));
+                13,
+                TextAnchor.MiddleLeft,
+                new Vector2(.035f, .30f),
+                new Vector2(.965f, .40f));
             dialogueHint.color =
-                new Color(1f, .80f, .43f, 1f);
+                EpisodeUiFactory.MutedSand;
+            predictionButtons = new Button[2];
+            for (int index = 0;
+                 index < predictionButtons.Length;
+                 index++)
+            {
+                int selectedIndex = index;
+                predictionButtons[index] =
+                    EpisodeUiFactory.ChoiceButton(
+                        dialogue.transform,
+                        "PredictionChoice_" + (index + 1),
+                        index + 1,
+                        string.Empty);
+                float left = .035f + index * .47f;
+                Stretch(
+                    predictionButtons[index]
+                        .GetComponent<RectTransform>(),
+                    new Vector2(left, .055f),
+                    new Vector2(left + .445f, .285f));
+                predictionButtons[index].onClick.AddListener(
+                    () => ChoosePrediction(selectedIndex));
+                predictionButtons[index].gameObject.SetActive(false);
+            }
             dialoguePanel.SetActive(false);
 
-            Image reading = Panel(
-                canvas.transform,
-                "FieldReading",
-                new Vector2(.035f, .28f),
-                new Vector2(.47f, .86f),
-                new Color(.018f, .11f, .12f, .94f));
+            AtlasSurfaceGraphic reading =
+                EpisodeUiFactory.AtlasLabel(
+                    canvas.transform,
+                    "FieldReading");
+            Stretch(
+                reading.rectTransform,
+                new Vector2(.635f, .28f),
+                new Vector2(.965f, .82f));
             readingPanel = reading.gameObject;
-            readingText = Label(
+            Text readingTitle = Label(
                 reading.transform,
                 font,
-                17,
+                15,
                 TextAnchor.UpperLeft,
                 new Vector2(.06f, .06f),
-                new Vector2(.94f, .94f));
+                new Vector2(.94f, .96f));
+            readingTitle.text = "FIELD READING  ·  RECORDED EVIDENCE";
+            readingTitle.color = EpisodeUiFactory.Amber;
+            Stretch(
+                readingTitle.rectTransform,
+                new Vector2(.06f, .86f),
+                new Vector2(.94f, .96f));
+            salinityInstrument =
+                EpisodeUiFactory.Instrument(
+                    reading.transform,
+                    "SalinityInstrument");
+            Stretch(
+                salinityInstrument.rectTransform,
+                new Vector2(.04f, .20f),
+                new Vector2(.34f, .84f));
+            Text scaleLabel = Label(
+                reading.transform,
+                font,
+                12,
+                TextAnchor.UpperCenter,
+                new Vector2(.035f, .08f),
+                new Vector2(.34f, .20f));
+            scaleLabel.name = "InstrumentLabel";
+            scaleLabel.text = "VIAL SCALE  ·  MEASURED";
+            scaleLabel.color = EpisodeUiFactory.Amber;
+            readingText = RuntimeScrollableContent.Create(
+                reading.transform,
+                "FieldReadingContent",
+                new Vector2(.36f, .18f),
+                new Vector2(.95f, .84f),
+                16);
+            AtlasSurfaceGraphic stamp =
+                EpisodeUiFactory.Stamp(
+                    reading.transform,
+                    "EvidenceRecordedStamp",
+                    "EVIDENCE RECORDED",
+                    EpisodeUiFactory.Amber);
+            evidenceRecordedStamp = stamp.rectTransform;
+            Stretch(
+                evidenceRecordedStamp,
+                new Vector2(.55f, .045f),
+                new Vector2(.94f, .15f));
             readingPanel.SetActive(false);
 
-            Image notebook = Panel(
-                canvas.transform,
-                "FieldJournal",
-                new Vector2(.16f, .11f),
-                new Vector2(.94f, .89f),
-                new Color(.018f, .11f, .12f, .97f));
+            AtlasSurfaceGraphic notebook =
+                EpisodeUiFactory.FieldPaper(
+                    canvas.transform,
+                    "FieldJournal");
+            Stretch(
+                notebook.rectTransform,
+                new Vector2(.09f, .075f),
+                new Vector2(.94f, .91f));
             notebookPanel = notebook.gameObject;
             Text journalTitle = Label(
                 notebook.transform,
@@ -1404,8 +1585,7 @@ namespace AgriVerse.Client
                 new Vector2(.05f, .91f),
                 new Vector2(.72f, .97f));
             journalTitle.text = "FIELD JOURNAL";
-            journalTitle.color =
-                new Color(1f, .76f, .34f, 1f);
+            journalTitle.color = EpisodeUiFactory.Ink;
             string[] tabLabels =
                 { "SITES", "PEOPLE", "PLAN", "SOURCES" };
             journalTabs = new Button[tabLabels.Length];
@@ -1434,12 +1614,75 @@ namespace AgriVerse.Client
                 new Vector2(.80f, .91f),
                 new Vector2(.95f, .97f));
             closeJournal.onClick.AddListener(ToggleNotebook);
+            AtlasSurfaceGraphic siteMap =
+                EpisodeUiFactory.AtlasLabel(
+                    notebook.transform,
+                    "JournalSiteMap");
+            Stretch(
+                siteMap.rectTransform,
+                new Vector2(.045f, .12f),
+                new Vector2(.365f, .79f));
+            Text mapTitle = Label(
+                siteMap.transform,
+                font,
+                13,
+                TextAnchor.UpperLeft,
+                new Vector2(.08f, .83f),
+                new Vector2(.92f, .96f));
+            mapTitle.name = "SpecimenLabel";
+            mapTitle.text =
+                "FIELD ROUTE  ·  THREE WATER STATIONS";
+            mapTitle.color = EpisodeUiFactory.Amber;
+            AtlasRouteGraphic route =
+                EpisodeUiFactory.Route(
+                    siteMap.transform,
+                    "InvestigationRoute",
+                    EpisodeUiFactory.FieldRouteNodes(
+                        Mathf.Max(
+                            1,
+                            configuredSiteIds.Length)),
+                    EpisodeUiFactory.BrightAmber,
+                    1.5f);
+            Stretch(
+                route.rectTransform,
+                new Vector2(.08f, .10f),
+                new Vector2(.92f, .80f));
+            AtlasSurfaceGraphic routeStamp =
+                EpisodeUiFactory.Stamp(
+                    siteMap.transform,
+                    "RouteEvidenceStamp",
+                    "SAMPLES  ·  0/0",
+                    EpisodeUiFactory.NetworkTeal);
+            journalRouteStampText =
+                routeStamp.transform.Find("StampLabel")
+                    ?.GetComponent<Text>();
+            Stretch(
+                routeStamp.rectTransform,
+                new Vector2(.14f, .05f),
+                new Vector2(.70f, .17f));
+            AtlasSurfaceGraphic dossierRule =
+                EpisodeUiFactory.AtlasLabel(
+                    notebook.transform,
+                    "DossierRule");
+            Stretch(
+                dossierRule.rectTransform,
+                new Vector2(.382f, .11f),
+                new Vector2(.386f, .79f));
             notebookText = RuntimeScrollableContent.Create(
                 notebook.transform,
                 "FieldJournalEntries",
-                new Vector2(.05f, .06f),
+                new Vector2(.405f, .10f),
                 new Vector2(.95f, .79f),
                 16);
+            ScrollRect journalScroll =
+                notebookText.GetComponentInParent<ScrollRect>();
+            journalScroll.GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .10f);
+            notebookText.color = EpisodeUiFactory.Ink;
             Button textSmaller = JournalButton(
                 notebook.transform,
                 font,
@@ -1545,6 +1788,24 @@ namespace AgriVerse.Client
             Image image = item.GetComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
+            bool themed =
+                Mathf.Abs(
+                    color.r -
+                    EpisodeUiFactory.DeepTeal.r) < .03f &&
+                Mathf.Abs(
+                    color.g -
+                    EpisodeUiFactory.DeepTeal.g) < .03f;
+            if (themed)
+            {
+                Outline outline = item.AddComponent<Outline>();
+                outline.effectColor = new Color(
+                    EpisodeUiFactory.Amber.r,
+                    EpisodeUiFactory.Amber.g,
+                    EpisodeUiFactory.Amber.b,
+                    .38f);
+                outline.effectDistance =
+                    new Vector2(1f, -1f);
+            }
             Stretch(image.rectTransform, anchorMin, anchorMax);
             return image;
         }
@@ -1569,7 +1830,7 @@ namespace AgriVerse.Client
             text.alignment = alignment;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.color = new Color(.96f, .95f, .89f, 1f);
+            text.color = EpisodeUiFactory.OffWhite;
             text.raycastTarget = false;
             Stretch(text.rectTransform, anchorMin, anchorMax);
             return text;
@@ -1583,27 +1844,18 @@ namespace AgriVerse.Client
             Vector2 anchorMin,
             Vector2 anchorMax)
         {
-            GameObject item = new GameObject(
+            Button button = EpisodeUiFactory.Button(
+                parent,
                 name,
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image),
-                typeof(Button));
-            item.transform.SetParent(parent, false);
-            Image image = item.GetComponent<Image>();
-            image.color = new Color(.025f, .20f, .20f, .96f);
-            Button button = item.GetComponent<Button>();
-            button.targetGraphic = image;
-            Text label = Label(
-                item.transform,
-                font,
-                13,
-                TextAnchor.MiddleCenter,
-                Vector2.zero,
-                Vector2.one);
-            label.text = value;
+                value,
+                name.StartsWith(
+                    "Journal_",
+                    StringComparison.Ordinal)
+                    ? EpisodeButtonStyle.Tab
+                    : EpisodeButtonStyle.Secondary,
+                13);
             Stretch(
-                item.GetComponent<RectTransform>(),
+                button.GetComponent<RectTransform>(),
                 anchorMin,
                 anchorMax);
             return button;
@@ -1672,6 +1924,32 @@ namespace AgriVerse.Client
             yield return Capture(directory, "05_evidence.png");
             ToggleNotebook();
             ContinueAfterReadingForTesting();
+            bool hudWasVisible =
+                hudRoot != null && hudRoot.activeSelf;
+            if (hudRoot != null)
+            {
+                hudRoot.SetActive(false);
+            }
+            yield return CaptureStation(
+                directory,
+                "SamplingDock",
+                "07_canal_station.png");
+            yield return CaptureStation(
+                directory,
+                "FieldStation_ResearchPost_A",
+                "08_research_station.png");
+            yield return CaptureStation(
+                directory,
+                "FieldStation_DistrictOffice_A",
+                "09_district_office.png");
+            yield return CaptureStation(
+                directory,
+                "FieldStation_PlanningTable_A",
+                "10_planning_station.png");
+            if (hudRoot != null)
+            {
+                hudRoot.SetActive(hudWasVisible);
+            }
             for (int index = 1;
                  index < configuredSiteIds.Length;
                  index++)
@@ -1742,9 +2020,254 @@ namespace AgriVerse.Client
                 yield return Capture(
                     directory,
                     "06_interview_selected.png");
+
+                InterviewNotebook interviewNotebook =
+                    InterviewNotebookSession
+                        .GetOrCreate()
+                        .Notebook;
+                foreach (StakeholderDto participant in
+                         interviews.Scenario.stakeholders)
+                {
+                    int priorTurns =
+                        interviewNotebook
+                            .ConversationFor(participant.id)
+                            .Count;
+                    interviews.AskForTesting(
+                        participant.id,
+                        "What condition should the community weigh " +
+                        "most before making its field plan?");
+                    yield return new WaitForSecondsRealtime(.1f);
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            !interviews.IsBusy &&
+                            interviewNotebook
+                                .ConversationFor(participant.id)
+                                .Count >= priorTurns + 2,
+                        150f,
+                        "stakeholder response " + participant.id);
+                }
+                yield return new WaitForSecondsRealtime(.35f);
+                yield return Capture(
+                    directory,
+                    "11_interview_response.png");
+
+                PlanController plan =
+                    FindFirstObjectByType<PlanController>();
+                ConsequencesController consequences =
+                    FindFirstObjectByType<ConsequencesController>();
+                FeedbackController feedback =
+                    FindFirstObjectByType<FeedbackController>();
+                PolicyBriefController brief =
+                    FindFirstObjectByType<PolicyBriefController>();
+                yield return WaitForCaptureCondition(
+                    () =>
+                        plan != null &&
+                        plan.LoadState ==
+                        InvestigationLoadState.Ready,
+                    30f,
+                    "planning stage");
+                if (plan != null && plan.BeginPlanning())
+                {
+                    plan.ConfigureForTesting(
+                        investigation.Scenario.test_sites[0].id,
+                        investigation.Scenario.interventions[0].id,
+                        "The proposal should fit the recorded field " +
+                        "conditions and the stakeholder evidence.");
+                    presentation?.DismissGuideForTesting();
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "12_planning_table.png");
+
+                    string priorSimulation =
+                        plan.Session.SimulatorResultJson;
+                    plan.SubmitPlan();
+                    yield return new WaitForSecondsRealtime(.1f);
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            !plan.IsBusy &&
+                            !string.IsNullOrWhiteSpace(
+                                plan.Session.SimulatorResultJson) &&
+                            !string.Equals(
+                                priorSimulation,
+                                plan.Session.SimulatorResultJson,
+                                StringComparison.Ordinal),
+                        180f,
+                        "first simulation");
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            consequences != null &&
+                            consequences.ConsequencesVisible,
+                        30f,
+                        "first Future Walk");
+                    presentation?.DismissGuideForTesting();
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "13_future_walk.png");
+
+                    consequences?.UnlockFeedback();
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            feedback != null &&
+                            !feedback.IsBusy &&
+                            !string.IsNullOrWhiteSpace(
+                                plan.Session.FeedbackResultJson),
+                        180f,
+                        "grounded feedback");
+                    yield return new WaitForSecondsRealtime(.35f);
+                    yield return Capture(
+                        directory,
+                        "14_grounded_feedback.png");
+
+                    feedback?.RevisePlan();
+                    yield return new WaitForSecondsRealtime(.25f);
+                    plan.ConfigureForTesting(
+                        plan.Session.TargetSiteId,
+                        investigation.Scenario.interventions[0].id,
+                        "The revised proposal responds to the " +
+                        "recorded evidence, stakeholder concerns, " +
+                        "and all decision factors.");
+                    plan.SubmitPlan();
+                    yield return new WaitForSecondsRealtime(.1f);
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            !plan.IsBusy &&
+                            plan.Session.HasRevision &&
+                            plan.Session.RevisionCount > 0 &&
+                            !string.IsNullOrWhiteSpace(
+                                plan.Session.SimulatorResultJson),
+                        180f,
+                        "revised simulation");
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            consequences != null &&
+                            consequences.ConsequencesVisible,
+                        30f,
+                        "revised Future Walk");
+                    presentation?.DismissGuideForTesting();
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "15_original_revised_comparison.png");
+
+                    consequences?.UnlockFeedback();
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            feedback != null &&
+                            !feedback.IsBusy &&
+                            !string.IsNullOrWhiteSpace(
+                                plan.Session.FeedbackResultJson),
+                        180f,
+                        "revised grounded feedback");
+                    feedback?.GenerateBrief();
+                    yield return WaitForCaptureCondition(
+                        () =>
+                            brief != null &&
+                            !brief.IsBusy &&
+                            !string.IsNullOrWhiteSpace(
+                                plan.Session.PolicyBriefResultJson),
+                        180f,
+                        "policy brief");
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "16_policy_brief.png");
+
+                    presentation?.RefreshForTesting();
+                    presentation?.OpenCertificate();
+                    yield return new WaitForSecondsRealtime(.45f);
+                    yield return Capture(
+                        directory,
+                        "17_certificate.png");
+                }
             }
             yield return new WaitForSecondsRealtime(.4f);
             Application.Quit(0);
+        }
+
+        private static IEnumerator WaitForCaptureCondition(
+            Func<bool> condition,
+            float timeoutSeconds,
+            string label)
+        {
+            float deadline =
+                Time.realtimeSinceStartup + timeoutSeconds;
+            while (!condition() &&
+                   Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+            if (!condition())
+            {
+                Debug.LogError(
+                    "Gate C capture timed out while waiting for " +
+                    label + ".");
+            }
+        }
+
+        private IEnumerator CaptureStation(
+            string directory,
+            string targetName,
+            string filename)
+        {
+            Transform target = null;
+            foreach (Transform candidate in
+                     FindObjectsByType<Transform>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                if (string.Equals(
+                        candidate.name,
+                        targetName,
+                        StringComparison.Ordinal))
+                {
+                    target = candidate;
+                    break;
+                }
+            }
+            if (target == null || walker?.ViewCamera == null)
+            {
+                Debug.LogWarning(
+                    "Station capture target was unavailable: " +
+                    targetName);
+                yield break;
+            }
+
+            Renderer[] renderers =
+                target.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0) yield break;
+            Bounds bounds = renderers[0].bounds;
+            for (int index = 1; index < renderers.Length; index++)
+            {
+                bounds.Encapsulate(renderers[index].bounds);
+            }
+
+            Vector3 viewDirection =
+                (target.forward + target.right * .28f).normalized;
+            float distance =
+                Mathf.Max(bounds.extents.x, bounds.extents.z) +
+                3.5f;
+            Vector3 groundPosition =
+                bounds.center - viewDirection * distance;
+            groundPosition.y = target.position.y;
+            Vector3 focus =
+                bounds.center +
+                Vector3.up * Mathf.Min(.35f, bounds.extents.y * .15f);
+            Vector3 eye =
+                groundPosition + Vector3.up * walker.EyeHeight;
+            Vector3 direction = focus - eye;
+            float heading =
+                Mathf.Atan2(direction.x, direction.z) *
+                Mathf.Rad2Deg;
+            float pitch =
+                -Mathf.Atan2(
+                    direction.y,
+                    new Vector2(direction.x, direction.z).magnitude) *
+                Mathf.Rad2Deg;
+            walker.Teleport(groundPosition, heading, pitch);
+            yield return new WaitForSecondsRealtime(1.15f);
+            yield return Capture(directory, filename);
         }
 
         private static IEnumerator Capture(

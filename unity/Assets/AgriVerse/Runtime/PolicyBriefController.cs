@@ -131,14 +131,133 @@ namespace AgriVerse.Client
         private static string OutcomeText(CanonicalJsonValue outcomes){var text=new StringBuilder("Salinity: ").Append(outcomes.Property("salinity").Property("value").Text).Append(' ').Append(outcomes.Property("salinity").Property("unit").Text).Append("\nYield items:");foreach(CanonicalJsonValue item in outcomes.Property("yield").Property("items").Items)text.Append("\n- ").Append(item.Property("commodity_id").Text).Append(": ").Append(item.Property("value").Text).Append(' ').Append(item.Property("unit").Text);CanonicalJsonValue income=outcomes.Property("income");CanonicalJsonValue sustainability=outcomes.Property("sustainability");text.Append("\nIncome score: ").Append(income.Property("score").Text).Append(" (scale ").Append(income.Property("scale_min").Text).Append("–").Append(income.Property("scale_max").Text).Append(")").Append("\nIncome projected value: ").Append(income.Property("projected_value").Text).Append(" ").Append(income.Property("currency").Text).Append(" ").Append(income.Property("basis").Text).Append("\nSustainability score: ").Append(sustainability.Property("score").Text).Append(" (scale ").Append(sustainability.Property("scale_min").Text).Append("–").Append(sustainability.Property("scale_max").Text).Append(")");return text.ToString();}
         private static string EvidenceText(CanonicalJsonValue evidence)=>"source IDs: "+Join(evidence.Property("source_ids").Items)+"; simulation years: "+Join(evidence.Property("simulation_years").Items);
 
-        private void CreateInterface(){var canvasObject=new GameObject("PolicyBriefCanvas",typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));canvasObject.transform.SetParent(stage.transform,false);Canvas canvas=canvasObject.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;CanvasScaler scaler=canvasObject.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1280,720);contentText=RuntimeScrollableContent.Create(canvas.transform,"PolicyBriefContent",new Vector2(.03f,.1f),new Vector2(.62f,.82f),15);retryButton=Button(canvas.transform,"RetryBrief","Retry policy brief");Stretch(retryButton.GetComponent<RectTransform>(),new Vector2(.03f,.04f),new Vector2(.62f,.08f));retryButton.onClick.AddListener(RetryBrief);RefreshButtons();}
-        private void RefreshButtons(){if(retryButton!=null)retryButton.interactable=!busy&&retryAvailable;}
-        private void SetScrollableText(string value){RuntimeScrollableContent.SetText(contentText,value);}
+        private void CreateInterface()
+        {
+            var canvasObject = new GameObject(
+                "PolicyBriefCanvas",
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+            canvasObject.transform.SetParent(stage.transform, false);
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 16;
+            CanvasScaler scaler =
+                canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode =
+                CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution =
+                new Vector2(1280f, 720f);
+            scaler.matchWidthOrHeight = .5f;
+
+            AtlasSurfaceGraphic document =
+                EpisodeUiFactory.FieldPaper(
+                canvas.transform,
+                "PolicyBriefDocument",
+                true);
+            Stretch(
+                document.rectTransform,
+                new Vector2(.10f, .045f),
+                new Vector2(.90f, .895f));
+            Text heading = EpisodeUiFactory.Text(
+                document.transform,
+                "PolicyBriefHeading",
+                22,
+                TextAnchor.MiddleLeft,
+                EpisodeUiFactory.Ink);
+            heading.text =
+                "EPISODE 1  ·  POLICY BRIEF";
+            Stretch(
+                heading.rectTransform,
+                new Vector2(.055f, .90f),
+                new Vector2(.76f, .975f));
+            Text status = EpisodeUiFactory.Text(
+                document.transform,
+                "PolicyBriefStatus",
+                13,
+                TextAnchor.MiddleRight,
+                EpisodeUiFactory.MutedSand);
+            status.text = "FIELD JOURNAL CAPSTONE";
+            Stretch(
+                status.rectTransform,
+                new Vector2(.72f, .90f),
+                new Vector2(.945f, .975f));
+            AtlasSurfaceGraphic seal =
+                EpisodeUiFactory.Stamp(
+                    document.transform,
+                    "AtlasSeal",
+                    "AGRIVERSE\nFIELD REPORT",
+                    EpisodeUiFactory.Amber);
+            Stretch(
+                seal.rectTransform,
+                new Vector2(.785f, .82f),
+                new Vector2(.945f, .90f));
+            AtlasSurfaceGraphic sourceRail =
+                EpisodeUiFactory.AtlasLabel(
+                    document.transform,
+                    "SourceTagRail");
+            Stretch(
+                sourceRail.rectTransform,
+                new Vector2(.045f, .14f),
+                new Vector2(.20f, .85f));
+            string[] railLabels =
+                { "PROBLEM", "EVIDENCE", "PLAN", "OUTLOOK", "SOURCES" };
+            for (int index = 0;
+                 index < railLabels.Length;
+                 index++)
+            {
+                Text tag = EpisodeUiFactory.Text(
+                    sourceRail.transform,
+                    "ReportTag_" + railLabels[index],
+                    12,
+                    TextAnchor.MiddleLeft,
+                    index == 1
+                        ? EpisodeUiFactory.Amber
+                        : EpisodeUiFactory.OffWhite);
+                tag.text =
+                    (index + 1).ToString("00") +
+                    "  " +
+                    railLabels[index];
+                float top = .92f - index * .16f;
+                Stretch(
+                    tag.rectTransform,
+                    new Vector2(.10f, top - .09f),
+                    new Vector2(.94f, top));
+            }
+            contentText = RuntimeScrollableContent.Create(
+                document.transform,
+                "PolicyBriefContent",
+                new Vector2(.225f, .12f),
+                new Vector2(.945f, .81f),
+                15);
+            contentText.color = EpisodeUiFactory.Ink;
+            contentText.supportRichText = true;
+            contentText.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .12f);
+            retryButton = EpisodeUiFactory.Button(
+                document.transform,
+                "RetryBrief",
+                "RETRY POLICY BRIEF",
+                EpisodeButtonStyle.Secondary,
+                14);
+            Stretch(
+                retryButton.GetComponent<RectTransform>(),
+                new Vector2(.69f, .035f),
+                new Vector2(.945f, .095f));
+            retryButton.onClick.AddListener(RetryBrief);
+            EpisodeAccessibility.ApplyAll();
+            RefreshButtons();
+        }
+        private void RefreshButtons(){if(retryButton!=null){retryButton.gameObject.SetActive(retryAvailable);retryButton.interactable=!busy&&retryAvailable;}}
+        private void SetScrollableText(string value){RuntimeScrollableContent.SetText(contentText,EpisodeUiFactory.FormatModelText(value));}
         private void SetStatus(string value){RuntimePanelManager.GetOrCreate().SetInstruction(value);}
         private static string ReadableError(UnityWebRequest request)=>request.responseCode>0?"server returned "+request.responseCode:request.error;
         private static string Join(IReadOnlyList<CanonicalJsonValue> values){var text=new StringBuilder();for(int i=0;i<values.Count;i++){if(i>0)text.Append(", ");text.Append(values[i].Text);}return text.ToString();}
-        private static Text Text(Transform parent,string name,int size){Text text=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Text)).GetComponent<Text>();text.transform.SetParent(parent,false);text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");text.fontSize=size;text.color=EpisodeUiFactory.OffWhite;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;}
-        private static Button Button(Transform parent,string name,string label){Button button=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button)).GetComponent<Button>();button.transform.SetParent(parent,false);Image image=button.GetComponent<Image>();image.color=EpisodeUiFactory.RiverTeal;button.targetGraphic=image;Text text=Text(button.transform,"Label",14);text.text=label;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,Vector2.zero,Vector2.one);return button;}
         private static void Stretch(RectTransform rect,Vector2 min,Vector2 max){rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;}
         private static bool IsWebBuild
         {

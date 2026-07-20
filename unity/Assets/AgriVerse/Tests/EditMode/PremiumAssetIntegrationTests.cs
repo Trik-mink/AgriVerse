@@ -155,10 +155,96 @@ namespace AgriVerse.Client.Tests
             ScriptableObject runtimeAssets =
                 AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/AgriVerse/Resources/GlobeLandingAssets.asset");
+            FieldNetworkCatalogAsset fieldNetwork =
+                AssetDatabase.LoadAssetAtPath<FieldNetworkCatalogAsset>(
+                    "Assets/AgriVerse/Resources/FieldNetworkCatalog.asset");
 
             Assert.That(earth, Is.Not.Null);
             Assert.That(clouds, Is.Not.Null);
             Assert.That(runtimeAssets, Is.Not.Null);
+            Assert.That(fieldNetwork, Is.Not.Null);
+            Assert.That(fieldNetwork.FutureLocations.Count, Is.EqualTo(4));
+        }
+
+        [TestCase(
+            CharacterRoot + "MrBa/Prefabs/MrBa.prefab")]
+        [TestCase(
+            CharacterRoot + "DrLinh/Prefabs/DrLinh.prefab")]
+        [TestCase(
+            CharacterRoot + "MsHoa/Prefabs/MsHoa.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Structures/ResearchPost_A/Prefabs/ResearchPost_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Structures/DistrictOffice_A/Prefabs/DistrictOffice_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Structures/ReflectionPavilion_A/Prefabs/" +
+            "ReflectionPavilion_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/ResearchWorkstation_A/Prefabs/" +
+            "ResearchWorkstation_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/SamplingKit_A/Prefabs/SamplingKit_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/PlanningTable_A/Prefabs/PlanningTable_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/WovenBasket_A/Prefabs/WovenBasket_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/Hoe_A/Prefabs/Hoe_A.prefab")]
+        [TestCase(
+            EnvironmentRoot +
+            "Props/Shovel_A/Prefabs/Shovel_A.prefab")]
+        public void DerivedPresentationPrefabsHaveStableGroundedWrapperRoots(
+            string path)
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            Assert.That(prefab, Is.Not.Null, path);
+            Assert.That(
+                Quaternion.Angle(
+                    prefab.transform.localRotation,
+                    Quaternion.identity),
+                Is.LessThan(.01f),
+                path + " must expose an identity wrapper root.");
+            Assert.That(
+                Vector3.Distance(
+                    prefab.transform.localScale,
+                    Vector3.one),
+                Is.LessThan(.0001f),
+                path);
+            Assert.That(
+                prefab.GetComponentsInChildren<Rigidbody>(true),
+                Is.Empty,
+                path + " must remain static presentation art.");
+
+            GameObject instance =
+                PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            try
+            {
+                Renderer[] renderers =
+                    instance.GetComponentsInChildren<Renderer>(true);
+                Assert.That(renderers, Is.Not.Empty, path);
+                Bounds bounds = renderers[0].bounds;
+                foreach (Renderer renderer in renderers.Skip(1))
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+                Assert.That(
+                    Mathf.Abs(bounds.min.y - instance.transform.position.y),
+                    Is.LessThan(.035f),
+                    path + " must rest on its wrapper base.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
         }
     }
 }

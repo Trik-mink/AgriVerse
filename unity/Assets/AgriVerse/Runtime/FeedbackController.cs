@@ -188,15 +188,129 @@ namespace AgriVerse.Client
 
         private void CreateInterface()
         {
-            var canvasObject = new GameObject("FeedbackCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var canvasObject = new GameObject(
+                "FeedbackCanvas",
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
             canvasObject.transform.SetParent(stage.transform, false);
-            Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280, 720);
-            contentText = RuntimeScrollableContent.Create(canvas.transform, "FeedbackContent", new Vector2(.03f, .1f), new Vector2(.62f, .82f), 15);
-            retryButton = Button(canvas.transform, "RetryFeedback", "Retry"); Stretch(retryButton.GetComponent<RectTransform>(), new Vector2(.03f, .04f), new Vector2(.17f, .08f)); retryButton.onClick.AddListener(RetryFeedback);
-            backButton = Button(canvas.transform, "BackToConsequences", "Back"); Stretch(backButton.GetComponent<RectTransform>(), new Vector2(.18f, .04f), new Vector2(.32f, .08f)); backButton.onClick.AddListener(ReturnToConsequences);
-            reviseButton = Button(canvas.transform, "RevisePlan", "Revise plan"); Stretch(reviseButton.GetComponent<RectTransform>(), new Vector2(.33f, .04f), new Vector2(.47f, .08f)); reviseButton.onClick.AddListener(RevisePlan);
-            briefButton = Button(canvas.transform, "GenerateBrief", "Generate brief"); Stretch(briefButton.GetComponent<RectTransform>(), new Vector2(.48f, .04f), new Vector2(.62f, .08f)); briefButton.onClick.AddListener(GenerateBrief);
+            Canvas canvas =
+                canvasObject.GetComponent<Canvas>();
+            canvas.renderMode =
+                RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 16;
+            CanvasScaler scaler =
+                canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode =
+                CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution =
+                new Vector2(1280f, 720f);
+            scaler.matchWidthOrHeight = .5f;
+
+            AtlasSurfaceGraphic card =
+                EpisodeUiFactory.FieldPaper(
+                canvas.transform,
+                "FeedbackCard",
+                true);
+            Stretch(
+                card.rectTransform,
+                new Vector2(.04f, .04f),
+                new Vector2(.96f, .55f));
+            Text heading = EpisodeUiFactory.Text(
+                card.transform,
+                "FeedbackHeading",
+                21,
+                TextAnchor.MiddleLeft,
+                EpisodeUiFactory.Ink);
+            heading.text =
+                "GROUNDED FEEDBACK  ·  REVIEW, THEN REVISE";
+            Stretch(
+                heading.rectTransform,
+                new Vector2(.03f, .88f),
+                new Vector2(.88f, .98f));
+            AtlasSurfaceGraphic rubricRail =
+                EpisodeUiFactory.AtlasLabel(
+                    card.transform,
+                    "RubricTagRail");
+            Stretch(
+                rubricRail.rectTransform,
+                new Vector2(.03f, .20f),
+                new Vector2(.21f, .85f));
+            for (int index = 0; index < 6; index++)
+            {
+                Text marker = EpisodeUiFactory.Text(
+                    rubricRail.transform,
+                    "RubricMarker_" + (index + 1),
+                    12,
+                    TextAnchor.MiddleLeft,
+                    index == 0
+                        ? EpisodeUiFactory.Amber
+                        : EpisodeUiFactory.OffWhite);
+                marker.text =
+                    (index + 1).ToString("00") +
+                    "  REVIEW";
+                float top = .94f - index * .15f;
+                Stretch(
+                    marker.rectTransform,
+                    new Vector2(.10f, top - .10f),
+                    new Vector2(.94f, top));
+            }
+            contentText = RuntimeScrollableContent.Create(
+                card.transform,
+                "FeedbackContent",
+                new Vector2(.235f, .20f),
+                new Vector2(.97f, .86f),
+                15);
+            contentText.color = EpisodeUiFactory.Ink;
+            contentText.supportRichText = true;
+            contentText.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .12f);
+            retryButton = Button(
+                card.transform,
+                "RetryFeedback",
+                "RETRY",
+                EpisodeButtonStyle.Secondary);
+            Stretch(
+                retryButton.GetComponent<RectTransform>(),
+                new Vector2(.03f, .045f),
+                new Vector2(.20f, .16f));
+            retryButton.onClick.AddListener(RetryFeedback);
+            backButton = Button(
+                card.transform,
+                "BackToConsequences",
+                "BACK TO FUTURE WALK",
+                EpisodeButtonStyle.Secondary);
+            Stretch(
+                backButton.GetComponent<RectTransform>(),
+                new Vector2(.215f, .045f),
+                new Vector2(.45f, .16f));
+            backButton.onClick.AddListener(ReturnToConsequences);
+            reviseButton = Button(
+                card.transform,
+                "RevisePlan",
+                "REVISE PLAN",
+                EpisodeButtonStyle.Secondary);
+            Stretch(
+                reviseButton.GetComponent<RectTransform>(),
+                new Vector2(.465f, .045f),
+                new Vector2(.68f, .16f));
+            reviseButton.onClick.AddListener(RevisePlan);
+            briefButton = Button(
+                card.transform,
+                "GenerateBrief",
+                "GENERATE POLICY BRIEF",
+                EpisodeButtonStyle.Primary);
+            Stretch(
+                briefButton.GetComponent<RectTransform>(),
+                new Vector2(.695f, .045f),
+                new Vector2(.97f, .16f));
+            briefButton.onClick.AddListener(GenerateBrief);
+            EpisodeAccessibility.ApplyAll();
             RefreshButtons();
         }
 
@@ -204,6 +318,7 @@ namespace AgriVerse.Client
         {
             if (retryButton == null) return;
             bool complete = !string.IsNullOrWhiteSpace(session?.FeedbackResultJson);
+            retryButton.gameObject.SetActive(retryAvailable);
             retryButton.interactable = !busy && retryAvailable;
             backButton.interactable = !busy;
             reviseButton.interactable = !busy && complete;
@@ -212,14 +327,15 @@ namespace AgriVerse.Client
 
         private void SetScrollableText(string value)
         {
-            RuntimeScrollableContent.SetText(contentText, value);
+            RuntimeScrollableContent.SetText(
+                contentText,
+                EpisodeUiFactory.FormatModelText(value));
         }
 
         private void SetStatus(string value){RuntimePanelManager.GetOrCreate().SetInstruction(value);}
         private static string ReadableError(UnityWebRequest request) => request.responseCode > 0 ? "server returned " + request.responseCode : request.error;
         private static string Join(IReadOnlyList<CanonicalJsonValue> values){var text=new StringBuilder();for(int i=0;i<values.Count;i++){if(i>0)text.Append(", ");text.Append(values[i].Text);}return text.ToString();}
-        private static Text Text(Transform parent,string name,int size){Text text=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Text)).GetComponent<Text>();text.transform.SetParent(parent,false);text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");text.fontSize=size;text.color=EpisodeUiFactory.OffWhite;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;}
-        private static Button Button(Transform parent,string name,string label){Button button=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button)).GetComponent<Button>();button.transform.SetParent(parent,false);Image image=button.GetComponent<Image>();image.color=EpisodeUiFactory.RiverTeal;button.targetGraphic=image;Text text=Text(button.transform,"Label",14);text.text=label;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,Vector2.zero,Vector2.one);return button;}
+        private static Button Button(Transform parent,string name,string label,EpisodeButtonStyle style)=>EpisodeUiFactory.Button(parent,name,label,style,14);
         private static void Stretch(RectTransform rect,Vector2 min,Vector2 max){rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;}
         private static bool IsWebBuild
         {

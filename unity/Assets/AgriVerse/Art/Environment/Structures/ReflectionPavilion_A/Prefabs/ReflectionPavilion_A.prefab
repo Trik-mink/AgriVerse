@@ -1,24 +1,99 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &4217480714133114808
+--- !u!1 &3911070116623299305
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4399235221590534227}
+  - component: {fileID: 2063320929810452131}
+  - component: {fileID: 1142416376278940764}
+  m_Layer: 2
+  m_Name: ReflectionPavilion_A
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4399235221590534227
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911070116623299305}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8450401481683770426}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!205 &2063320929810452131
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911070116623299305}
+  serializedVersion: 3
+  m_LocalReferencePoint: {x: 0, y: 1.9968576, z: 0}
+  m_Size: 5.9199862
+  m_FadeMode: 1
+  m_AnimateCrossFading: 1
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.018
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 7282030037303158613}
+  m_Enabled: 1
+  m_GlobalIlluminationLOD: 0
+--- !u!65 &1142416376278940764
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911070116623299305}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.5219736, y: 3.9937146, z: 5.919985}
+  m_Center: {x: 0, y: 1.9968573, z: -9.094947e-11}
+--- !u!1001 &8272938918866811857
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 4399235221590534227}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
-      propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.00000035762787
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.0032040775
+      value: 0.00000023795292
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -54,7 +129,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 556119a7fe0d6412dbb0ee5011e76ace, type: 2}
     - target: {fileID: 919132149155446097, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
       propertyPath: m_Name
-      value: ReflectionPavilion_A
+      value: Visual
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
       propertyPath: m_Layer
@@ -63,62 +138,15 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2063320929810452131}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1142416376278940764}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
---- !u!23 &3262319154674635580 stripped
+--- !u!23 &7282030037303158613 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
-  m_PrefabInstance: {fileID: 4217480714133114808}
+  m_PrefabInstance: {fileID: 8272938918866811857}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &3911070116623299305 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
-  m_PrefabInstance: {fileID: 4217480714133114808}
+--- !u!4 &8450401481683770426 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8d19d0659b932460f94d53918afea87b, type: 3}
+  m_PrefabInstance: {fileID: 8272938918866811857}
   m_PrefabAsset: {fileID: 0}
---- !u!205 &2063320929810452131
-LODGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3911070116623299305}
-  serializedVersion: 3
-  m_LocalReferencePoint: {x: 0, y: 0, z: 1.9968576}
-  m_Size: 5.9199867
-  m_FadeMode: 1
-  m_AnimateCrossFading: 1
-  m_LastLODIsBillboard: 0
-  m_LODs:
-  - screenRelativeHeight: 0.018
-    fadeTransitionWidth: 0
-    renderers:
-    - renderer: {fileID: 3262319154674635580}
-  m_Enabled: 1
-  m_GlobalIlluminationLOD: 0
---- !u!65 &1142416376278940764
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3911070116623299305}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 4.5219736, y: 3.9937136, z: 5.9199834}
-  m_Center: {x: 0, y: 0, z: 1.9968572}

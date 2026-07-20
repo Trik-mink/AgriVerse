@@ -1,0 +1,9 @@
+{
+  "id": "vietnam-mekong-salinity",
+  "title": "Saving a Mekong Delta farming community",
+  "location": {
+    "country": "Vietnam",
+    "region": "Mekong Delta",
+    "env_asset": "mekong_delta_3d"
+  }
+}

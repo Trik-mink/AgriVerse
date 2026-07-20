@@ -251,31 +251,40 @@ namespace AgriVerse.Client.Editor
             EnsureFolder(Path.GetDirectoryName(spec.Prefab));
             GameObject source =
                 AssetDatabase.LoadAssetAtPath<GameObject>(spec.Source);
-            GameObject instance =
+            GameObject wrapper = new GameObject(spec.Id);
+            GameObject visual =
                 source == null
                     ? null
-                    : PrefabUtility.InstantiatePrefab(source)
+                    : PrefabUtility.InstantiatePrefab(
+                        source,
+                        wrapper.transform)
                         as GameObject;
-            if (instance == null)
+            if (visual == null)
             {
+                UnityEngine.Object.DestroyImmediate(wrapper);
                 throw new InvalidOperationException(
                     spec.Id + " could not be instantiated.");
             }
 
-            instance.name = spec.Id;
+            visual.name = "Visual";
             try
             {
                 Renderer[] renderers =
-                    instance.GetComponentsInChildren<Renderer>(true);
+                    wrapper.GetComponentsInChildren<Renderer>(true);
                 if (renderers.Length == 0)
                 {
                     throw new InvalidOperationException(
                         spec.Id + " has no renderer.");
                 }
                 ConfigureRenderers(renderers, material);
+                NormalizeVisualToBase(
+                    wrapper.transform,
+                    visual.transform,
+                    renderers);
+                RemoveRigidbodies(wrapper);
 
                 Animator animator =
-                    instance.GetComponentInChildren<Animator>(true);
+                    wrapper.GetComponentInChildren<Animator>(true);
                 if (animator == null ||
                     animator.avatar == null ||
                     !animator.avatar.isValid ||
@@ -291,25 +300,25 @@ namespace AgriVerse.Client.Editor
                     AnimatorCullingMode.CullUpdateTransforms;
 
                 StakeholderCharacterController character =
-                    instance.GetComponent<
+                    wrapper.GetComponent<
                         StakeholderCharacterController>();
                 if (character == null)
                 {
                     character =
-                        instance.AddComponent<
+                        wrapper.AddComponent<
                             StakeholderCharacterController>();
                 }
                 character.Configure(animator, null);
-                AddCullingLod(instance, renderers, .025f);
-                AddCapsuleCollider(instance, renderers);
-                SetLayerRecursively(instance, 2);
+                AddCullingLod(wrapper, renderers, .025f);
+                AddCapsuleCollider(wrapper, renderers);
+                SetLayerRecursively(wrapper, 2);
                 PrefabUtility.SaveAsPrefabAsset(
-                    instance,
+                    wrapper,
                     spec.Prefab);
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(instance);
+                UnityEngine.Object.DestroyImmediate(wrapper);
             }
         }
 
@@ -320,38 +329,72 @@ namespace AgriVerse.Client.Editor
             EnsureFolder(Path.GetDirectoryName(spec.Prefab));
             GameObject source =
                 AssetDatabase.LoadAssetAtPath<GameObject>(spec.Source);
-            GameObject instance =
+            GameObject wrapper = new GameObject(spec.Id);
+            GameObject visual =
                 source == null
                     ? null
-                    : PrefabUtility.InstantiatePrefab(source)
+                    : PrefabUtility.InstantiatePrefab(
+                        source,
+                        wrapper.transform)
                         as GameObject;
-            if (instance == null)
+            if (visual == null)
             {
+                UnityEngine.Object.DestroyImmediate(wrapper);
                 throw new InvalidOperationException(
                     spec.Id + " could not be instantiated.");
             }
 
-            instance.name = spec.Id;
+            visual.name = "Visual";
             try
             {
                 Renderer[] renderers =
-                    instance.GetComponentsInChildren<Renderer>(true);
+                    wrapper.GetComponentsInChildren<Renderer>(true);
                 if (renderers.Length == 0)
                 {
                     throw new InvalidOperationException(
                         spec.Id + " has no renderer.");
                 }
                 ConfigureRenderers(renderers, material);
-                AddCullingLod(instance, renderers, .018f);
-                AddBoxCollider(instance, renderers);
-                SetLayerRecursively(instance, 2);
+                NormalizeVisualToBase(
+                    wrapper.transform,
+                    visual.transform,
+                    renderers);
+                RemoveRigidbodies(wrapper);
+                AddCullingLod(wrapper, renderers, .018f);
+                AddBoxCollider(wrapper, renderers);
+                SetLayerRecursively(wrapper, 2);
                 PrefabUtility.SaveAsPrefabAsset(
-                    instance,
+                    wrapper,
                     spec.Prefab);
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(instance);
+                UnityEngine.Object.DestroyImmediate(wrapper);
+            }
+        }
+
+        private static void NormalizeVisualToBase(
+            Transform wrapper,
+            Transform visual,
+            Renderer[] renderers)
+        {
+            wrapper.position = Vector3.zero;
+            wrapper.rotation = Quaternion.identity;
+            wrapper.localScale = Vector3.one;
+            Bounds bounds = CombinedBounds(renderers);
+            Vector3 worldOffset = new Vector3(
+                -bounds.center.x,
+                -bounds.min.y,
+                -bounds.center.z);
+            visual.position += worldOffset;
+        }
+
+        private static void RemoveRigidbodies(GameObject root)
+        {
+            foreach (Rigidbody body in
+                     root.GetComponentsInChildren<Rigidbody>(true))
+            {
+                UnityEngine.Object.DestroyImmediate(body);
             }
         }
 

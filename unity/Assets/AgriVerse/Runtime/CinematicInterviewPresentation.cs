@@ -12,10 +12,14 @@ namespace AgriVerse.Client
     /// </summary>
     public sealed class CinematicInterviewPresentation : MonoBehaviour
     {
-        private static readonly Color RiverTeal = new Color(.025f, .12f, .13f, .88f);
-        private static readonly Color DeepTeal = new Color(.018f, .075f, .08f, .94f);
-        private static readonly Color Amber = new Color(.92f, .61f, .23f, 1f);
-        private static readonly Color OffWhite = new Color(.96f, .93f, .84f, 1f);
+        private static readonly Color RiverTeal =
+            EpisodeUiFactory.RiverTeal;
+        private static readonly Color DeepTeal =
+            EpisodeUiFactory.DeepTeal;
+        private static readonly Color Amber =
+            EpisodeUiFactory.Amber;
+        private static readonly Color OffWhite =
+            EpisodeUiFactory.OffWhite;
         private readonly Dictionary<string, RawImage> cardPortraits = new Dictionary<string, RawImage>();
 
         private ScenarioDto scenario;
@@ -133,13 +137,18 @@ namespace AgriVerse.Client
             mission.text = hasSelection ? "Interview " + selected.name : "Choose a stakeholder perspective";
             evidenceChip.text = "EVIDENCE  " + evidenceCount + "/" + evidenceTotal;
             interviewChip.text = "INTERVIEWS  " + interviewsComplete + "/" + interviewTotal;
-            RuntimeScrollableContent.SetText(evidence, evidenceText);
+            RuntimeScrollableContent.SetText(
+                evidence,
+                EpisodeUiFactory.FormatModelText(evidenceText));
             if (!hasSelection) return;
 
             UpdateSuggestedQuestions(selected);
             identity.text = selected.name + "\n" + selected.role;
             status.text = StatusForPresentation(statusText, busy, planUnlocked);
-            RuntimeScrollableContent.SetText(conversation, conversationText);
+            RuntimeScrollableContent.SetText(
+                conversation,
+                EpisodeUiFactory.FormatModelText(
+                    conversationText));
             askLabel.text = planUnlocked ? "CONTINUE" : busy ? "LISTENING…" : "ASK";
             askButton.interactable = !busy && (planUnlocked || hasSelection);
             QuestionInput.interactable = !busy && !planUnlocked;
@@ -304,8 +313,10 @@ namespace AgriVerse.Client
 
         private void BuildDialogue(Transform root)
         {
-            identityArea = Panel(root, "StakeholderIdentity", RiverTeal, false).gameObject;
-            Stretch(identityArea.GetComponent<RectTransform>(), new Vector2(.03f, .055f), new Vector2(.275f, .265f));
+            identityArea = EpisodeUiFactory.AtlasLabel(
+                root,
+                "StakeholderIdentity").gameObject;
+            Stretch(identityArea.GetComponent<RectTransform>(), new Vector2(.03f, .045f), new Vector2(.275f, .30f));
             selectedPortrait = new GameObject("SelectedPortrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>();
             selectedPortrait.transform.SetParent(identityArea.transform, false);
             selectedPortrait.raycastTarget = false;
@@ -315,9 +326,12 @@ namespace AgriVerse.Client
             identity = Text(identityArea.transform, "StakeholderIdentityText", 15, TextAnchor.MiddleLeft, OffWhite);
             Stretch(identity.rectTransform, new Vector2(.46f, .15f), new Vector2(.94f, .86f));
 
-            dialogueArea = Panel(root, "InterviewDialogue", DeepTeal, false).gameObject;
-            Stretch(dialogueArea.GetComponent<RectTransform>(), new Vector2(.29f, .055f), new Vector2(.81f, .49f));
+            dialogueArea = EpisodeUiFactory.SmokedGlass(
+                root,
+                "InterviewDialogue").gameObject;
+            Stretch(dialogueArea.GetComponent<RectTransform>(), new Vector2(.29f, .045f), new Vector2(.97f, .39f));
             conversation = RuntimeScrollableContent.Create(dialogueArea.transform, "InterviewConversation", new Vector2(.045f, .45f), new Vector2(.955f, .94f), 15);
+            conversation.supportRichText = true;
             status = Text(dialogueArea.transform, "InterviewStatus", 13, TextAnchor.MiddleLeft, new Color(OffWhite.r, OffWhite.g, OffWhite.b, .9f));
             Stretch(status.rectTransform, new Vector2(.055f, .34f), new Vector2(.72f, .42f));
 
@@ -335,17 +349,17 @@ namespace AgriVerse.Client
                 Vector2.one);
             for (int index = 0; index < 3; index++)
             {
-                Button suggested = Button(
+                Button suggested =
+                    EpisodeUiFactory.ChoiceButton(
                     suggestedQuestionArea.transform,
                     "SuggestedQuestion_" + (index + 1),
-                    "Suggested question",
-                    RiverTeal,
-                    12);
+                    index + 1,
+                    "Suggested question");
                 float left = .05f + index * .305f;
                 Stretch(
                     suggested.GetComponent<RectTransform>(),
-                    new Vector2(left, .065f),
-                    new Vector2(left + .285f, .255f));
+                    new Vector2(left, .055f),
+                    new Vector2(left + .285f, .225f));
                 int selectedIndex = index;
                 suggested.onClick.AddListener(
                     () =>
@@ -395,8 +409,8 @@ namespace AgriVerse.Client
                 12);
             Stretch(
                 returnToFieldButton.GetComponent<RectTransform>(),
-                new Vector2(.82f, .055f),
-                new Vector2(.965f, .115f));
+                new Vector2(.82f, .405f),
+                new Vector2(.965f, .46f));
             returnToFieldButton.onClick.AddListener(
                 () => returnToField?.Invoke());
             returnToFieldButton.gameObject.SetActive(false);
@@ -406,15 +420,52 @@ namespace AgriVerse.Client
         {
             evidenceScrim = Panel(root, "EvidenceFocusScrim", new Color(0f, .025f, .03f, .56f), false).gameObject;
             Stretch(evidenceScrim.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
-            evidenceDrawer = Panel(root, "EvidenceDrawer", DeepTeal, false).gameObject;
+            evidenceDrawer = EpisodeUiFactory.FieldPaper(
+                root,
+                "EvidenceDrawer").gameObject;
             Stretch(evidenceDrawer.GetComponent<RectTransform>(), new Vector2(.27f, .12f), new Vector2(.93f, .87f));
-            Text title = Text(evidenceDrawer.transform, "EvidenceTitle", 19, TextAnchor.MiddleLeft, OffWhite);
+            Text title = Text(evidenceDrawer.transform, "EvidenceTitle", 19, TextAnchor.MiddleLeft, EpisodeUiFactory.Ink);
             title.text = "FIELD JOURNAL · SITES";
             Stretch(title.rectTransform, new Vector2(.07f, .91f), new Vector2(.79f, .98f));
             Button close = Button(evidenceDrawer.transform, "CloseEvidence", "×", RiverTeal, 19);
             Stretch(close.GetComponent<RectTransform>(), new Vector2(.83f, .91f), new Vector2(.94f, .98f));
             close.onClick.AddListener(ToggleEvidenceDrawer);
-            evidence = RuntimeScrollableContent.Create(evidenceDrawer.transform, "CinematicEvidence", new Vector2(.06f, .18f), new Vector2(.94f, .87f), 16);
+            AtlasRouteGraphic evidenceRoute =
+                EpisodeUiFactory.Route(
+                    evidenceDrawer.transform,
+                    "EvidenceRoute",
+                    new[]
+                    {
+                        new Vector2(.18f, .18f),
+                        new Vector2(.52f, .48f),
+                        new Vector2(.80f, .78f)
+                    },
+                    EpisodeUiFactory.Amber,
+                    1.4f);
+            Stretch(
+                evidenceRoute.rectTransform,
+                new Vector2(.055f, .22f),
+                new Vector2(.28f, .82f));
+            AtlasSurfaceGraphic sourceStamp =
+                EpisodeUiFactory.Stamp(
+                    evidenceDrawer.transform,
+                    "SourceStamp",
+                    "FIELD SOURCES",
+                    EpisodeUiFactory.NetworkTeal);
+            Stretch(
+                sourceStamp.rectTransform,
+                new Vector2(.07f, .10f),
+                new Vector2(.27f, .19f));
+            evidence = RuntimeScrollableContent.Create(evidenceDrawer.transform, "CinematicEvidence", new Vector2(.31f, .18f), new Vector2(.94f, .87f), 16);
+            evidence.supportRichText = true;
+            evidence.color = EpisodeUiFactory.Ink;
+            evidence.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .10f);
             drawerContinueButton = Button(evidenceDrawer.transform, "DrawerContinue", "CONTINUE", Amber, 15);
             Stretch(drawerContinueButton.GetComponent<RectTransform>(), new Vector2(.69f, .055f), new Vector2(.94f, .145f));
             drawerContinueButton.onClick.AddListener(() => ask?.Invoke());
@@ -441,60 +492,53 @@ namespace AgriVerse.Client
 
         private static Image Panel(Transform parent, string name, Color color, bool raycastable)
         {
-            Image image = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
-            image.transform.SetParent(parent, false);
-            image.color = color;
-            image.raycastTarget = raycastable;
-            return image;
+            bool themed =
+                Mathf.Abs(color.r - DeepTeal.r) < .02f ||
+                Mathf.Abs(color.r - RiverTeal.r) < .02f;
+            if (themed)
+            {
+                return EpisodeUiFactory.CinematicPanel(
+                    parent,
+                    name,
+                    raycastable,
+                    Mathf.Clamp(color.a, .82f, .92f));
+            }
+            return EpisodeUiFactory.Panel(
+                parent,
+                name,
+                color,
+                raycastable);
         }
 
         private static Text Text(Transform parent, string name, int size, TextAnchor anchor, Color color)
         {
-            Text text = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
-            text.transform.SetParent(parent, false);
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = size;
-            text.color = color;
-            text.alignment = anchor;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.raycastTarget = false;
-            return text;
+            return EpisodeUiFactory.Text(
+                parent,
+                name,
+                Mathf.Max(13, size),
+                anchor,
+                color);
         }
 
         private static InputField Input(Transform parent)
         {
-            InputField input = new GameObject("QuestionInput", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(InputField)).GetComponent<InputField>();
-            input.transform.SetParent(parent, false);
-            input.GetComponent<Image>().color = new Color(.08f, .17f, .17f, .96f);
-            Text value = Text(input.transform, "Text", 14, TextAnchor.MiddleLeft, OffWhite);
-            Stretch(value.rectTransform, new Vector2(.05f, .08f), new Vector2(.94f, .92f));
-            input.textComponent = value;
-            Text placeholder = Text(input.transform, "Placeholder", 14, TextAnchor.MiddleLeft, new Color(.8f, .8f, .75f, .55f));
-            placeholder.text = "Ask a focused question…";
-            Stretch(placeholder.rectTransform, new Vector2(.05f, .08f), new Vector2(.94f, .92f));
-            input.placeholder = placeholder;
+            InputField input = EpisodeUiFactory.Input(
+                parent,
+                "QuestionInput",
+                "Ask a focused question…",
+                true);
             input.lineType = InputField.LineType.MultiLineSubmit;
             return input;
         }
 
         private static Button Button(Transform parent, string name, string label, Color color, int size)
         {
-            Button button = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button)).GetComponent<Button>();
-            button.transform.SetParent(parent, false);
-            Image image = button.GetComponent<Image>();
-            image.color = color;
-            button.targetGraphic = image;
-            ColorBlock colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1f, 1f, 1f, .9f);
-            colors.pressedColor = new Color(.78f, .78f, .78f, 1f);
-            colors.disabledColor = new Color(.5f, .5f, .5f, .55f);
-            button.colors = colors;
-            Text text = Text(button.transform, "Label", size, TextAnchor.MiddleCenter, OffWhite);
-            text.text = label;
-            Stretch(text.rectTransform, Vector2.zero, Vector2.one);
-            return button;
+            return EpisodeUiFactory.Button(
+                parent,
+                name,
+                label,
+                color,
+                size);
         }
 
         private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)

@@ -1,6 +1,8 @@
 using System;
 using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace AgriVerse.Client
@@ -20,15 +22,35 @@ namespace AgriVerse.Client
         private Text judgeText;
         private Text certificateText;
         private Text landingError;
-        private Text landingCountry;
-        private Text landingRegion;
-        private Texture2D globeTexture;
+        private Text landingInstruction;
+        private Text missionCountry;
+        private Text missionRegion;
+        private Text missionEpisode;
+        private Text missionTagline;
+        private Text incomingCountry;
+        private Text incomingRegion;
+        private Text incomingEpisode;
+        private Text incomingTeaser;
+        private GameObject missionReveal;
+        private GameObject incomingReveal;
+        private GameObject connectionStatus;
+        private Text connectionStatusTitle;
+        private Text connectionStatusBody;
+        private Button retryConnectionButton;
+        private Button missionStartButton;
+        private Text missionStartLabel;
+        private GlobeLandingRenderer globeRenderer;
+        private CanvasGroup arrivalVeil;
+        private float arrivalStartedAt;
+        private FieldNetworkCatalog fieldCatalog;
+        private FieldNetworkLandingState fieldState;
         private Action beginMission;
         private Action dismissGuide;
         private Action toggleGlossary;
         private Action toggleJudge;
         private Action openCertificate;
         private Action<EpisodeEndingChoice> chooseEnding;
+        private Action retryConnection;
 
         internal InputField NameInput { get; private set; }
         internal bool LandingVisible => landing != null && landing.activeSelf;
@@ -43,6 +65,37 @@ namespace AgriVerse.Client
         internal string JudgeText => judgeText == null ? string.Empty : judgeText.text;
         internal string CertificateText =>
             certificateText == null ? string.Empty : certificateText.text;
+        internal string SelectedFieldLocationId =>
+            fieldState?.SelectedLocation?.Id ?? string.Empty;
+        internal bool IncomingLocationSelected =>
+            fieldState?.SelectedLocation != null &&
+            !fieldState.SelectedLocation.IsPlayable;
+        internal bool NameEntryVisible =>
+            NameInput != null && NameInput.gameObject.activeInHierarchy;
+        internal bool MissionStartVisible =>
+            missionStartButton != null &&
+            missionStartButton.gameObject.activeInHierarchy;
+        internal bool MissionStartInteractable =>
+            missionStartButton != null &&
+            missionStartButton.interactable;
+        internal bool ConnectionStatusVisible =>
+            connectionStatus != null &&
+            connectionStatus.activeInHierarchy;
+        internal bool RetryVisible =>
+            retryConnectionButton != null &&
+            retryConnectionButton.gameObject.activeInHierarchy;
+        internal string ConnectionStatusText =>
+            (connectionStatusTitle?.text ?? string.Empty) +
+            "\n" +
+            (connectionStatusBody?.text ?? string.Empty);
+        internal bool MissionConnectionRequired =>
+            fieldState != null &&
+            !fieldState.MissionServiceReady &&
+            fieldState.SelectedLocation?.IsPlayable == true;
+        internal string PlayerName =>
+            NameInput?.text ?? string.Empty;
+        internal int FieldNetworkPinCount =>
+            globeRenderer?.PinCount ?? 0;
 
         internal void Build(
             Action onBegin,
@@ -50,7 +103,8 @@ namespace AgriVerse.Client
             Action onToggleGlossary,
             Action onToggleJudge,
             Action onOpenCertificate,
-            Action<EpisodeEndingChoice> onChooseEnding)
+            Action<EpisodeEndingChoice> onChooseEnding,
+            Action onRetryConnection)
         {
             beginMission = onBegin;
             dismissGuide = onDismissGuide;
@@ -58,6 +112,7 @@ namespace AgriVerse.Client
             toggleJudge = onToggleJudge;
             openCertificate = onOpenCertificate;
             chooseEnding = onChooseEnding;
+            retryConnection = onRetryConnection;
             EpisodeUiFactory.EnsureEventSystem();
 
             GameObject canvasObject = new GameObject(
@@ -79,11 +134,16 @@ namespace AgriVerse.Client
             BuildGlossary(canvas.transform);
             BuildJudge(canvas.transform);
             BuildCertificate(canvas.transform);
+            RuntimePanelManager.GetOrCreate()
+                .SetCinematicMode(true);
         }
 
         internal void HideLanding()
         {
             landing.SetActive(false);
+            globeRenderer?.SetVisible(false);
+            RuntimePanelManager.GetOrCreate()
+                .SetCinematicMode(false);
             glossaryButton.gameObject.SetActive(true);
             judgeButton.gameObject.SetActive(false);
         }
@@ -93,20 +153,125 @@ namespace AgriVerse.Client
             landingError.text = value ?? string.Empty;
         }
 
-        internal void SetLandingLocation(
-            string country,
-            string region)
+        internal void ConfigureFieldNetwork(
+            ScenarioDto scenario,
+            FieldNetworkConnectionState connectionState =
+                FieldNetworkConnectionState.Ready)
         {
-            if (landingCountry != null)
+            fieldCatalog =
+                FieldNetworkCatalog.CreateForScenario(
+                    scenario,
+                    SaltLineNarrative.Episode,
+                    SaltLineNarrative.Tagline);
+            fieldState =
+                new FieldNetworkLandingState(
+                    fieldCatalog,
+                    connectionState);
+            globeRenderer?.SetCatalog(fieldCatalog);
+            RefreshLandingState();
+        }
+
+        internal void SetConnectionState(
+            FieldNetworkConnectionState value)
+        {
+            fieldState?.SetConnectionState(value);
+            RefreshConnectionState();
+            RefreshMissionStart();
+        }
+
+        internal bool SelectFieldLocation(string id)
+        {
+            if (fieldState == null ||
+                !fieldState.Select(id))
             {
-                landingCountry.text =
-                    string.IsNullOrWhiteSpace(country)
-                        ? "FIELD EPISODE"
-                        : country.ToUpperInvariant();
+                return false;
             }
-            if (landingRegion != null)
+            globeRenderer?.FocusLocation(
+                fieldState.SelectedLocation);
+            landingError.text = string.Empty;
+            RefreshLandingState();
+            return true;
+        }
+
+        internal void ClearFieldLocationSelection()
+        {
+            fieldState?.ClearSelection();
+            globeRenderer?.ClearSelection();
+            landingError.text = string.Empty;
+            if (EventSystem.current != null)
             {
-                landingRegion.text = region ?? string.Empty;
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+            RefreshLandingState();
+        }
+
+        internal bool CanBeginMission(string playerName) =>
+            fieldState != null &&
+            fieldState.CanBeginMission(playerName);
+
+        internal void FocusNextFieldLocation(int direction)
+        {
+            globeRenderer?.FocusNextPin(direction);
+        }
+
+        internal bool SelectKeyboardFocusedFieldLocation() =>
+            globeRenderer != null &&
+            globeRenderer.SelectKeyboardFocusedPin();
+
+        internal void SetPlayerName(string playerName)
+        {
+            if (NameInput != null)
+            {
+                NameInput.text = playerName ?? string.Empty;
+            }
+            RefreshMissionStart();
+        }
+
+        private void Update()
+        {
+            if (!LandingVisible)
+            {
+                return;
+            }
+
+            if (arrivalVeil != null &&
+                arrivalVeil.alpha > 0f)
+            {
+                float duration =
+                    EpisodeAccessibility.ReducedMotion
+                        ? .18f
+                        : 1.5f;
+                arrivalVeil.alpha = 1f - Mathf.Clamp01(
+                    (Time.unscaledTime - arrivalStartedAt) /
+                    duration);
+                if (arrivalVeil.alpha <= 0f)
+                {
+                    arrivalVeil.gameObject.SetActive(false);
+                }
+            }
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            if (keyboard.tabKey.wasPressedThisFrame)
+            {
+                bool reverse =
+                    keyboard.leftShiftKey.isPressed ||
+                    keyboard.rightShiftKey.isPressed;
+                globeRenderer?.FocusNextPin(reverse ? -1 : 1);
+            }
+            if ((keyboard.enterKey.wasPressedThisFrame ||
+                 keyboard.numpadEnterKey.wasPressedThisFrame) &&
+                (NameInput == null ||
+                 EventSystem.current == null ||
+                 EventSystem.current.currentSelectedGameObject !=
+                 NameInput.gameObject))
+            {
+                globeRenderer?.SelectKeyboardFocusedPin();
+            }
+            if (fieldState?.SelectedLocation != null &&
+                keyboard.escapeKey.wasPressedThisFrame)
+            {
+                ClearFieldLocationSelection();
             }
         }
 
@@ -173,248 +338,516 @@ namespace AgriVerse.Client
             landing = EpisodeUiFactory.Panel(
                 root,
                 "LandingBlocker",
-                new Color(0f, .025f, .03f, .62f),
+                new Color(0f, .01f, .02f, .001f),
                 true).gameObject;
             EpisodeUiFactory.Stretch(
                 landing.GetComponent<RectTransform>(),
                 Vector2.zero,
                 Vector2.one);
 
-            Image card = EpisodeUiFactory.Panel(
+            CinematicGradientGraphic leftShade =
+                EpisodeUiFactory.Gradient(
                 landing.transform,
-                "LandingCard",
-                EpisodeUiFactory.DeepTeal,
-                true);
+                "LeftEdgeReadability",
+                new Color(.002f, .035f, .045f, .58f),
+                Color.clear,
+                new Color(.002f, .035f, .045f, .58f),
+                Color.clear);
             EpisodeUiFactory.Stretch(
-                card.rectTransform,
-                new Vector2(.07f, .09f),
-                new Vector2(.55f, .91f));
+                leftShade.rectTransform,
+                Vector2.zero,
+                new Vector2(.64f, 1f));
+            CinematicGradientGraphic lowerShade =
+                EpisodeUiFactory.Gradient(
+                landing.transform,
+                "LowerEdgeReadability",
+                Color.clear,
+                Color.clear,
+                new Color(.002f, .025f, .034f, .54f),
+                new Color(.002f, .025f, .034f, .54f));
+            EpisodeUiFactory.Stretch(
+                lowerShade.rectTransform,
+                Vector2.zero,
+                new Vector2(1f, .38f));
 
             Text title = EpisodeUiFactory.Text(
-                card.transform,
+                landing.transform,
                 "Title",
-                38,
+                25,
                 TextAnchor.UpperLeft,
                 EpisodeUiFactory.OffWhite);
-            title.text = SaltLineNarrative.Title;
+            title.text = "AGRIVERSE";
             EpisodeUiFactory.Stretch(
                 title.rectTransform,
-                new Vector2(.07f, .84f),
-                new Vector2(.93f, .95f));
+                new Vector2(.04f, .90f),
+                new Vector2(.30f, .97f));
 
-            Text episode = EpisodeUiFactory.Text(
-                card.transform,
-                "Episode",
-                21,
+            Text network = EpisodeUiFactory.Text(
+                landing.transform,
+                "Network",
+                14,
                 TextAnchor.UpperLeft,
                 EpisodeUiFactory.Amber);
-            episode.text = SaltLineNarrative.Episode;
+            network.text = "GLOBAL FIELD NETWORK";
             EpisodeUiFactory.Stretch(
-                episode.rectTransform,
-                new Vector2(.07f, .76f),
-                new Vector2(.93f, .84f));
+                network.rectTransform,
+                new Vector2(.04f, .85f),
+                new Vector2(.34f, .91f));
 
-            Text intro = EpisodeUiFactory.Text(
-                card.transform,
-                "Intro",
-                16,
+            Text networkPromise = EpisodeUiFactory.Text(
+                landing.transform,
+                "NetworkPromise",
+                15,
+                TextAnchor.UpperLeft,
+                new Color(.95f, .94f, .87f, .78f));
+            networkPromise.text =
+                "One planet. Many food systems. No easy answers.";
+            EpisodeUiFactory.Stretch(
+                networkPromise.rectTransform,
+                new Vector2(.04f, .795f),
+                new Vector2(.42f, .85f));
+
+            landingInstruction = EpisodeUiFactory.Text(
+                landing.transform,
+                "LandingInstruction",
+                14,
+                TextAnchor.UpperRight,
+                new Color(.95f, .94f, .87f, .82f));
+            EpisodeUiFactory.Stretch(
+                landingInstruction.rectTransform,
+                new Vector2(.53f, .89f),
+                new Vector2(.96f, .96f));
+
+            RectTransform pinLayer = new GameObject(
+                "FieldNetworkPins",
+                typeof(RectTransform))
+                .GetComponent<RectTransform>();
+            pinLayer.SetParent(landing.transform, false);
+            EpisodeUiFactory.Stretch(
+                pinLayer,
+                Vector2.zero,
+                Vector2.one);
+
+            BuildIncomingReveal(landing.transform);
+            BuildMissionReveal(landing.transform);
+            BuildConnectionStatus(landing.transform);
+
+            Text hint = EpisodeUiFactory.Text(
+                landing.transform,
+                "GlobeControls",
+                13,
+                TextAnchor.LowerRight,
+                new Color(.92f, .91f, .84f, .74f));
+            hint.text =
+                "DRAG TO ROTATE  ·  SCROLL TO ZOOM  ·  TAB TO EXPLORE PINS";
+            EpisodeUiFactory.Stretch(
+                hint.rectTransform,
+                new Vector2(.52f, .025f),
+                new Vector2(.96f, .08f));
+
+            globeRenderer =
+                landing.AddComponent<GlobeLandingRenderer>();
+            globeRenderer.Initialize(
+                pinLayer,
+                location =>
+                    SelectFieldLocation(location.Id));
+
+            Image veil = EpisodeUiFactory.Panel(
+                landing.transform,
+                "OrbitalArrivalFade",
+                new Color(.001f, .004f, .01f, 1f),
+                false);
+            EpisodeUiFactory.Stretch(
+                veil.rectTransform,
+                Vector2.zero,
+                Vector2.one);
+            arrivalVeil =
+                veil.gameObject.AddComponent<CanvasGroup>();
+            arrivalVeil.alpha = 1f;
+            arrivalStartedAt = Time.unscaledTime;
+        }
+
+        private void BuildConnectionStatus(Transform root)
+        {
+            AtlasSurfaceGraphic surface =
+                EpisodeUiFactory.AtlasLabel(
+                    root,
+                    "FieldNetworkConnectionStatus",
+                    true);
+            connectionStatus = surface.gameObject;
+            EpisodeUiFactory.Stretch(
+                surface.rectTransform,
+                new Vector2(.62f, .69f),
+                new Vector2(.96f, .86f));
+
+            connectionStatusTitle = EpisodeUiFactory.Text(
+                connectionStatus.transform,
+                "ConnectionStatusTitle",
+                14,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.Amber);
+            EpisodeUiFactory.Stretch(
+                connectionStatusTitle.rectTransform,
+                new Vector2(.055f, .57f),
+                new Vector2(.95f, .91f));
+
+            connectionStatusBody = EpisodeUiFactory.Text(
+                connectionStatus.transform,
+                "ConnectionStatusBody",
+                13,
                 TextAnchor.UpperLeft,
                 EpisodeUiFactory.OffWhite);
-            intro.text = SaltLineNarrative.Tagline + "\n\n" + SaltLineNarrative.Intro;
-            intro.lineSpacing = 1.1f;
             EpisodeUiFactory.Stretch(
-                intro.rectTransform,
-                new Vector2(.07f, .48f),
-                new Vector2(.93f, .75f));
+                connectionStatusBody.rectTransform,
+                new Vector2(.055f, .10f),
+                new Vector2(.61f, .58f));
+
+            retryConnectionButton = EpisodeUiFactory.Button(
+                connectionStatus.transform,
+                "RetryConnection",
+                "RETRY CONNECTION",
+                EpisodeButtonStyle.Secondary,
+                12);
+            EpisodeUiFactory.Stretch(
+                retryConnectionButton.GetComponent<RectTransform>(),
+                new Vector2(.65f, .17f),
+                new Vector2(.95f, .49f));
+            retryConnectionButton.onClick.AddListener(
+                () => retryConnection?.Invoke());
+            connectionStatusTitle.text =
+                "CONNECTING TO FIELD NETWORK";
+            connectionStatusBody.text =
+                "Loading the playable field mission…";
+            retryConnectionButton.gameObject.SetActive(false);
+        }
+
+        private void BuildIncomingReveal(Transform root)
+        {
+            incomingReveal = new GameObject(
+                "IncomingLocationReveal",
+                typeof(RectTransform));
+            incomingReveal.transform.SetParent(root, false);
+            EpisodeUiFactory.Stretch(
+                incomingReveal.GetComponent<RectTransform>(),
+                new Vector2(.05f, .08f),
+                new Vector2(.48f, .39f));
+            Image accent = EpisodeUiFactory.Panel(
+                incomingReveal.transform,
+                "IncomingAccent",
+                EpisodeUiFactory.NetworkTeal,
+                false);
+            EpisodeUiFactory.Stretch(
+                accent.rectTransform,
+                new Vector2(0f, .05f),
+                new Vector2(.009f, .95f));
+            incomingCountry = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingCountry",
+                25,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.OffWhite);
+            EpisodeUiFactory.Stretch(
+                incomingCountry.rectTransform,
+                new Vector2(.05f, .76f),
+                new Vector2(.96f, .98f));
+            Text status = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingStatus",
+                14,
+                TextAnchor.MiddleLeft,
+                EpisodeUiFactory.NetworkTeal);
+            status.text = "INCOMING FIELD EPISODE";
+            EpisodeUiFactory.Stretch(
+                status.rectTransform,
+                new Vector2(.05f, .64f),
+                new Vector2(.96f, .77f));
+            incomingRegion = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingRegion",
+                15,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.NetworkTeal);
+            EpisodeUiFactory.Stretch(
+                incomingRegion.rectTransform,
+                new Vector2(.05f, .51f),
+                new Vector2(.96f, .64f));
+            incomingEpisode = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingEpisode",
+                18,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.OffWhite);
+            EpisodeUiFactory.Stretch(
+                incomingEpisode.rectTransform,
+                new Vector2(.05f, .36f),
+                new Vector2(.96f, .52f));
+            incomingTeaser = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingTeaser",
+                15,
+                TextAnchor.UpperLeft,
+                new Color(.96f, .95f, .89f, .86f));
+            EpisodeUiFactory.Stretch(
+                incomingTeaser.rectTransform,
+                new Vector2(.05f, .12f),
+                new Vector2(.96f, .36f));
+            Text futureHint = EpisodeUiFactory.Text(
+                incomingReveal.transform,
+                "IncomingHint",
+                13,
+                TextAnchor.LowerLeft,
+                new Color(.96f, .95f, .89f, .68f));
+            futureHint.text =
+                "ESCAPE TO KEEP EXPLORING THE NETWORK";
+            EpisodeUiFactory.Stretch(
+                futureHint.rectTransform,
+                new Vector2(.05f, .01f),
+                new Vector2(.96f, .11f));
+            incomingReveal.SetActive(false);
+        }
+
+        private void BuildMissionReveal(Transform root)
+        {
+            missionReveal = new GameObject(
+                "AvailableMissionReveal",
+                typeof(RectTransform));
+            missionReveal.transform.SetParent(root, false);
+            EpisodeUiFactory.Stretch(
+                missionReveal.GetComponent<RectTransform>(),
+                new Vector2(.05f, .065f),
+                new Vector2(.59f, .43f));
+
+            Image accent = EpisodeUiFactory.Panel(
+                missionReveal.transform,
+                "AvailableAccent",
+                EpisodeUiFactory.Amber,
+                false);
+            EpisodeUiFactory.Stretch(
+                accent.rectTransform,
+                new Vector2(0f, .04f),
+                new Vector2(.008f, .97f));
+            missionCountry = EpisodeUiFactory.Text(
+                missionReveal.transform,
+                "MissionCountry",
+                28,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.OffWhite);
+            EpisodeUiFactory.Stretch(
+                missionCountry.rectTransform,
+                new Vector2(.035f, .80f),
+                new Vector2(.98f, .98f));
+            missionRegion = EpisodeUiFactory.Text(
+                missionReveal.transform,
+                "MissionRegion",
+                17,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.Amber);
+            EpisodeUiFactory.Stretch(
+                missionRegion.rectTransform,
+                new Vector2(.035f, .67f),
+                new Vector2(.98f, .82f));
+            missionEpisode = EpisodeUiFactory.Text(
+                missionReveal.transform,
+                "MissionEpisode",
+                18,
+                TextAnchor.UpperLeft,
+                EpisodeUiFactory.OffWhite);
+            EpisodeUiFactory.Stretch(
+                missionEpisode.rectTransform,
+                new Vector2(.035f, .53f),
+                new Vector2(.98f, .68f));
+            missionTagline = EpisodeUiFactory.Text(
+                missionReveal.transform,
+                "MissionTagline",
+                15,
+                TextAnchor.UpperLeft,
+                new Color(.96f, .95f, .89f, .88f));
+            EpisodeUiFactory.Stretch(
+                missionTagline.rectTransform,
+                new Vector2(.035f, .41f),
+                new Vector2(.98f, .54f));
 
             Text nameLabel = EpisodeUiFactory.Text(
-                card.transform,
+                missionReveal.transform,
                 "NameLabel",
-                15,
+                14,
                 TextAnchor.MiddleLeft,
                 EpisodeUiFactory.OffWhite);
             nameLabel.text = SaltLineNarrative.NamePrompt;
             EpisodeUiFactory.Stretch(
                 nameLabel.rectTransform,
-                new Vector2(.07f, .42f),
-                new Vector2(.93f, .48f));
-
-            NameInput = EpisodeUiFactory.Input(card.transform, "Enter your name");
+                new Vector2(.035f, .30f),
+                new Vector2(.98f, .41f));
+            NameInput = EpisodeUiFactory.Input(
+                missionReveal.transform,
+                "Enter your name");
             EpisodeUiFactory.Stretch(
                 NameInput.GetComponent<RectTransform>(),
-                new Vector2(.07f, .29f),
-                new Vector2(.93f, .42f));
+                new Vector2(.035f, .10f),
+                new Vector2(.61f, .30f));
+            NameInput.onValueChanged.AddListener(_ =>
+            {
+                landingError.text = string.Empty;
+                RefreshMissionStart();
+            });
+
+            missionStartButton = EpisodeUiFactory.Button(
+                missionReveal.transform,
+                "BeginMission",
+                SaltLineNarrative.StartButton,
+                EpisodeUiFactory.Amber,
+                16);
+            EpisodeUiFactory.Stretch(
+                missionStartButton.GetComponent<RectTransform>(),
+                new Vector2(.64f, .10f),
+                new Vector2(.98f, .30f));
+            missionStartButton.onClick.AddListener(
+                () => beginMission?.Invoke());
+            missionStartLabel =
+                missionStartButton.GetComponentInChildren<Text>();
 
             landingError = EpisodeUiFactory.Text(
-                card.transform,
+                missionReveal.transform,
                 "LandingError",
                 13,
                 TextAnchor.MiddleLeft,
                 new Color(1f, .76f, .48f, 1f));
             EpisodeUiFactory.Stretch(
                 landingError.rectTransform,
-                new Vector2(.07f, .17f),
-                new Vector2(.93f, .25f));
-
-            Button start = EpisodeUiFactory.Button(
-                card.transform,
-                "BeginMission",
-                SaltLineNarrative.StartButton,
-                EpisodeUiFactory.Amber,
-                17);
-            EpisodeUiFactory.Stretch(
-                start.GetComponent<RectTransform>(),
-                new Vector2(.07f, .06f),
-                new Vector2(.93f, .16f));
-            start.onClick.AddListener(() => beginMission?.Invoke());
-
-            BuildGlobe(landing.transform);
+                new Vector2(.035f, 0f),
+                new Vector2(.98f, .09f));
+            missionReveal.SetActive(false);
         }
 
-        private void BuildGlobe(Transform root)
+        private void RefreshLandingState()
         {
-            Text eyebrow = EpisodeUiFactory.Text(
-                root,
-                "GlobeEyebrow",
-                14,
-                TextAnchor.MiddleCenter,
-                EpisodeUiFactory.Amber);
-            eyebrow.text = "AGRIVERSE FIELD NETWORK";
-            EpisodeUiFactory.Stretch(
-                eyebrow.rectTransform,
-                new Vector2(.62f, .82f),
-                new Vector2(.94f, .88f));
+            FieldNetworkLocation selected =
+                fieldState?.SelectedLocation;
+            bool available =
+                selected != null && selected.IsPlayable;
+            bool incoming =
+                selected != null && !selected.IsPlayable;
+            missionReveal?.SetActive(available);
+            incomingReveal?.SetActive(incoming);
 
-            RawImage globe = new GameObject(
-                "ArrivalGlobe",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(RawImage)).GetComponent<RawImage>();
-            globe.transform.SetParent(root, false);
-            globeTexture = CreateGlobeTexture(256);
-            globe.texture = globeTexture;
-            globe.color = Color.white;
-            globe.raycastTarget = false;
-            EpisodeUiFactory.Stretch(
-                globe.rectTransform,
-                new Vector2(.64f, .29f),
-                new Vector2(.92f, .79f));
-            GlobeLandingRenderer globeRenderer =
-                globe.gameObject.AddComponent<GlobeLandingRenderer>();
-            globeRenderer.Configure(globe);
-
-            landingCountry = EpisodeUiFactory.Text(
-                root,
-                "LandingCountry",
-                25,
-                TextAnchor.MiddleCenter,
-                EpisodeUiFactory.OffWhite);
-            landingCountry.text = "FIELD EPISODE";
-            EpisodeUiFactory.Stretch(
-                landingCountry.rectTransform,
-                new Vector2(.60f, .20f),
-                new Vector2(.96f, .28f));
-            landingRegion = EpisodeUiFactory.Text(
-                root,
-                "LandingRegion",
-                16,
-                TextAnchor.UpperCenter,
-                EpisodeUiFactory.Amber);
-            EpisodeUiFactory.Stretch(
-                landingRegion.rectTransform,
-                new Vector2(.60f, .13f),
-                new Vector2(.96f, .21f));
-
-            Text future = EpisodeUiFactory.Text(
-                root,
-                "FutureEpisodes",
-                13,
-                TextAnchor.MiddleCenter,
-                new Color(.86f, .85f, .78f, .72f));
-            future.text = "More regions unlock in future field episodes";
-            EpisodeUiFactory.Stretch(
-                future.rectTransform,
-                new Vector2(.60f, .06f),
-                new Vector2(.96f, .12f));
-        }
-
-        private static Texture2D CreateGlobeTexture(int size)
-        {
-            var texture = new Texture2D(
-                size,
-                size,
-                TextureFormat.RGBA32,
-                false,
-                true)
+            if (selected == null)
             {
-                name = "AgriVerseProceduralGlobe",
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            var pixels = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-            {
-                float ny = (y + .5f) / size * 2f - 1f;
-                for (int x = 0; x < size; x++)
-                {
-                    float nx = (x + .5f) / size * 2f - 1f;
-                    float radiusSquared = nx * nx + ny * ny;
-                    int index = y * size + x;
-                    if (radiusSquared > 1f)
-                    {
-                        pixels[index] =
-                            new Color32(0, 0, 0, 0);
-                        continue;
-                    }
-                    float z = Mathf.Sqrt(1f - radiusSquared);
-                    float longitude =
-                        Mathf.Atan2(nx, z) / Mathf.PI;
-                    float latitude =
-                        Mathf.Asin(ny) / Mathf.PI;
-                    float grid =
-                        Mathf.Min(
-                            Mathf.Abs(
-                                Mathf.Sin(longitude * Mathf.PI * 12f)),
-                            Mathf.Abs(
-                                Mathf.Sin(latitude * Mathf.PI * 12f)));
-                    float light = Mathf.Clamp01(
-                        .34f + z * .58f - nx * .08f + ny * .06f);
-                    Color baseColor = Color.Lerp(
-                        new Color(.018f, .10f, .12f, 1f),
-                        new Color(.05f, .34f, .35f, 1f),
-                        light);
-                    if (grid < .045f)
-                    {
-                        baseColor = Color.Lerp(
-                            baseColor,
-                            new Color(.92f, .61f, .23f, 1f),
-                            .38f);
-                    }
-                    float edge =
-                        Mathf.SmoothStep(0f, .08f, 1f - radiusSquared);
-                    baseColor.a = edge;
-                    pixels[index] = baseColor;
-                }
+                landingInstruction.text =
+                    "SELECT A FIELD PIN TO DISCOVER THE NETWORK";
+                RefreshConnectionState();
+                return;
             }
-            texture.SetPixels32(pixels);
-            texture.Apply(false, true);
-            return texture;
+
+            if (incoming)
+            {
+                landingInstruction.text =
+                    "INCOMING FIELD EPISODE  ·  ESCAPE TO RETURN";
+                incomingCountry.text =
+                    selected.Country.ToUpperInvariant();
+                incomingRegion.text = selected.Region;
+                incomingEpisode.text = selected.Episode;
+                incomingTeaser.text = selected.Teaser;
+                RefreshConnectionState();
+                return;
+            }
+
+            landingInstruction.text =
+                "AVAILABLE FIELD EPISODE  ·  ESCAPE TO RETURN";
+            missionCountry.text =
+                selected.Country.ToUpperInvariant();
+            missionRegion.text = selected.Region;
+            missionEpisode.text = selected.Episode;
+            missionTagline.text = selected.Teaser;
+            RefreshConnectionState();
+            RefreshMissionStart();
         }
 
-        private void OnDestroy()
+        private void RefreshMissionStart()
         {
-            if (globeTexture != null)
+            if (missionStartButton == null) return;
+            bool connectionRequired =
+                MissionConnectionRequired;
+            missionStartButton.interactable =
+                fieldState != null &&
+                fieldState.CanBeginMission(NameInput?.text);
+            if (missionStartLabel != null)
             {
-                Destroy(globeTexture);
+                missionStartLabel.text =
+                    connectionRequired
+                        ? "CONNECTION REQUIRED"
+                        : SaltLineNarrative.StartButton;
             }
+            if (connectionRequired &&
+                landingError != null)
+            {
+                landingError.text =
+                    "Connection required to begin this mission.";
+            }
+            else if (landingError != null &&
+                     string.Equals(
+                         landingError.text,
+                         "Connection required to begin this mission.",
+                         StringComparison.Ordinal))
+            {
+                landingError.text = string.Empty;
+            }
+        }
+
+        private void RefreshConnectionState()
+        {
+            if (connectionStatus == null) return;
+            FieldNetworkConnectionState state =
+                fieldState?.ConnectionState ??
+                FieldNetworkConnectionState.Loading;
+            bool ready =
+                state == FieldNetworkConnectionState.Ready;
+            connectionStatus.SetActive(!ready);
+            if (ready) return;
+
+            bool offline =
+                state == FieldNetworkConnectionState.Offline;
+            connectionStatusTitle.text = offline
+                ? "FIELD NETWORK OFFLINE"
+                : "CONNECTING TO FIELD NETWORK";
+            connectionStatusBody.text = offline
+                ? "The mission service could not be reached."
+                : "Loading the playable field mission…";
+            retryConnectionButton.gameObject.SetActive(offline);
+            retryConnectionButton.interactable = offline;
+        }
+
+        internal bool LandingControlsUsableAt(
+            Vector2 resolution)
+        {
+            if (resolution.x < 1280f ||
+                resolution.y < 720f ||
+                connectionStatus == null ||
+                missionReveal == null)
+            {
+                return false;
+            }
+
+            RectTransform statusRect =
+                connectionStatus.GetComponent<RectTransform>();
+            RectTransform missionRect =
+                missionReveal.GetComponent<RectTransform>();
+            Vector2 statusSize = Vector2.Scale(
+                statusRect.anchorMax - statusRect.anchorMin,
+                resolution);
+            Vector2 missionSize = Vector2.Scale(
+                missionRect.anchorMax - missionRect.anchorMin,
+                resolution);
+            return statusSize.x >= 400f &&
+                   statusSize.y >= 110f &&
+                   missionSize.x >= 640f &&
+                   missionSize.y >= 250f;
         }
 
         private void BuildGuide(Transform root)
         {
-            guide = EpisodeUiFactory.Panel(
+            guide = EpisodeUiFactory.SmokedGlass(
                 root,
                 "MaiGuidance",
-                EpisodeUiFactory.DeepTeal,
                 false).gameObject;
             EpisodeUiFactory.Stretch(
                 guide.GetComponent<RectTransform>(),
@@ -448,7 +881,7 @@ namespace AgriVerse.Client
                 guide.transform,
                 "DismissMai",
                 "CONTINUE",
-                EpisodeUiFactory.Amber,
+                EpisodeButtonStyle.Primary,
                 12);
             EpisodeUiFactory.Stretch(
                 close.GetComponent<RectTransform>(),
@@ -482,10 +915,10 @@ namespace AgriVerse.Client
                 glossary.GetComponent<RectTransform>(),
                 Vector2.zero,
                 Vector2.one);
-            Image drawer = EpisodeUiFactory.Panel(
+            AtlasSurfaceGraphic drawer =
+                EpisodeUiFactory.FieldPaper(
                 glossary.transform,
                 "GlossaryDrawer",
-                EpisodeUiFactory.DeepTeal,
                 true);
             EpisodeUiFactory.Stretch(
                 drawer.rectTransform,
@@ -496,7 +929,7 @@ namespace AgriVerse.Client
                 "GlossaryTitle",
                 22,
                 TextAnchor.MiddleLeft,
-                EpisodeUiFactory.OffWhite);
+                EpisodeUiFactory.Ink);
             title.text = "FIELD GLOSSARY";
             EpisodeUiFactory.Stretch(
                 title.rectTransform,
@@ -506,7 +939,7 @@ namespace AgriVerse.Client
                 drawer.transform,
                 "CloseGlossary",
                 "CLOSE",
-                EpisodeUiFactory.RiverTeal,
+                EpisodeButtonStyle.Secondary,
                 13);
             EpisodeUiFactory.Stretch(
                 close.GetComponent<RectTransform>(),
@@ -520,6 +953,14 @@ namespace AgriVerse.Client
                 new Vector2(.06f, .07f),
                 new Vector2(.94f, .87f),
                 16);
+            glossaryText.color = EpisodeUiFactory.Ink;
+            glossaryText.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .12f);
             var content = new StringBuilder();
             foreach (string entry in SaltLineNarrative.Glossary)
             {
@@ -554,10 +995,10 @@ namespace AgriVerse.Client
                 judge.GetComponent<RectTransform>(),
                 Vector2.zero,
                 Vector2.one);
-            Image drawer = EpisodeUiFactory.Panel(
+            AtlasSurfaceGraphic drawer =
+                EpisodeUiFactory.FieldPaper(
                 judge.transform,
                 "JudgeViewDrawer",
-                EpisodeUiFactory.DeepTeal,
                 true);
             EpisodeUiFactory.Stretch(
                 drawer.rectTransform,
@@ -568,8 +1009,9 @@ namespace AgriVerse.Client
                 "JudgeViewTitle",
                 22,
                 TextAnchor.MiddleLeft,
-                EpisodeUiFactory.OffWhite);
+                EpisodeUiFactory.Ink);
             title.text = "JUDGE VIEW";
+            title.color = EpisodeUiFactory.Ink;
             EpisodeUiFactory.Stretch(
                 title.rectTransform,
                 new Vector2(.05f, .91f),
@@ -578,7 +1020,7 @@ namespace AgriVerse.Client
                 drawer.transform,
                 "CloseJudgeView",
                 "CLOSE",
-                EpisodeUiFactory.RiverTeal,
+                EpisodeButtonStyle.Secondary,
                 13);
             EpisodeUiFactory.Stretch(
                 close.GetComponent<RectTransform>(),
@@ -591,6 +1033,14 @@ namespace AgriVerse.Client
                 new Vector2(.05f, .06f),
                 new Vector2(.95f, .88f),
                 14);
+            judgeText.color = EpisodeUiFactory.Ink;
+            judgeText.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .12f);
             judge.SetActive(false);
         }
 
@@ -619,38 +1069,74 @@ namespace AgriVerse.Client
                 certificate.GetComponent<RectTransform>(),
                 Vector2.zero,
                 Vector2.one);
-            Image card = EpisodeUiFactory.Panel(
+            AtlasSurfaceGraphic card =
+                EpisodeUiFactory.FieldPaper(
                 certificate.transform,
                 "CertificateCard",
-                new Color(.07f, .15f, .15f, .99f),
                 true);
             EpisodeUiFactory.Stretch(
                 card.rectTransform,
-                new Vector2(.14f, .07f),
-                new Vector2(.86f, .93f));
+                new Vector2(.13f, .065f),
+                new Vector2(.87f, .935f));
             Text title = EpisodeUiFactory.Text(
                 card.transform,
                 "CertificateHeading",
                 25,
                 TextAnchor.MiddleCenter,
-                EpisodeUiFactory.Amber);
+                EpisodeUiFactory.Ink);
             title.text = SaltLineNarrative.CertificateHeading;
             EpisodeUiFactory.Stretch(
                 title.rectTransform,
                 new Vector2(.06f, .89f),
                 new Vector2(.94f, .97f));
+            AtlasSurfaceGraphic seal =
+                EpisodeUiFactory.Stamp(
+                    card.transform,
+                    "ExpeditionSeal",
+                    "AGRIVERSE\nEXPEDITION 01",
+                    EpisodeUiFactory.Amber);
+            EpisodeUiFactory.Stretch(
+                seal.rectTransform,
+                new Vector2(.76f, .79f),
+                new Vector2(.92f, .88f));
+            AtlasRouteGraphic certificateRoute =
+                EpisodeUiFactory.Route(
+                    card.transform,
+                    "CertificateRoute",
+                    new[]
+                    {
+                        new Vector2(.02f, .34f),
+                        new Vector2(.26f, .62f),
+                        new Vector2(.51f, .48f),
+                        new Vector2(.75f, .70f),
+                        new Vector2(.98f, .56f)
+                    },
+                    EpisodeUiFactory.Amber,
+                    1.4f);
+            EpisodeUiFactory.Stretch(
+                certificateRoute.rectTransform,
+                new Vector2(.08f, .75f),
+                new Vector2(.92f, .84f));
             certificateText = RuntimeScrollableContent.Create(
                 card.transform,
                 "CertificateContent",
                 new Vector2(.08f, .20f),
-                new Vector2(.92f, .87f),
+                new Vector2(.92f, .74f),
                 17);
+            certificateText.color = EpisodeUiFactory.Ink;
+            certificateText.GetComponentInParent<ScrollRect>()
+                .GetComponent<Image>().color =
+                new Color(
+                    EpisodeUiFactory.OffWhite.r,
+                    EpisodeUiFactory.OffWhite.g,
+                    EpisodeUiFactory.OffWhite.b,
+                    .12f);
 
             Button home = EpisodeUiFactory.Button(
                 card.transform,
                 "ReturnHome",
                 SaltLineNarrative.ReturnHome,
-                EpisodeUiFactory.RiverTeal,
+                EpisodeButtonStyle.Secondary,
                 14);
             EpisodeUiFactory.Stretch(
                 home.GetComponent<RectTransform>(),
@@ -662,7 +1148,7 @@ namespace AgriVerse.Client
                 card.transform,
                 "StayAnotherSeason",
                 SaltLineNarrative.StayAnotherSeason,
-                EpisodeUiFactory.Amber,
+                EpisodeButtonStyle.Primary,
                 14);
             EpisodeUiFactory.Stretch(
                 stay.GetComponent<RectTransform>(),

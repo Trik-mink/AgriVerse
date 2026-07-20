@@ -108,26 +108,22 @@ namespace AgriVerse.Client
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
-            Image instructionCard = new GameObject(
-                "RuntimeInstructionCard",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image)).GetComponent<Image>();
-            instructionCard.transform.SetParent(canvas.transform, false);
-            instructionCard.color =
-                new Color(.018f, .075f, .08f, .90f);
-            instructionCard.raycastTarget = false;
+            AtlasSurfaceGraphic instructionCard =
+                EpisodeUiFactory.AtlasLabel(
+                    canvas.transform,
+                    "RuntimeInstructionCard",
+                    false);
             RectTransform cardRect = instructionCard.rectTransform;
-            cardRect.anchorMin = new Vector2(.025f, .85f);
-            cardRect.anchorMax = new Vector2(.64f, .92f);
+            cardRect.anchorMin = new Vector2(.025f, .91f);
+            cardRect.anchorMax = new Vector2(.405f, .968f);
             cardRect.offsetMin = Vector2.zero;
             cardRect.offsetMax = Vector2.zero;
             instructionText = new GameObject("RuntimeInstruction", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
             instructionText.transform.SetParent(instructionCard.transform, false);
             instructionText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            instructionText.fontSize = 18;
-            instructionText.color = Color.white;
-            instructionText.alignment = TextAnchor.UpperLeft;
+            instructionText.fontSize = 14;
+            instructionText.color = EpisodeUiFactory.OffWhite;
+            instructionText.alignment = TextAnchor.MiddleLeft;
             instructionText.verticalOverflow = VerticalWrapMode.Overflow;
             instructionText.raycastTarget = false;
             RectTransform rect = instructionText.rectTransform;

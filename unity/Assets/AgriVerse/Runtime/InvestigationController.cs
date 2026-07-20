@@ -546,42 +546,31 @@ namespace AgriVerse.Client
 
         private static Image CreatePanel(Transform parent, string name)
         {
-            var panelObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            panelObject.transform.SetParent(parent, false);
-            Image panel = panelObject.GetComponent<Image>();
-            panel.color = new Color(0.12f, 0.12f, 0.12f, 0.9f);
-            panel.raycastTarget = false;
-            return panel;
+            return EpisodeUiFactory.CinematicPanel(
+                parent,
+                name,
+                false,
+                .90f);
         }
 
         private static Text CreateText(Transform parent, string name, int fontSize, TextAnchor alignment)
         {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            textObject.transform.SetParent(parent, false);
-            Text text = textObject.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = fontSize;
-            text.alignment = alignment;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.color = Color.white;
-            text.raycastTarget = false;
-            return text;
+            return EpisodeUiFactory.Text(
+                parent,
+                name,
+                Mathf.Max(13, fontSize),
+                alignment,
+                EpisodeUiFactory.OffWhite);
         }
 
         private static Button CreateButton(Transform parent, string name, string label)
         {
-            var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            buttonObject.transform.SetParent(parent, false);
-            Image image = buttonObject.GetComponent<Image>();
-            image.color = new Color(0.38f, 0.38f, 0.38f, 1f);
-            Button button = buttonObject.GetComponent<Button>();
-            button.targetGraphic = image;
-
-            Text text = CreateText(buttonObject.transform, "Label", 18, TextAnchor.MiddleCenter);
-            text.text = label;
-            Stretch(text.rectTransform, Vector2.zero, Vector2.one);
-            return button;
+            return EpisodeUiFactory.Button(
+                parent,
+                name,
+                label,
+                EpisodeButtonStyle.Secondary,
+                16);
         }
 
         private static void Stretch(RectTransform rectTransform, Vector2 anchorMin, Vector2 anchorMax)

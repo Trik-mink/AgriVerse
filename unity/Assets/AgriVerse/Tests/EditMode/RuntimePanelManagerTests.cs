@@ -69,5 +69,27 @@ namespace AgriVerse.Client.Tests
                 manager.InstructionCanvasVisible,
                 Is.False);
         }
+
+        [Test]
+        public void SharedInstructionUsesOneCompactEdgeMountedAtlasLabel()
+        {
+            RuntimePanelManager manager =
+                RuntimePanelManager.GetOrCreate();
+            manager.SetInstruction("One current instruction.");
+            Transform card = manager.transform.Find(
+                "RuntimeInstructionCanvas/RuntimeInstructionCard");
+            RectTransform rect = card as RectTransform;
+
+            Assert.That(card, Is.Not.Null);
+            Assert.That(
+                card.GetComponent<AtlasSurfaceGraphic>()?.SurfaceKind,
+                Is.EqualTo(AtlasSurfaceKind.AtlasLabel));
+            Assert.That(
+                rect.anchorMax.x - rect.anchorMin.x,
+                Is.LessThanOrEqualTo(.42f));
+            Assert.That(
+                card.GetComponentsInChildren<UnityEngine.UI.Text>(true),
+                Has.Length.EqualTo(1));
+        }
     }
 }

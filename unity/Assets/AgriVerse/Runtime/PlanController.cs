@@ -107,23 +107,264 @@ namespace AgriVerse.Client
 
         private void CreateInterface()
         {
-            var canvasObject = new GameObject("PlanCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); canvasObject.transform.SetParent(planStage.transform, false);
-            Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280, 720);
-            Image card = EpisodeUiFactory.Panel(canvas.transform, "PlanCard", new Color(.018f,.075f,.08f,.94f), true);
-            Stretch(card.rectTransform, new Vector2(.02f,.025f), new Vector2(.64f,.84f));
-            Text heading = Text(canvas.transform, "PlanHeading", 21); heading.text = "Design a proposal"; Stretch(heading.rectTransform, new Vector2(.03f,.77f), new Vector2(.62f,.83f));
-            siteDropdown = Dropdown(canvas.transform, "TargetSite"); siteDropdown.options.Add(new Dropdown.OptionData("Select target site")); foreach (TestSiteDto site in scenario.test_sites) siteDropdown.options.Add(new Dropdown.OptionData(site.label)); siteDropdown.gameObject.SetActive(false);
-            for (int index=0; index<scenario.test_sites.Length; index++) { int captured=index; Button button=Button(canvas.transform,"TargetSite_"+scenario.test_sites[index].id,scenario.test_sites[index].label); Stretch(button.GetComponent<RectTransform>(),new Vector2(.03f+index*.2f,.7f),new Vector2(.21f+index*.2f,.75f)); button.onClick.AddListener(()=>SelectSite(captured)); siteButtons.Add(button); }
-            Text interventions = Text(canvas.transform, "Interventions", 16); interventions.text = "Interventions"; Stretch(interventions.rectTransform, new Vector2(.03f,.63f), new Vector2(.62f,.68f));
-            for (int index=0; index<scenario.interventions.Length; index++) { int captured=index; Button button=Button(canvas.transform,"Intervention_"+scenario.interventions[index].id,scenario.interventions[index].label); Stretch(button.GetComponent<RectTransform>(),new Vector2(.03f + (index%2)*.3f,.56f-(index/2)*.07f),new Vector2(.31f+(index%2)*.3f,.62f-(index/2)*.07f)); button.onClick.AddListener(()=>ToggleIntervention(captured)); interventionButtons.Add(button); }
-            Text supports = Text(canvas.transform,"SupportMeasures",16); supports.text="Support measures"; Stretch(supports.rectTransform,new Vector2(.03f,.39f),new Vector2(.62f,.44f));
-            for(int index=0; index<scenario.support_measure_options.Length; index++){int captured=index; Button button=Button(canvas.transform,"Support_"+scenario.support_measure_options[index].id,scenario.support_measure_options[index].description); Stretch(button.GetComponent<RectTransform>(),new Vector2(.03f,.32f-index*.06f),new Vector2(.62f,.37f-index*.06f)); button.onClick.AddListener(()=>ToggleSupport(captured)); supportButtons.Add(button);}
-            parametersInput=Input(canvas.transform,"ParametersInput","Optional parameters"); Stretch(parametersInput.GetComponent<RectTransform>(),new Vector2(.03f,.14f),new Vector2(.3f,.22f));
-            rationaleInput=Input(canvas.transform,"RationaleInput","Evidence-based rationale"); Stretch(rationaleInput.GetComponent<RectTransform>(),new Vector2(.32f,.14f),new Vector2(.62f,.22f));
-            submitButton=Button(canvas.transform,"SimulateButton","Run simulation"); Stretch(submitButton.GetComponent<RectTransform>(),new Vector2(.03f,.04f),new Vector2(.31f,.1f)); submitButton.onClick.AddListener(SubmitPlan);
-            retryButton=Button(canvas.transform,"RetrySimulation","Retry"); Stretch(retryButton.GetComponent<RectTransform>(),new Vector2(.33f,.04f),new Vector2(.62f,.1f)); retryButton.onClick.AddListener(RetrySimulation);
-            resultText=Text(canvas.transform,"SimulationConfirmation",18); Stretch(resultText.rectTransform,new Vector2(.03f,.10f),new Vector2(.62f,.13f));
+            var canvasObject = new GameObject(
+                "PlanCanvas",
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+            canvasObject.transform.SetParent(
+                planStage.transform,
+                false);
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 16;
+            CanvasScaler scaler =
+                canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode =
+                CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution =
+                new Vector2(1280f, 720f);
+            scaler.matchWidthOrHeight = .5f;
+
+            AtlasSurfaceGraphic card = EpisodeUiFactory.FieldPaper(
+                canvas.transform,
+                "PlanCard",
+                true);
+            Stretch(
+                card.rectTransform,
+                new Vector2(.035f, .035f),
+                new Vector2(.965f, .53f));
+            Text heading = Text(
+                card.transform,
+                "PlanHeading",
+                22);
+            heading.text = "FIELD PLAN  ·  DESIGN A PROPOSAL";
+            heading.color = EpisodeUiFactory.Ink;
+            Stretch(
+                heading.rectTransform,
+                new Vector2(.025f, .88f),
+                new Vector2(.72f, .98f));
+
+            AtlasSurfaceGraphic planningMap =
+                EpisodeUiFactory.AtlasLabel(
+                    card.transform,
+                    "PlanningMap");
+            Stretch(
+                planningMap.rectTransform,
+                new Vector2(.025f, .11f),
+                new Vector2(.245f, .84f));
+            AtlasRouteGraphic planningRoute =
+                EpisodeUiFactory.Route(
+                    planningMap.transform,
+                    "PlanningRoute",
+                    new[]
+                    {
+                        new Vector2(.16f, .18f),
+                        new Vector2(.52f, .52f),
+                        new Vector2(.82f, .78f)
+                    },
+                    EpisodeUiFactory.BrightAmber,
+                    1.5f);
+            Stretch(
+                planningRoute.rectTransform,
+                new Vector2(.08f, .42f),
+                new Vector2(.92f, .94f));
+            Text mapLabel = Text(
+                planningMap.transform,
+                "PlanningMapLabel",
+                12);
+            mapLabel.text = "TARGET FIELD";
+            mapLabel.color = EpisodeUiFactory.Amber;
+            Stretch(
+                mapLabel.rectTransform,
+                new Vector2(.08f, .88f),
+                new Vector2(.92f, .98f));
+
+            siteDropdown = Dropdown(
+                card.transform,
+                "TargetSite");
+            siteDropdown.options.Add(
+                new Dropdown.OptionData("Select target site"));
+            foreach (TestSiteDto site in scenario.test_sites)
+            {
+                siteDropdown.options.Add(
+                    new Dropdown.OptionData(site.label));
+            }
+            siteDropdown.gameObject.SetActive(false);
+            for (int index = 0;
+                 index < scenario.test_sites.Length;
+                 index++)
+            {
+                int captured = index;
+                float height =
+                    .34f / scenario.test_sites.Length;
+                float bottom =
+                    .05f +
+                    (scenario.test_sites.Length - 1 - index) *
+                    height;
+                Button button =
+                    EpisodeUiFactory.ChoiceButton(
+                        planningMap.transform,
+                        "TargetSite_" +
+                        scenario.test_sites[index].id,
+                        index + 1,
+                        scenario.test_sites[index].label);
+                Stretch(
+                    button.GetComponent<RectTransform>(),
+                    new Vector2(.08f, bottom),
+                    new Vector2(.92f, bottom + height - .025f));
+                button.onClick.AddListener(
+                    () => SelectSite(captured));
+                siteButtons.Add(button);
+            }
+
+            AtlasSurfaceGraphic interventionTray =
+                EpisodeUiFactory.SmokedGlass(
+                    card.transform,
+                    "InterventionTokenTray");
+            Stretch(
+                interventionTray.rectTransform,
+                new Vector2(.27f, .47f),
+                new Vector2(.71f, .84f));
+            Text interventions = Text(
+                card.transform,
+                "Interventions",
+                14);
+            interventions.text =
+                "INTERVENTION TOKENS  ·  SELECT ONE OR MORE";
+            interventions.color = EpisodeUiFactory.Ink;
+            Stretch(
+                interventions.rectTransform,
+                new Vector2(.27f, .84f),
+                new Vector2(.71f, .90f));
+            for (int index = 0;
+                 index < scenario.interventions.Length;
+                 index++)
+            {
+                int captured = index;
+                float width =
+                    .92f / scenario.interventions.Length;
+                float left = .04f + index * width;
+                Button button =
+                    EpisodeUiFactory.ChoiceButton(
+                        interventionTray.transform,
+                        "Intervention_" +
+                        scenario.interventions[index].id,
+                        index + 1,
+                        scenario.interventions[index].label);
+                Stretch(
+                    button.GetComponent<RectTransform>(),
+                    new Vector2(left, .12f),
+                    new Vector2(
+                        left + width - .025f,
+                        .88f));
+                button.onClick.AddListener(
+                    () => ToggleIntervention(captured));
+                interventionButtons.Add(button);
+            }
+
+            AtlasSurfaceGraphic supportTray =
+                EpisodeUiFactory.AtlasLabel(
+                    card.transform,
+                    "SupportTokenTray");
+            Stretch(
+                supportTray.rectTransform,
+                new Vector2(.27f, .25f),
+                new Vector2(.71f, .43f));
+            Text supports = Text(
+                card.transform,
+                "SupportMeasures",
+                14);
+            supports.text = "SUPPORT MEASURES";
+            supports.color = EpisodeUiFactory.Ink;
+            Stretch(
+                supports.rectTransform,
+                new Vector2(.27f, .43f),
+                new Vector2(.71f, .47f));
+            for (int index = 0;
+                 index <
+                 scenario.support_measure_options.Length;
+                 index++)
+            {
+                int captured = index;
+                float width =
+                    .92f /
+                    Mathf.Max(
+                        1,
+                        scenario
+                            .support_measure_options.Length);
+                float left = .04f + index * width;
+                Button button =
+                    EpisodeUiFactory.ChoiceButton(
+                        supportTray.transform,
+                        "Support_" +
+                        scenario
+                            .support_measure_options[index].id,
+                        index + 1,
+                        scenario
+                            .support_measure_options[index]
+                            .description);
+                Stretch(
+                    button.GetComponent<RectTransform>(),
+                    new Vector2(left, .12f),
+                    new Vector2(
+                        left + width - .025f,
+                        .88f));
+                button.onClick.AddListener(
+                    () => ToggleSupport(captured));
+                supportButtons.Add(button);
+            }
+
+            parametersInput = Input(
+                card.transform,
+                "ParametersInput",
+                "Optional parameters");
+            Stretch(
+                parametersInput.GetComponent<RectTransform>(),
+                new Vector2(.27f, .06f),
+                new Vector2(.43f, .21f));
+            rationaleInput = Input(
+                card.transform,
+                "RationaleInput",
+                "Evidence-based rationale");
+            Stretch(
+                rationaleInput.GetComponent<RectTransform>(),
+                new Vector2(.445f, .06f),
+                new Vector2(.71f, .21f));
+
+            resultText = Text(
+                card.transform,
+                "SimulationConfirmation",
+                14);
+            resultText.color = EpisodeUiFactory.RiceGreen;
+            Stretch(
+                resultText.rectTransform,
+                new Vector2(.74f, .56f),
+                new Vector2(.975f, .84f));
+            submitButton = EpisodeUiFactory.Button(
+                card.transform,
+                "SimulateButton",
+                "RUN SIMULATION",
+                EpisodeButtonStyle.Primary,
+                15);
+            Stretch(
+                submitButton.GetComponent<RectTransform>(),
+                new Vector2(.73f, .31f),
+                new Vector2(.975f, .49f));
+            submitButton.onClick.AddListener(SubmitPlan);
+            retryButton = EpisodeUiFactory.Button(
+                card.transform,
+                "RetrySimulation",
+                "RETRY",
+                EpisodeButtonStyle.Secondary,
+                14);
+            Stretch(
+                retryButton.GetComponent<RectTransform>(),
+                new Vector2(.73f, .12f),
+                new Vector2(.975f, .27f));
+            retryButton.onClick.AddListener(
+                RetrySimulation);
+            EpisodeAccessibility.ApplyAll();
         }
 
         private void ToggleIntervention(int index) { session.InterventionIds = Toggle(session.InterventionIds,scenario.interventions[index].id); RefreshButtons(); }
@@ -136,13 +377,12 @@ namespace AgriVerse.Client
         public bool BeginPlanning(){if(LoadState!=InvestigationLoadState.Ready||!InterviewsComplete())return false;revisionRequested=false;ActivatePlanStage();return true;}
         public void ShowConsequencesActivity() { }
         public void BeginRevision(){if(LoadState!=InvestigationLoadState.Ready)return;revisionRequested=true;RuntimePanelManager.GetOrCreate().Show(RuntimeActivityStage.Plan);SetStatus("Revise the saved proposal, then run a new simulation.");RefreshButtons();}
-        private void RefreshButtons(){if(submitButton==null)return;submitButton.interactable=!busy;retryButton.interactable=!busy&&retryAvailable;for(int i=0;i<siteButtons.Count;i++)siteButtons[i].GetComponent<Image>().color=siteDropdown.value==i+1?EpisodeUiFactory.Amber:EpisodeUiFactory.RiverTeal;for(int i=0;i<interventionButtons.Count;i++)interventionButtons[i].GetComponent<Image>().color=Array.IndexOf(session.InterventionIds,scenario.interventions[i].id)>=0?EpisodeUiFactory.Amber:EpisodeUiFactory.RiverTeal;for(int i=0;i<supportButtons.Count;i++)supportButtons[i].GetComponent<Image>().color=Array.IndexOf(session.SupportMeasures,scenario.support_measure_options[i].id)>=0?EpisodeUiFactory.Amber:EpisodeUiFactory.RiverTeal;}
+        private void RefreshButtons(){if(submitButton==null)return;submitButton.interactable=!busy;retryButton.interactable=!busy&&retryAvailable;for(int i=0;i<siteButtons.Count;i++)EpisodeUiFactory.SetButtonSelected(siteButtons[i],siteDropdown.value==i+1);for(int i=0;i<interventionButtons.Count;i++)EpisodeUiFactory.SetButtonSelected(interventionButtons[i],Array.IndexOf(session.InterventionIds,scenario.interventions[i].id)>=0);for(int i=0;i<supportButtons.Count;i++)EpisodeUiFactory.SetButtonSelected(supportButtons[i],Array.IndexOf(session.SupportMeasures,scenario.support_measure_options[i].id)>=0);}
         private void SetStatus(string message){RuntimePanelManager.GetOrCreate().SetInstruction(message);}
         private void Fail(string message,string diagnostic){LoadState=InvestigationLoadState.Failed;SetStatus(message);Debug.LogError(diagnostic,this);}
-        private static Text Text(Transform parent,string name,int size){Text text=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Text)).GetComponent<Text>();text.transform.SetParent(parent,false);text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");text.fontSize=size;text.color=EpisodeUiFactory.OffWhite;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;return text;}
-        private static InputField Input(Transform parent,string name,string placeholderText){InputField input=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(InputField)).GetComponent<InputField>();input.transform.SetParent(parent,false);input.GetComponent<Image>().color=new Color(.025f,.16f,.17f,.98f);Text text=Text(input.transform,"Text",15);Stretch(text.rectTransform,new Vector2(.04f,.05f),new Vector2(.96f,.95f));input.textComponent=text;Text placeholder=Text(input.transform,"Placeholder",15);placeholder.text=placeholderText;placeholder.color=new Color(.85f,.83f,.76f,.58f);Stretch(placeholder.rectTransform,new Vector2(.04f,.05f),new Vector2(.96f,.95f));input.placeholder=placeholder;input.lineType=InputField.LineType.MultiLineNewline;return input;}
-        private static Button Button(Transform parent,string name,string label){Button button=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button)).GetComponent<Button>();button.transform.SetParent(parent,false);Image image=button.GetComponent<Image>();image.color=EpisodeUiFactory.RiverTeal;button.targetGraphic=image;Text text=Text(button.transform,"Label",14);text.text=label;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,Vector2.zero,Vector2.one);return button;}
-        private static Dropdown Dropdown(Transform parent,string name){Dropdown dropdown=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Dropdown)).GetComponent<Dropdown>();dropdown.transform.SetParent(parent,false);dropdown.GetComponent<Image>().color=new Color(.35f,.35f,.35f);Text caption=Text(dropdown.transform,"Caption",15);caption.alignment=TextAnchor.MiddleLeft;Stretch(caption.rectTransform,new Vector2(.04f,0),new Vector2(.96f,1));dropdown.captionText=caption;return dropdown;}
+        private static Text Text(Transform parent,string name,int size)=>EpisodeUiFactory.Text(parent,name,Mathf.Max(13,size),TextAnchor.UpperLeft,EpisodeUiFactory.OffWhite);
+        private static InputField Input(Transform parent,string name,string placeholderText)=>EpisodeUiFactory.Input(parent,name,placeholderText,true);
+        private static Dropdown Dropdown(Transform parent,string name){Dropdown dropdown=new GameObject(name,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Dropdown)).GetComponent<Dropdown>();dropdown.transform.SetParent(parent,false);dropdown.GetComponent<Image>().color=EpisodeUiFactory.SecondarySurface;Text caption=Text(dropdown.transform,"Caption",15);caption.alignment=TextAnchor.MiddleLeft;Stretch(caption.rectTransform,new Vector2(.04f,0),new Vector2(.96f,1));dropdown.captionText=caption;return dropdown;}
         private static void Stretch(RectTransform rect,Vector2 min,Vector2 max){rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;}
         private static bool IsWebBuild
         {

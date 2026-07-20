@@ -1,9 +1,11 @@
 using NUnit.Framework;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace AgriVerse.Client.Tests
 {
@@ -30,6 +32,172 @@ namespace AgriVerse.Client.Tests
 
                 Assert.That(investigation.CreatesRuntimeUi, Is.False);
                 Assert.That(investigation.CreatesRuntimeMarkers, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void InvestigationUsesCinematicChoicesAndABoundedReadingCard()
+        {
+            GameObject root =
+                new GameObject("CinematicInvestigationTest");
+            try
+            {
+                Episode3DAlphaController controller =
+                    root.AddComponent<Episode3DAlphaController>();
+                typeof(Episode3DAlphaController)
+                    .GetField(
+                        "configuredSiteIds",
+                        BindingFlags.Instance |
+                        BindingFlags.NonPublic)
+                    ?.SetValue(
+                        controller,
+                        new[] { "site-1", "site-2", "site-3" });
+                if (root.transform.Find("Episode3DAlphaHUD") == null)
+                {
+                    typeof(Episode3DAlphaController)
+                        .GetMethod(
+                            "BuildInterface",
+                            BindingFlags.Instance |
+                            BindingFlags.NonPublic)
+                        ?.Invoke(controller, null);
+                }
+                Transform firstChoice = root.transform.Find(
+                    "Episode3DAlphaHUD/MaiDialogue/" +
+                    "PredictionChoice_1");
+                Transform secondChoice = root.transform.Find(
+                    "Episode3DAlphaHUD/MaiDialogue/" +
+                    "PredictionChoice_2");
+                Transform reading = root.transform.Find(
+                    "Episode3DAlphaHUD/FieldReading");
+
+                Assert.That(firstChoice, Is.Not.Null);
+                Assert.That(secondChoice, Is.Not.Null);
+                Assert.That(
+                    firstChoice.Find("ChoiceNumber"),
+                    Is.Not.Null);
+                Assert.That(
+                    secondChoice.Find("ChoiceNumber"),
+                    Is.Not.Null);
+                Assert.That(reading, Is.Not.Null);
+                RectTransform readingRect =
+                    reading as RectTransform;
+                Assert.That(readingRect.anchorMin.x, Is.GreaterThan(.60f));
+                Assert.That(
+                    reading.GetComponentInChildren<ScrollRect>(true),
+                    Is.Not.Null);
+                Assert.That(
+                    reading.GetComponent<AtlasSurfaceGraphic>()
+                        ?.SurfaceKind,
+                    Is.EqualTo(AtlasSurfaceKind.AtlasLabel));
+                Assert.That(
+                    reading.Find("SalinityInstrument")
+                        ?.GetComponent<AtlasInstrumentGraphic>(),
+                    Is.Not.Null);
+                Assert.That(
+                    reading.Find("EvidenceRecordedStamp"),
+                    Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void FieldJournalIsAnAtlasSpreadWithMapRouteAndBoundedDossier()
+        {
+            GameObject root = new GameObject("FieldJournalAtlasTest");
+            try
+            {
+                Episode3DAlphaController controller =
+                    root.AddComponent<Episode3DAlphaController>();
+                typeof(Episode3DAlphaController)
+                    .GetField(
+                        "configuredSiteIds",
+                        BindingFlags.Instance |
+                        BindingFlags.NonPublic)
+                    ?.SetValue(
+                        controller,
+                        new[] { "site-1", "site-2", "site-3" });
+                if (root.transform.Find("Episode3DAlphaHUD") == null)
+                {
+                    typeof(Episode3DAlphaController)
+                        .GetMethod(
+                            "BuildInterface",
+                            BindingFlags.Instance |
+                            BindingFlags.NonPublic)
+                        ?.Invoke(controller, null);
+                }
+
+                Transform journal = root.transform.Find(
+                    "Episode3DAlphaHUD/FieldJournal");
+                Assert.That(journal, Is.Not.Null);
+                Assert.That(
+                    journal.GetComponent<AtlasSurfaceGraphic>()
+                        ?.SurfaceKind,
+                    Is.EqualTo(AtlasSurfaceKind.FieldPaper));
+                Assert.That(
+                    journal.Find("JournalSiteMap"),
+                    Is.Not.Null);
+                Assert.That(
+                    journal.Find("JournalSiteMap/InvestigationRoute")
+                        ?.GetComponent<AtlasRouteGraphic>()?.NodeCount,
+                    Is.EqualTo(3));
+                Assert.That(
+                    journal.Find("DossierRule"),
+                    Is.Not.Null);
+                Assert.That(
+                    journal.GetComponentInChildren<ScrollRect>(true),
+                    Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void WorldHudUsesCompactEdgeMountedAtlasLabels()
+        {
+            GameObject root = new GameObject("AtlasHudTest");
+            try
+            {
+                Episode3DAlphaController controller =
+                    root.AddComponent<Episode3DAlphaController>();
+                if (root.transform.Find("Episode3DAlphaHUD") == null)
+                {
+                    typeof(Episode3DAlphaController)
+                        .GetMethod(
+                            "BuildInterface",
+                            BindingFlags.Instance |
+                            BindingFlags.NonPublic)
+                        ?.Invoke(controller, null);
+                }
+                RectTransform objective = root.transform.Find(
+                    "Episode3DAlphaHUD/Objective") as RectTransform;
+                RectTransform progress = root.transform.Find(
+                    "Episode3DAlphaHUD/Progress") as RectTransform;
+
+                Assert.That(objective, Is.Not.Null);
+                Assert.That(progress, Is.Not.Null);
+                Assert.That(
+                    objective.anchorMax.x - objective.anchorMin.x,
+                    Is.LessThanOrEqualTo(.42f));
+                Assert.That(
+                    progress.anchorMax.x - progress.anchorMin.x,
+                    Is.LessThanOrEqualTo(.25f));
+                Assert.That(
+                    objective.GetComponent<AtlasSurfaceGraphic>()
+                        ?.SurfaceKind,
+                    Is.EqualTo(AtlasSurfaceKind.AtlasLabel));
+                Assert.That(
+                    progress.GetComponent<AtlasSurfaceGraphic>()
+                        ?.SurfaceKind,
+                    Is.EqualTo(AtlasSurfaceKind.AtlasLabel));
             }
             finally
             {
@@ -201,6 +369,115 @@ namespace AgriVerse.Client.Tests
             {
                 EditorSceneManager.CloseScene(scene, true);
             }
+        }
+
+        [Test]
+        public void PremiumStationsAndCharactersAreGroundedAndCannotFall()
+        {
+            Scene scene = EditorSceneManager.OpenScene(
+                ScenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                GameObject premiumStations =
+                    scene.GetRootGameObjects()
+                        .FirstOrDefault(root =>
+                            root.name == "PremiumFieldStations");
+                Assert.That(premiumStations, Is.Not.Null);
+                Transform[] stationRoots =
+                    premiumStations.transform.Cast<Transform>().ToArray();
+                Assert.That(stationRoots, Has.Length.EqualTo(9));
+                foreach (Transform station in stationRoots)
+                {
+                    Assert.That(
+                        Vector3.Dot(station.up, Vector3.up),
+                        Is.GreaterThan(.999f),
+                        station.name + " wrapper must remain upright.");
+                    Assert.That(
+                        station.GetComponentsInChildren<Rigidbody>(true),
+                        Is.Empty,
+                        station.name + " must not fall after Play begins.");
+                    AssertGrounded(station);
+                }
+
+                MaiGuideController mai =
+                    FindInScene<MaiGuideController>(scene);
+                Assert.That(mai, Is.Not.Null);
+                Assert.That(
+                    mai.GetComponentsInChildren<Rigidbody>(true),
+                    Is.Empty);
+                AssertGrounded(mai.transform);
+
+                foreach (StakeholderHotspot hotspot in
+                         FindAllInScene<StakeholderHotspot>(scene))
+                {
+                    Assert.That(hotspot.Character, Is.Not.Null);
+                    Assert.That(
+                        hotspot.Character.GetComponentsInChildren<
+                            Rigidbody>(true),
+                        Is.Empty);
+                    AssertGrounded(hotspot.Character.transform);
+                }
+
+                string[] stableWorldAssets =
+                {
+                    "FieldShelter",
+                    "SamplingDock",
+                    "LocalWoodenBoat",
+                    "Banana_01",
+                    "Palmyra_01",
+                    "Coconut_01",
+                    "Broadleaf_01",
+                    "Reeds_01"
+                };
+                foreach (string assetName in stableWorldAssets)
+                {
+                    Transform asset = FindTransform(
+                        scene,
+                        assetName);
+                    Assert.That(
+                        asset.GetComponentsInChildren<Rigidbody>(true),
+                        Is.Empty,
+                        assetName + " must remain static.");
+                    AssertGrounded(asset);
+                }
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        private static void AssertGrounded(Transform target)
+        {
+            Renderer[] renderers =
+                target.GetComponentsInChildren<Renderer>(true)
+                    .Where(renderer =>
+                        renderer.gameObject.name != "MeetingFocusRing")
+                    .ToArray();
+            Assert.That(renderers, Is.Not.Empty, target.name);
+            Bounds bounds = renderers[0].bounds;
+            foreach (Renderer renderer in renderers.Skip(1))
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+            Assert.That(
+                Mathf.Abs(bounds.min.y - target.position.y),
+                Is.LessThan(.06f),
+                target.name + " must rest on its placement surface.");
+        }
+
+        private static Transform FindTransform(
+            Scene scene,
+            string objectName)
+        {
+            Transform result = scene.GetRootGameObjects()
+                .SelectMany(root =>
+                    root.GetComponentsInChildren<Transform>(true))
+                .FirstOrDefault(item =>
+                    item.name == objectName);
+            Assert.That(result, Is.Not.Null, objectName);
+            return result;
         }
 
         private static T FindInScene<T>(Scene scene)

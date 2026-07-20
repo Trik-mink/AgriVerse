@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -19,6 +20,9 @@ namespace AgriVerse.Client
         private ScenarioDto scenario;
         private EpisodeSession session;
         private bool missionStarted;
+        private string activeGuideCue = string.Empty;
+        private bool guideSuspended;
+        private Coroutine connectionAttempt;
         [SerializeField] private bool showArrivalGuideCues = true;
 
         public bool LandingVisible => view != null && view.LandingVisible;
@@ -39,18 +43,64 @@ namespace AgriVerse.Client
         public string GlossaryTextForTesting => view?.GlossaryText ?? string.Empty;
         public string CertificateTextForTesting =>
             view?.CertificateText ?? string.Empty;
+        public string SelectedFieldLocationIdForTesting =>
+            view?.SelectedFieldLocationId ?? string.Empty;
+        public bool IncomingLocationSelectedForTesting =>
+            view != null && view.IncomingLocationSelected;
+        public bool NameEntryVisibleForTesting =>
+            view != null && view.NameEntryVisible;
+        public bool MissionStartVisibleForTesting =>
+            view != null && view.MissionStartVisible;
+        public bool MissionStartInteractableForTesting =>
+            view != null && view.MissionStartInteractable;
+        public bool ConnectionStatusVisibleForTesting =>
+            view != null && view.ConnectionStatusVisible;
+        public string ConnectionStatusTextForTesting =>
+            view?.ConnectionStatusText ?? string.Empty;
+        public bool RetryVisibleForTesting =>
+            view != null && view.RetryVisible;
+        public bool MissionConnectionRequiredForTesting =>
+            view != null && view.MissionConnectionRequired;
+        public string PlayerNameForTesting =>
+            view?.PlayerName ?? string.Empty;
+        public int FieldNetworkPinCountForTesting =>
+            view?.FieldNetworkPinCount ?? 0;
 
         private IEnumerator Start()
         {
             EnsureView();
-            while (scenario == null)
+            string reliabilityCaptureDirectory =
+                ReliabilityCaptureDirectory(
+                    Environment.GetCommandLineArgs());
+            if (PackagedScenarioLoader.TryLoad(
+                    out ScenarioDto packagedScenario,
+                    out string packagedError))
+            {
+                ConfigureScenario(
+                    packagedScenario,
+                    FieldNetworkConnectionState.Loading);
+            }
+            else
+            {
+                Debug.LogError(packagedError, this);
+            }
+
+            while (true)
             {
                 InvestigationController investigation =
                     FindFirstObjectByType<InvestigationController>();
                 if (investigation != null &&
                     investigation.LoadState == InvestigationLoadState.Ready)
                 {
-                    ConfigureScenario(investigation.Scenario);
+                    CompleteScenarioConnection(
+                        investigation.Scenario);
+                    if (!string.IsNullOrWhiteSpace(
+                            reliabilityCaptureDirectory))
+                    {
+                        yield return CaptureRecoveredLanding(
+                            reliabilityCaptureDirectory);
+                        yield break;
+                    }
                     string captureDirectory =
                         LandingCaptureDirectory(
                             Environment.GetCommandLineArgs());
@@ -59,6 +109,20 @@ namespace AgriVerse.Client
                     {
                         yield return CaptureLanding(
                             captureDirectory);
+                    }
+                    yield break;
+                }
+                if (investigation != null &&
+                    investigation.LoadState ==
+                    InvestigationLoadState.Failed)
+                {
+                    view.SetConnectionState(
+                        FieldNetworkConnectionState.Offline);
+                    if (!string.IsNullOrWhiteSpace(
+                            reliabilityCaptureDirectory))
+                    {
+                        yield return CaptureOfflineRecovery(
+                            reliabilityCaptureDirectory);
                     }
                     yield break;
                 }
@@ -72,7 +136,13 @@ namespace AgriVerse.Client
             RefreshPresentationState();
             RuntimePanelManager manager =
                 FindFirstObjectByType<RuntimePanelManager>();
-            if (manager == null || !manager.ActiveStage.HasValue) return;
+            if (manager == null || !manager.ActiveStage.HasValue)
+            {
+                ResumeGuideOutsideStage();
+                return;
+            }
+
+            SuspendGuideDuringStage();
 
             RuntimeActivityStage stage = manager.ActiveStage.Value;
             if (stage == RuntimeActivityStage.Interviews)
@@ -133,15 +203,62 @@ namespace AgriVerse.Client
         public void BuildForTesting(ScenarioDto source)
         {
             EnsureView();
-            ConfigureScenario(source);
+            ConfigureScenario(
+                source,
+                FieldNetworkConnectionState.Ready);
+        }
+
+        public void BuildOfflineForTesting(ScenarioDto source)
+        {
+            EnsureView();
+            ConfigureScenario(
+                source,
+                FieldNetworkConnectionState.Offline);
+        }
+
+        public void BuildLoadingForTesting(ScenarioDto source)
+        {
+            EnsureView();
+            ConfigureScenario(
+                source,
+                FieldNetworkConnectionState.Loading);
+        }
+
+        public void CompleteRetryForTesting(
+            ScenarioDto source)
+        {
+            CompleteScenarioConnection(source);
+        }
+
+        public void SetPlayerNameForTesting(string value)
+        {
+            view?.SetPlayerName(value);
+        }
+
+        public bool LandingControlsUsableAtForTesting(
+            Vector2 resolution) =>
+            view != null &&
+            view.LandingControlsUsableAt(resolution);
+
+        public void RetryConnectionForTesting()
+        {
+            RetryConnection();
         }
 
         public bool BeginMissionForTesting(
             string playerName,
             string avatarPresetId)
         {
-            view.NameInput.text = playerName ?? string.Empty;
+            view.SetPlayerName(playerName);
             return BeginMission();
+        }
+
+        public bool SelectFieldLocationForTesting(string id) =>
+            view != null && view.SelectFieldLocation(id);
+
+        public void ClearFieldLocationSelectionForTesting()
+        {
+            view?.ClearFieldLocationSelection();
         }
 
         public void ConfigureFor3D(bool showAuthoredArrivalCues)
@@ -163,6 +280,20 @@ namespace AgriVerse.Client
         public void RefreshForTesting()
         {
             RefreshPresentationState();
+        }
+
+        internal void RefreshGuideVisibilityForTesting()
+        {
+            RuntimePanelManager manager =
+                FindFirstObjectByType<RuntimePanelManager>();
+            if (manager == null || !manager.ActiveStage.HasValue)
+            {
+                ResumeGuideOutsideStage();
+            }
+            else
+            {
+                SuspendGuideDuringStage();
+            }
         }
 
         public void DismissGuideForTesting()
@@ -202,18 +333,135 @@ namespace AgriVerse.Client
                 ToggleGlossary,
                 ToggleJudge,
                 OpenCertificate,
-                ChooseEnding);
+                ChooseEnding,
+                RetryConnection);
         }
 
-        private void ConfigureScenario(ScenarioDto source)
+        private void ConfigureScenario(
+            ScenarioDto source,
+            FieldNetworkConnectionState connectionState)
         {
             if (source == null || string.IsNullOrWhiteSpace(source.id)) return;
             scenario = source;
             session = EpisodeSession.GetOrCreate();
             session.ConfigureScenario(scenario.id);
-            view.SetLandingLocation(
-                scenario.location?.country,
-                scenario.location?.region);
+            view.ConfigureFieldNetwork(
+                scenario,
+                connectionState);
+        }
+
+        private void CompleteScenarioConnection(
+            ScenarioDto source)
+        {
+            if (source == null ||
+                string.IsNullOrWhiteSpace(source.id))
+            {
+                view.SetConnectionState(
+                    FieldNetworkConnectionState.Offline);
+                return;
+            }
+
+            bool sameScenario =
+                scenario != null &&
+                string.Equals(
+                    scenario.id,
+                    source.id,
+                    StringComparison.Ordinal);
+            scenario = source;
+            session = EpisodeSession.GetOrCreate();
+            session.ConfigureScenario(scenario.id);
+            if (sameScenario &&
+                view.FieldNetworkPinCount > 0)
+            {
+                view.SetConnectionState(
+                    FieldNetworkConnectionState.Ready);
+            }
+            else
+            {
+                view.ConfigureFieldNetwork(
+                    scenario,
+                    FieldNetworkConnectionState.Ready);
+            }
+        }
+
+        private void RetryConnection()
+        {
+            if (connectionAttempt != null) return;
+            connectionAttempt =
+                StartCoroutine(RetryConnectionRoutine());
+        }
+
+        private IEnumerator RetryConnectionRoutine()
+        {
+            view.SetConnectionState(
+                FieldNetworkConnectionState.Loading);
+            InvestigationController investigation =
+                FindFirstObjectByType<InvestigationController>();
+            if (investigation == null)
+            {
+                view.SetConnectionState(
+                    FieldNetworkConnectionState.Offline);
+                connectionAttempt = null;
+                yield break;
+            }
+
+            yield return investigation.LoadScenario();
+            if (investigation.LoadState !=
+                InvestigationLoadState.Ready)
+            {
+                view.SetConnectionState(
+                    FieldNetworkConnectionState.Offline);
+                connectionAttempt = null;
+                yield break;
+            }
+
+            InterviewController interviews =
+                FindFirstObjectByType<InterviewController>();
+            while (interviews != null &&
+                   interviews.LoadState ==
+                   InvestigationLoadState.Loading)
+            {
+                yield return null;
+            }
+            if (interviews != null &&
+                interviews.LoadState !=
+                InvestigationLoadState.Ready)
+            {
+                yield return interviews.LoadScenario();
+            }
+            PlanController plan =
+                FindFirstObjectByType<PlanController>();
+            while (plan != null &&
+                   plan.LoadState ==
+                   InvestigationLoadState.Loading)
+            {
+                yield return null;
+            }
+            if (plan != null &&
+                plan.LoadState !=
+                InvestigationLoadState.Ready)
+            {
+                yield return plan.LoadScenario();
+            }
+
+            bool dependenciesReady =
+                (interviews == null ||
+                 interviews.LoadState ==
+                 InvestigationLoadState.Ready) &&
+                (plan == null ||
+                 plan.LoadState ==
+                 InvestigationLoadState.Ready);
+            if (!dependenciesReady)
+            {
+                view.SetConnectionState(
+                    FieldNetworkConnectionState.Offline);
+                connectionAttempt = null;
+                yield break;
+            }
+
+            CompleteScenarioConnection(
+                investigation.Scenario);
+            connectionAttempt = null;
         }
 
         private bool BeginMission()
@@ -221,6 +469,23 @@ namespace AgriVerse.Client
             if (scenario == null)
             {
                 view.ShowLandingError("The field mission is still loading.");
+                return false;
+            }
+
+            if (view.MissionConnectionRequired)
+            {
+                view.ShowLandingError(
+                    "Connection required to begin this mission.");
+                return false;
+            }
+
+            if (!view.CanBeginMission(view.NameInput.text))
+            {
+                view.ShowLandingError(
+                    string.IsNullOrWhiteSpace(
+                        view.SelectedFieldLocationId)
+                        ? "Select the available field mission first."
+                        : "Enter a name between 1 and 40 characters.");
                 return false;
             }
 
@@ -258,7 +523,7 @@ namespace AgriVerse.Client
             }
 
             guideQueue.Enqueue(text);
-            if (!view.GuideVisible)
+            if (!view.GuideVisible && CanShowGuideCue())
             {
                 ShowNextGuideCue();
             }
@@ -267,15 +532,49 @@ namespace AgriVerse.Client
         private void DismissGuide()
         {
             view.HideGuide();
+            activeGuideCue = string.Empty;
+            guideSuspended = false;
             ShowNextGuideCue();
         }
 
         private void ShowNextGuideCue()
         {
-            if (guideQueue.Count > 0)
+            if (!CanShowGuideCue() ||
+                view.GuideVisible ||
+                guideQueue.Count == 0)
             {
-                view.ShowGuide(guideQueue.Dequeue());
+                return;
             }
+            activeGuideCue = guideQueue.Dequeue();
+            view.ShowGuide(activeGuideCue);
+        }
+
+        private bool CanShowGuideCue()
+        {
+            RuntimePanelManager manager =
+                FindFirstObjectByType<RuntimePanelManager>();
+            return manager == null || !manager.ActiveStage.HasValue;
+        }
+
+        private void SuspendGuideDuringStage()
+        {
+            if (!view.GuideVisible) return;
+            guideSuspended =
+                !string.IsNullOrWhiteSpace(activeGuideCue);
+            view.HideGuide();
+        }
+
+        private void ResumeGuideOutsideStage()
+        {
+            if (view.GuideVisible) return;
+            if (guideSuspended &&
+                !string.IsNullOrWhiteSpace(activeGuideCue))
+            {
+                guideSuspended = false;
+                view.ShowGuide(activeGuideCue);
+                return;
+            }
+            ShowNextGuideCue();
         }
 
         private void ToggleJudge()
@@ -430,18 +729,141 @@ namespace AgriVerse.Client
             return null;
         }
 
-        private static IEnumerator CaptureLanding(
+        private static string ReliabilityCaptureDirectory(
+            string[] arguments)
+        {
+            if (arguments == null) return null;
+            for (int index = 0;
+                 index < arguments.Length - 1;
+                 index++)
+            {
+                if (string.Equals(
+                        arguments[index],
+                        "-agriverse-reliability-capture-dir",
+                        StringComparison.Ordinal))
+                {
+                    return arguments[index + 1];
+                }
+            }
+            return null;
+        }
+
+        private IEnumerator CaptureOfflineRecovery(
             string directory)
         {
             Directory.CreateDirectory(directory);
-            yield return new WaitForSecondsRealtime(1.1f);
-            yield return new WaitForEndOfFrame();
-            ScreenCapture.CaptureScreenshot(
-                Path.Combine(
-                    directory,
-                    "00_globe_identity.png"));
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return CaptureLandingFrame(
+                directory,
+                "01_offline_globe_retry.png");
+
+            float deadline =
+                Time.unscaledTime + 90f;
+            float nextRetry = Time.unscaledTime;
+            while (view.ConnectionStatusVisible &&
+                   Time.unscaledTime < deadline)
+            {
+                if (connectionAttempt == null &&
+                    Time.unscaledTime >= nextRetry)
+                {
+                    RetryConnection();
+                    nextRetry =
+                        Time.unscaledTime + 1.5f;
+                }
+                yield return null;
+            }
+
+            if (view.ConnectionStatusVisible)
+            {
+                Debug.LogError(
+                    "AGRIVERSE_RELIABILITY_CAPTURE timed out waiting for mission-service recovery.",
+                    this);
+                Application.Quit(2);
+                yield break;
+            }
+
+            yield return CaptureRecoveredLanding(directory);
+        }
+
+        private IEnumerator CaptureRecoveredLanding(
+            string directory)
+        {
+            Directory.CreateDirectory(directory);
+            yield return new WaitForSecondsRealtime(1.0f);
+            yield return CaptureLandingFrame(
+                directory,
+                "02_after_retry.png");
+
+            view.FocusNextFieldLocation(1);
+            view.FocusNextFieldLocation(1);
+            yield return new WaitForSecondsRealtime(1.25f);
+            view.SelectKeyboardFocusedFieldLocation();
+            yield return new WaitForSecondsRealtime(.55f);
+            yield return CaptureLandingFrame(
+                directory,
+                "03_incoming_selected_by_tab.png");
+
+            view.FocusNextFieldLocation(-1);
+            yield return new WaitForSecondsRealtime(1.25f);
+            view.SelectKeyboardFocusedFieldLocation();
+            view.SetPlayerName("Lan");
+            yield return new WaitForSecondsRealtime(.45f);
+            yield return CaptureLandingFrame(
+                directory,
+                "04_vietnam_ready.png");
+            yield return new WaitForSecondsRealtime(.4f);
+            Application.Quit(0);
+        }
+
+        private IEnumerator CaptureLanding(
+            string directory)
+        {
+            Directory.CreateDirectory(directory);
+            yield return new WaitForSecondsRealtime(1.8f);
+            yield return CaptureLandingFrame(
+                directory,
+                "01_orbital_network.png");
+
+            FieldNetworkLocation incoming =
+                FieldNetworkCatalog.CreateForScenario(
+                        scenario,
+                        SaltLineNarrative.Episode,
+                        SaltLineNarrative.Tagline)
+                    .Locations
+                    .FirstOrDefault(location => !location.IsPlayable);
+            if (incoming != null)
+            {
+                view.SelectFieldLocation(incoming.Id);
+            }
+            yield return new WaitForSecondsRealtime(1.25f);
+            yield return CaptureLandingFrame(
+                directory,
+                "02_incoming_selected.png");
+
+            view.SelectFieldLocation(scenario.id);
+            view.SetPlayerName(string.Empty);
+            yield return new WaitForSecondsRealtime(1.25f);
+            yield return CaptureLandingFrame(
+                directory,
+                "03_vietnam_selected_empty.png");
+
+            view.SetPlayerName("Lan");
+            yield return new WaitForSecondsRealtime(.35f);
+            yield return CaptureLandingFrame(
+                directory,
+                "04_vietnam_ready.png");
             yield return new WaitForSecondsRealtime(.5f);
             Application.Quit(0);
+        }
+
+        private static IEnumerator CaptureLandingFrame(
+            string directory,
+            string filename)
+        {
+            yield return new WaitForEndOfFrame();
+            ScreenCapture.CaptureScreenshot(
+                Path.Combine(directory, filename));
+            yield return new WaitForSecondsRealtime(.3f);
         }
     }
 }

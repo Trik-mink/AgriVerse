@@ -184,6 +184,46 @@ namespace AgriVerse.Client.Tests
                 future.DisplayedText,
                 Does.Contain("REVISED FUTURE · YEAR 1"));
             Assert.That(future.DisplayedText, Does.Contain("0.7500 g/L"));
+            RectTransform comparisonCard =
+                root.transform.Find(
+                    "FutureWalkCanvas/FutureWalkCard")
+                    as RectTransform;
+            Assert.That(comparisonCard, Is.Not.Null);
+            Assert.That(
+                comparisonCard.anchorMin.x,
+                Is.EqualTo(.025f).Within(.001f));
+            Assert.That(
+                comparisonCard.anchorMax.y,
+                Is.LessThanOrEqualTo(.39f),
+                "The Future Walk must leave the changing world visible.");
+            Assert.That(
+                comparisonCard.GetComponent<AtlasSurfaceGraphic>()
+                    ?.SurfaceKind,
+                Is.EqualTo(AtlasSurfaceKind.SmokedGlass));
+            Assert.That(
+                root.transform.Find(
+                    "FutureWalkCanvas/FutureWalkCard/" +
+                    "OriginalRiverRoute")
+                    .GetComponent<AtlasRouteGraphic>().NodeCount,
+                Is.EqualTo(5));
+            Assert.That(
+                root.transform.Find(
+                    "FutureWalkCanvas/FutureWalkCard/" +
+                    "RevisedRiverRoute")
+                    .GetComponent<AtlasRouteGraphic>().NodeCount,
+                Is.EqualTo(5));
+            Assert.That(
+                root.transform.Find(
+                    "FutureWalkCanvas/FutureWalkCard/" +
+                    "OriginalFutureComparisonScroll")
+                    .gameObject.activeSelf,
+                Is.True);
+            Assert.That(
+                root.transform.Find(
+                    "FutureWalkCanvas/FutureWalkCard/" +
+                    "RevisedFutureComparisonScroll")
+                    .gameObject.activeSelf,
+                Is.True);
             future.ShowOriginal();
             Assert.That(
                 future.DisplayedText,

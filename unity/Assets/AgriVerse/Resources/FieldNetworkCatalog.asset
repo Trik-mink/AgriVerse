@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9795f066ba48461e9a2bcab9001cd1e9, type: 3}
+  m_Name: FieldNetworkCatalog
+  m_EditorClassIdentifier: AgriVerse.Runtime::AgriVerse.Client.FieldNetworkCatalogAsset
+  activeLatitude: 10.03
+  activeLongitude: 105.78
+  futureLocations:
+  - id: india
+    country: India
+    region: Punjab
+    episodeTitle: The Falling Water Table
+    teaser: Protect the aquifer without leaving farming families behind.
+    latitude: 30.9
+    longitude: 75.8
+    status: 1
+  - id: kenya
+    country: Kenya
+    region: Arid and semi-arid lands
+    episodeTitle: When the Rains Fail
+    teaser: Balance water, crops, livestock, and recovery.
+    latitude: 1
+    longitude: 38
+    status: 1
+  - id: brazil
+    country: Brazil
+    region: Cerrado
+    episodeTitle: The Forest Boundary
+    teaser: Produce food without pushing beyond the living landscape.
+    latitude: -15.5
+    longitude: -47.5
+    status: 1
+  - id: netherlands
+    country: Netherlands
+    region: Rural Netherlands
+    episodeTitle: The Nitrogen Balance
+    teaser: Protect nature while making the transition workable for farmers.
+    latitude: 52.1
+    longitude: 5.3
+    status: 1

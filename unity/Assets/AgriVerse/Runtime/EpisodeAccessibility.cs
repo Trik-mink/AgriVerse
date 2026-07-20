@@ -42,8 +42,8 @@ namespace AgriVerse.Client
 
         public void Apply(bool highContrast)
         {
-            Image image = GetComponent<Image>();
-            if (image == null) return;
+            Graphic image = GetComponent<Graphic>();
+            if (image == null || image is Text) return;
             if (!configured)
             {
                 baseColor = image.color;
@@ -117,6 +117,21 @@ namespace AgriVerse.Client
                 {
                     accessible =
                         image.gameObject.AddComponent<
+                            EpisodeAccessibleImage>();
+                }
+                accessible.Apply(HighContrast);
+            }
+            foreach (AtlasSurfaceGraphic surface in
+                     Object.FindObjectsByType<AtlasSurfaceGraphic>(
+                         FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                EpisodeAccessibleImage accessible =
+                    surface.GetComponent<EpisodeAccessibleImage>();
+                if (accessible == null)
+                {
+                    accessible =
+                        surface.gameObject.AddComponent<
                             EpisodeAccessibleImage>();
                 }
                 accessible.Apply(HighContrast);
