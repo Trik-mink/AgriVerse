@@ -11,7 +11,7 @@ Official references:
 
 - [ ] Project name: **AgriVerse**
 - [ ] Category: **Education**
-- [ ] Repository URL: `<PUBLIC_REPOSITORY_URL>`
+- [x] Repository URL: https://github.com/Trik-mink/AgriVerse
 - [ ] macOS judge build URL: `<GITHUB_RELEASE_ASSET_URL>`
 - [ ] Public YouTube demo URL: `<PUBLIC_YOUTUBE_URL>`
 - [ ] Video is no more than three minutes.
@@ -72,14 +72,16 @@ tests.
 
 ## Release evidence
 
-- [x] `npm ci` on supported Node 24.16.0
+- [x] `npm ci` on supported Node 24
 - [x] Type checking and production web/server build
-- [x] Backend tests: 22/22 passed
+- [x] Backend tests, including hosted-service security boundaries: 43/43 passed
 - [x] Dependency vulnerability audit: 0 findings
-- [x] Unity EditMode: 126 passed, 0 failed, 1 intentionally ignored
-- [x] Focused non-GPT Unity PlayMode: 5/5 passed
+- [x] Unity EditMode: 130 passed, 0 failed, 1 intentionally skipped live-connectivity test
+- [x] Focused non-GPT Unity PlayMode: field-network reliability, world-lab, and revised Future
+  Walk suites passed
 - [x] Focused offline/retry suite
-- [x] Live GPT-backed full-loop regression: passed in 156.1 seconds
+- [x] Pre-hosting live GPT-backed full-loop regression: passed in 156.1 seconds
+- [ ] One final live GPT-backed journey against the hosted judge service
 - [x] Fresh universal macOS build at
   `unity/Builds/Release/AgriVerse.app`
 - [x] Correct executable, product name, and `org.agriverse.episode1` identifier
@@ -102,15 +104,25 @@ tests.
 - [x] Uncompressed app size: 290,095,104 bytes
 - [x] Archive size: 165,386,216 bytes
 
-## Publication gate
+## Current publication state
 
-Before any push, tag, release, visibility change, asset upload, or backend deployment, receive
-this exact approval:
+- [x] Public repository created with exactly one branch named `main`.
+- [x] Clean milestone tags and reachable Git LFS objects published.
+- [x] Apache-2.0 source-code license and third-party notices published.
+- [x] Publication secret, privacy, history, and LFS scan passed before first push.
+- [ ] Add Render billing information so the single authorized service can be created.
+- [ ] Deploy and verify the secured temporary judge backend.
+- [ ] Rebuild Unity with the hosted HTTPS endpoint.
+- [ ] Complete the one final live hosted journey.
+- [ ] Create and verify `v1.0.0-build-week` and the GitHub Release.
 
-```text
-APPROVE PUBLICATION
-GitHub target: <owner/repository>
-Code license: <chosen license>
-Judge access plan: <approved plan>
-Asset provenance: <confirmation or exclusions>
-```
+## Remaining human submission work
+
+- [ ] Record, edit, and publicly upload the under-three-minute YouTube demo.
+- [ ] Obtain or confirm the Builder Session ID using `/feedback`.
+- [ ] Replace all final URL and Session-ID placeholders.
+- [ ] Complete and submit Devpost.
+- [ ] Perform a final incognito check of repository, release, video, and judge instructions.
+
+The GitHub repository being public is not the Devpost submission. Do not mark the hackathon
+submission complete until the remaining human tasks are done.

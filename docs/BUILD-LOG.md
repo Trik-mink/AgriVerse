@@ -368,3 +368,8 @@ Format per entry:
 - What Codex did: Added strict HTTP validation, bounded sessions/rates/concurrency, sanitized observability, judge-window expiration, and an atomic persistent US$9 model-budget ledger with conservative pre-call reservations.
 - Human decision: Authorized one secure temporary judge backend with an absolute US$10 OpenAI ceiling, a US$9 application cap, and no client-side secret or fabricated AI fallback.
 - GPT-5.6 technique used: Kept Responses API calls, versioned prompts, grounded inputs, strict structured outputs, and citation validation intact while bounding every paid request.
+
+### 2026-07-20 - Main branch and public judge documentation
+- What Codex did: Consolidated the verified release onto `main`, published the privacy-audited source and LFS history with preserved milestone tags, and prepared judge, video, Devpost, and troubleshooting documentation.
+- Human decision: Authorized the first public GitHub publication while reserving YouTube, Devpost, `/feedback`, and any cloud billing confirmation for the human.
+- GPT-5.6 technique used: Documented the four live runtime systems and distinguished the one authoritative live journey from recorded presentation replays used to conserve the judge budget.

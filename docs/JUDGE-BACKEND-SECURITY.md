@@ -15,7 +15,7 @@ scenario, stakeholder, simulator, grader, and policy-brief responses.
 | --- | --- |
 | Public unauthenticated traffic | IP, opaque-session, route, and concurrency limits; an absolute lifetime budget gate |
 | Automated cost exhaustion | Durable US$9 internal cap, conservative pre-call reservation, one service instance, judge-window expiration |
-| Oversized or malformed input | 256 KiB HTTP body ceiling, strict Zod schemas, bounded strings and arrays, bounded proposal parameters |
+| Oversized or malformed input | 128 KiB HTTP body ceiling, strict Zod schemas, bounded strings and arrays, bounded proposal parameters |
 | Prompt injection in student questions | Student text remains a bounded user message; versioned system prompts, private stakeholder roles, grounding corpus, strict structured outputs, and citation validation remain authoritative |
 | Concurrent calls and retry storms | Two model calls globally, one per session, no SDK retries, bounded structured-validation retries |
 | Replay or repeated-session abuse | Six-hour per-session route limits plus a separate IP limit and durable lifetime cap |

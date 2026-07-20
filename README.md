@@ -112,7 +112,7 @@ backend or fabricated gameplay.
 
 ```bash
 git lfs install
-git clone <PUBLIC_REPOSITORY_URL>
+git clone https://github.com/Trik-mink/AgriVerse.git
 cd AgriVerse
 git lfs pull
 npm ci
@@ -182,12 +182,14 @@ The destination must not exist before the build.
 
 ## Prebuilt judge build
 
-**Download:** _GitHub Release link will be added after the publication gate._
+**Download:** _The verified GitHub Release link will be added after the hosted judge service
+and final release build pass._
 
 1. Download `AgriVerse-macOS-Universal.zip`.
 2. Verify it against the published SHA-256 file.
 3. Extract it with Finder or `ditto`.
-4. Start the documented judge backend, then open `AgriVerse.app`.
+4. Open `AgriVerse.app`. The judge build will use the temporary hosted service documented in
+   [`docs/JUDGE-ACCESS.md`](docs/JUDGE-ACCESS.md); no judge API key is required.
 
 The current local build is ad-hoc signed, not Apple-notarized. If Gatekeeper quarantines a
 download, Control-click the app, choose **Open**, and confirm once. Do not disable Gatekeeper
@@ -240,8 +242,9 @@ contents are intentionally excluded.
 - The downloadable client currently targets macOS only.
 - Live AI stages require the Express backend. The standalone client does not and must not
   contain an API key.
-- The current build defaults to `localhost:8787`; an external judge endpoint is not configured
-  yet. Publication is blocked until the owner approves a secure judge-access plan.
+- Live GPT functionality in the downloadable judge build depends on a temporary, rate-limited
+  hosted service. Its availability window and failure states are documented in
+  [`docs/JUDGE-ACCESS.md`](docs/JUDGE-ACCESS.md).
 - The local app is ad-hoc signed and not notarized.
 - Incoming countries on the globe are previews, not additional playable scenarios.
 - Audio is representative sound design rather than a Vietnam field recording.
