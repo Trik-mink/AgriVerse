@@ -19,8 +19,8 @@ Official references:
 - [ ] Primary Builder `/feedback` Session ID:
   `019f71fd-f4b9-7991-bdda-1c1f42203916`
 - [ ] README setup, testing, collaboration, limitations, and attribution links resolve.
-- [ ] The selected code license is present.
-- [ ] All third-party licensing and provenance rows are resolved.
+- [x] The selected Apache-2.0 code license is present.
+- [x] All third-party licensing and provenance rows are resolved.
 - [ ] Submit before the deadline; no submission edits are possible afterward.
 
 ## Suggested Devpost description
@@ -88,6 +88,8 @@ tests.
 - [x] No SampleScene in release scene list
 - [x] No development/profiler flags
 - [x] No magenta, missing shader, runtime exception, or credential in the app
+- [x] Release binaries were rebuilt from a neutral local path and contain no personal email
+  or private home/Downloads path.
 - [x] Metal player: 179.5 average FPS over the bounded five-second sample on Apple M4 at
   1280×720
 - [x] `git diff --check`
@@ -96,9 +98,9 @@ tests.
 - [x] Archive:
   `unity/Builds/Release/AgriVerse-macOS-Universal.zip`
 - [x] SHA-256:
-  `b74ffd7c7b0bb19d4c8d6cfb7d806aa3d73df87a29ce14c10e2873b0d389aca5`
+  `f98ad6e5115fe3cd78b0bd6dd51f99e1c4a9e9ab4dfe76e9e6b97e47a5c0fb4f`
 - [x] Uncompressed app size: 290,095,104 bytes
-- [x] Archive size: 165,386,151 bytes
+- [x] Archive size: 165,386,216 bytes
 
 ## Publication gate
 

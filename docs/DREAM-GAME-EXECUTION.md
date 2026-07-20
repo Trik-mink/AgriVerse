@@ -74,19 +74,16 @@ authorized.
 
 ## Current blockers
 
-- No GitHub owner/repository or public visibility action is authorized.
-- No code license has been selected for AgriVerse's original source.
+- The intended GitHub target is `Trik-mink/AgriVerse`, but repository creation, pushing,
+  visibility changes, tags, and releases remain outside this local-only task.
 - The judge client still targets `localhost:8787`; external access requires an approved secure,
   server-side hosted or time-limited endpoint plan.
-- Historical commits and three historical LFS objects retain old absolute workstation paths.
-  Current files are clean, no credential was found, and history rewriting is not authorized.
-- Publication still requires the owner's final asset-provenance confirmation or exclusions.
 
 ## Release checkpoint commits
 
-- `c2cafbf` — approved Human Gate C field network, Living Field Atlas presentation,
+- `eebe87c` — approved Human Gate C field network, Living Field Atlas presentation,
   offline/retry behavior, and stable world-asset wrappers.
-- `2979855` — repository hygiene, provenance privacy cleanup, deterministic release
+- `7825ae2` — repository hygiene, provenance privacy cleanup, deterministic release
   configuration, release regressions, and reproducible archive verification scripts.
 
 ## External asset manifest
@@ -282,19 +279,19 @@ footstep rows remain documented below without blocking the current build.
 
 ## Checkpoint commits
 
-- `87ae13b11266325ad9a608c9efdbec21ded65c9` - Reality Spike 1 technical baseline.
-- `9eead89` - Cinematic stakeholder interview presentation.
-- `1ea9ad5` - Dream Game execution tracker initialized.
-- `27b900b` - Repeatable macOS checkpoint build helper.
-- `4894384` - Salt Line identity, authored guidance, glossary, and prediction flow.
-- `adc011b` - Original/revised futures, Judge View, certificate, and ending choices.
-- `c731041` - Licensed source-art intake and verified Mai CharacterLab.
-- `ccf7daa` - Isolated true-3D AnGiangWorldLab, optimized vegetation, movement, and ambience.
-- `6e90ca1` - Human-approved playable 3D investigation vertical slice.
-- `814868d` - Complete 3D journey and macOS release candidate.
-- `9d98317` - Licensed stakeholder, field-station, and NASA globe asset intake with
+- `69a8bf5eb996e7b226a6941edcf66c79413364f` - Reality Spike 1 technical baseline.
+- `c90964f` - Cinematic stakeholder interview presentation.
+- `0a808a5` - Dream Game execution tracker initialized.
+- `544e80d` - Repeatable macOS checkpoint build helper.
+- `aa717d4` - Salt Line identity, authored guidance, glossary, and prediction flow.
+- `97a120c` - Original/revised futures, Judge View, certificate, and ending choices.
+- `c452bba` - Licensed source-art intake and verified Mai CharacterLab.
+- `ac64158` - Isolated true-3D AnGiangWorldLab, optimized vegetation, movement, and ambience.
+- `00ca877` - Human-approved playable 3D investigation vertical slice.
+- `49c5e1f` - Complete 3D journey and macOS release candidate.
+- `1f62dee` - Licensed stakeholder, field-station, and NASA globe asset intake with
   name-only first-person identity.
-- `87880e6` - Premium 3D stakeholder journey, physical planning handoff, Field Journal,
+- `620ec2d` - Premium 3D stakeholder journey, physical planning handoff, Field Journal,
   accessibility controls, and compact Future Walk presentation.
-- `998cb03` - Verified universal macOS release candidate with native AgriVerse bundle
+- `a30a4a8` - Verified universal macOS release candidate with native AgriVerse bundle
   identity and complete release audit.
