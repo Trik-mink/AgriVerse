@@ -8,6 +8,25 @@ coverage/
 .DS_Store
 assets/source/
 .codegraph/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+
+# Generated verification, capture, packaging, and local media output.
+/captures/
+/renders/
+/TestResults/
+*.test-result.xml
+*.xcarchive/
+*.app/
+AgriVerse-macOS-Universal.zip
+AgriVerse-macOS-Universal.zip.sha256
+/unity/Captures/
+/unity/Verification/
 
 # Unity-generated directories (keep Assets and their .meta files tracked).
 /unity/[Ll]ibrary/

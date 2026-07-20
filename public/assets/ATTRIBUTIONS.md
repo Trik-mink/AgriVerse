@@ -1,5 +1,20 @@
 # Asset Attributions
 
+## OpenAI-generated character portraits
+
+- Local source files: `public/assets/characters/guide.png`,
+  `public/assets/characters/mr-ba.png`, `public/assets/characters/dr-linh.png`, and
+  `public/assets/characters/ms-hoa.png`.
+- Creator and generator: Original AgriVerse character concepts generated with the OpenAI
+  Media Service on 2026-07-17. The source PNGs retain OpenAI-signed C2PA provenance
+  manifests.
+- Applicable terms: OpenAI Terms of Use,
+  https://openai.com/policies/terms-of-use/.
+- Modifications: Cropped and resized JPEG derivatives are stored under
+  `public/assets/characters/optimized/`; the source PNGs are retained unchanged.
+- Redistribution: Included under the user's rights to the generated output under the
+  applicable OpenAI terms. No real person is represented or endorsed.
+
 ## Kenney Interface Sounds
 
 - Local file: `public/assets/audio/dialogue-pop.ogg`.
