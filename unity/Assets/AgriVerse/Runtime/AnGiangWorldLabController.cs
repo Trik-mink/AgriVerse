@@ -26,6 +26,8 @@ namespace AgriVerse.Client
             Array.Empty<Viewpoint>();
         private int sampledFrames;
         private float sampledTime;
+        private bool performanceReportingEnabled;
+        private bool performanceReported;
 
         public IReadOnlyList<Viewpoint> EvidenceViewpoints =>
             evidenceViewpoints;
@@ -40,8 +42,10 @@ namespace AgriVerse.Client
 
         private void Start()
         {
-            string directory = CaptureDirectoryFromArguments(
-                Environment.GetCommandLineArgs());
+            string[] args = Environment.GetCommandLineArgs();
+            performanceReportingEnabled =
+                PerformanceReportingEnabledFromArguments(args);
+            string directory = CaptureDirectoryFromArguments(args);
             if (!string.IsNullOrWhiteSpace(directory))
             {
                 StartCoroutine(CaptureEvidence(directory));
@@ -50,6 +54,11 @@ namespace AgriVerse.Client
 
         private void Update()
         {
+            if (!performanceReportingEnabled || performanceReported)
+            {
+                return;
+            }
+
             sampledFrames++;
             sampledTime += Time.unscaledDeltaTime;
             if (sampledFrames >= 300 && sampledTime > 0f)
@@ -57,8 +66,7 @@ namespace AgriVerse.Client
                 Debug.Log(
                     $"AnGiangWorldLab average FPS: " +
                     $"{sampledFrames / sampledTime:F1}");
-                sampledFrames = 0;
-                sampledTime = 0f;
+                performanceReported = true;
             }
         }
 
@@ -106,6 +114,31 @@ namespace AgriVerse.Client
                 }
             }
             return null;
+        }
+
+        internal static bool PerformanceReportingEnabledFromArguments(
+            string[] args)
+        {
+            if (args == null)
+            {
+                return false;
+            }
+
+            foreach (string argument in args)
+            {
+                if (string.Equals(
+                        argument,
+                        "-agriverse-performance-report",
+                        StringComparison.Ordinal) ||
+                    string.Equals(
+                        argument,
+                        "-agriverse-world-capture-dir",
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -29,6 +29,35 @@ namespace AgriVerse.Client.Tests
             "Prefabs/Grass_A.prefab";
         private const string ScenePath = "Assets/Scenes/AnGiangWorldLab.unity";
 
+        [Test]
+        public void PerformanceReportingRequiresAnExplicitDiagnosticArgument()
+        {
+            Assert.That(
+                AnGiangWorldLabController
+                    .PerformanceReportingEnabledFromArguments(
+                        System.Array.Empty<string>()),
+                Is.False);
+            Assert.That(
+                AnGiangWorldLabController
+                    .PerformanceReportingEnabledFromArguments(
+                        new[]
+                        {
+                            "AgriVerse",
+                            "-agriverse-performance-report"
+                        }),
+                Is.True);
+            Assert.That(
+                AnGiangWorldLabController
+                    .PerformanceReportingEnabledFromArguments(
+                        new[]
+                        {
+                            "AgriVerse",
+                            "-agriverse-world-capture-dir",
+                            "/tmp/agriverse-world-capture"
+                        }),
+                Is.True);
+        }
+
         [TestCase(RiceLod0, 1500)]
         [TestCase(GrassLod0, 2000)]
         [TestCase(FanPalmOptimized, 12000)]

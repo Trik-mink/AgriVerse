@@ -383,3 +383,7 @@ Format per entry:
 - What Codex did: Deployed one Starter Render service with a 1 GB persistent budget ledger, verified secret-free health and scenario delivery, and centralized the macOS release client on its HTTPS origin while retaining localhost Editor overrides.
 - Human decision: Authorized a temporary non-sleeping judge service under the US$8 Render cap and a durable US$9 OpenAI application ceiling.
 - GPT-5.6 technique used: Kept the API key in the linked server-side secret group and preserved the four validated Responses API systems without client-side prompts, secrets, or fabricated fallbacks.
+
+### 2026-07-20 - Release player logging hygiene
+- What Codex did: Gated world-performance sampling behind explicit diagnostic arguments, limited it to one report, and verified a normal standalone landing run emits no repeated world-lab performance logs.
+- GPT-5.6 technique used: Used deterministic Unity regression and standalone capture paths without repeating the already-completed paid GPT-backed journey.
