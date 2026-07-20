@@ -396,3 +396,8 @@ Format per entry:
 ### 2026-07-20 - Portable release checksum
 - What Codex did: Corrected the release packager so its SHA-256 manifest names the downloaded archive rather than a repository-relative path, then added a regression for download-directory verification.
 - GPT-5.6 technique used: No model call; this was deterministic release-engineering verification.
+
+### 2026-07-20 - Public Build Week release
+- What Codex did: Published the verified macOS archive and portable checksum on GitHub, re-downloaded and revalidated the bundle, and confirmed a clean public clone with complete Git LFS assets and no private files.
+- Human decision: Reserved the public YouTube upload, `/feedback` confirmation, and Devpost submission for the final human submission workflow.
+- GPT-5.6 technique used: No additional model call; the already-verified hosted journey remains the single paid release verification.

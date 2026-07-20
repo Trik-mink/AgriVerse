@@ -116,7 +116,7 @@ tests.
 - [x] Secured temporary judge backend deployed and healthy over HTTPS.
 - [x] Unity rebuilt with the hosted HTTPS endpoint and no embedded API secret.
 - [x] One final live hosted journey completed with source and citation IDs intact.
-- [ ] Create and verify `v1.0.0-build-week` and the GitHub Release.
+- [x] Create and verify `v1.0.0-build-week` and the GitHub Release.
 
 ## Remaining human submission work
 
