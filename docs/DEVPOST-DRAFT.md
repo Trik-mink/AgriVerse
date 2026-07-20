@@ -84,7 +84,8 @@ contaminated-build failures; Codex corrected their root causes and added regress
 ## Links
 
 - Repository: https://github.com/Trik-mink/AgriVerse
-- macOS release: `<FINAL_GITHUB_RELEASE_URL>`
+- macOS release:
+  https://github.com/Trik-mink/AgriVerse/releases/tag/v1.0.0-build-week
 - Public YouTube demo: `<PUBLIC_YOUTUBE_URL>`
 - Builder `/feedback` Session ID: `<BUILDER_FEEDBACK_SESSION_ID>`
 

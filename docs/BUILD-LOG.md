@@ -387,3 +387,8 @@ Format per entry:
 ### 2026-07-20 - Release player logging hygiene
 - What Codex did: Gated world-performance sampling behind explicit diagnostic arguments, limited it to one report, and verified a normal standalone landing run emits no repeated world-lab performance logs.
 - GPT-5.6 technique used: Used deterministic Unity regression and standalone capture paths without repeating the already-completed paid GPT-backed journey.
+
+### 2026-07-20 - Final verified Build Week judge release
+- What Codex did: Verified the universal hosted-service macOS package, completed one live globe-to-return journey, captured the human-readable Judge View and certificate, and prepared the public release, checksum, judge guide, video script, and Devpost draft.
+- Human decision: Authorized one bounded live hosted journey and reserved the YouTube upload, `/feedback` confirmation, and Devpost submission for the human.
+- GPT-5.6 technique used: Exercised all four real Responses API systems exactly once through the secured hosted boundary, then used deterministic captures and regressions for repeated presentation evidence.

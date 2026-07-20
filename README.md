@@ -182,8 +182,7 @@ The destination must not exist before the build.
 
 ## Prebuilt judge build
 
-**Download:** _The verified GitHub Release link will be added after the hosted judge service
-and final release build pass._
+**Download:** [AgriVerse Episode 1 — Build Week release](https://github.com/Trik-mink/AgriVerse/releases/tag/v1.0.0-build-week)
 
 1. Download `AgriVerse-macOS-Universal.zip`.
 2. Verify it against the published SHA-256 file.
@@ -204,8 +203,9 @@ The repository contains:
   contracts, asset import/orientation, panel and scrolling regressions, and release settings;
 - Unity PlayMode coverage for investigation, interviews, planning, Future Walk, offline
   recovery, cursor/collision behavior, and the full learning loop;
-- a live end-to-end verification that exercises three stakeholder calls, two simulations,
-  two feedback calls, revision, and policy-brief generation; and
+- one hosted live end-to-end verification that exercised three stakeholder calls, two
+  simulations, two feedback calls, revision, policy-brief generation, human-readable Judge
+  View, the certificate, and a clean return to the Field Network; and
 - Git LFS integrity, secret, archive, bundle-identity, architecture, signature, and Player-log
   checks during release preparation.
 

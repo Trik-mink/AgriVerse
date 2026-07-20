@@ -12,7 +12,8 @@ Official references:
 - [ ] Project name: **AgriVerse**
 - [ ] Category: **Education**
 - [x] Repository URL: https://github.com/Trik-mink/AgriVerse
-- [ ] macOS judge build URL: `<GITHUB_RELEASE_ASSET_URL>`
+- [x] macOS judge build URL:
+  https://github.com/Trik-mink/AgriVerse/releases/download/v1.0.0-build-week/AgriVerse-macOS-Universal.zip
 - [ ] Public YouTube demo URL: `<PUBLIC_YOUTUBE_URL>`
 - [ ] Video is no more than three minutes.
 - [ ] Video audio explains both Codex's build role and GPT-5.6's runtime role.
@@ -74,14 +75,15 @@ tests.
 
 - [x] `npm ci` on supported Node 24
 - [x] Type checking and production web/server build
-- [x] Backend tests, including hosted-service security boundaries: 43/43 passed
+- [x] Backend tests, including hosted-service security boundaries: 44/44 passed
 - [x] Dependency vulnerability audit: 0 findings
-- [x] Unity EditMode: 130 passed, 0 failed, 1 intentionally skipped live-connectivity test
+- [x] Unity EditMode: 134 passed, 0 failed, 1 intentionally skipped live-connectivity test
 - [x] Focused non-GPT Unity PlayMode: field-network reliability, world-lab, and revised Future
   Walk suites passed
 - [x] Focused offline/retry suite
 - [x] Pre-hosting live GPT-backed full-loop regression: passed in 156.1 seconds
-- [ ] One final live GPT-backed journey against the hosted judge service
+- [x] One final live GPT-backed journey against the hosted judge service: passed with exactly
+  eight successful model routes and no paid retry
 - [x] Fresh universal macOS build at
   `unity/Builds/Release/AgriVerse.app`
 - [x] Correct executable, product name, and `org.agriverse.episode1` identifier
@@ -92,17 +94,17 @@ tests.
 - [x] No magenta, missing shader, runtime exception, or credential in the app
 - [x] Release binaries were rebuilt from a neutral local path and contain no personal email
   or private home/Downloads path.
-- [x] Metal player: 179.5 average FPS over the bounded five-second sample on Apple M4 at
-  1280×720
+- [x] Metal player: 279.4 average FPS over the bounded five-second landing sample on Apple M4
+  at 1280×720; the full 1920×1080 journey remained approximately 145–186 FPS
 - [x] `git diff --check`
 - [x] `git lfs fsck` and source-asset checksum integrity
 - [x] Archive extraction and identity re-verification
 - [x] Archive:
   `unity/Builds/Release/AgriVerse-macOS-Universal.zip`
 - [x] SHA-256:
-  `f98ad6e5115fe3cd78b0bd6dd51f99e1c4a9e9ab4dfe76e9e6b97e47a5c0fb4f`
-- [x] Uncompressed app size: 290,095,104 bytes
-- [x] Archive size: 165,386,216 bytes
+  `cb806af881c95e8a7facc082e78e275ed502bfdfbe7eaf0c48263cbe47a4d27d`
+- [x] Uncompressed app size: 290,103,296 bytes
+- [x] Archive size: 165,388,870 bytes
 
 ## Current publication state
 
@@ -112,15 +114,15 @@ tests.
 - [x] Publication secret, privacy, history, and LFS scan passed before first push.
 - [x] Render billing added for the single authorized service within the US$8 cap.
 - [x] Secured temporary judge backend deployed and healthy over HTTPS.
-- [ ] Rebuild Unity with the hosted HTTPS endpoint.
-- [ ] Complete the one final live hosted journey.
+- [x] Unity rebuilt with the hosted HTTPS endpoint and no embedded API secret.
+- [x] One final live hosted journey completed with source and citation IDs intact.
 - [ ] Create and verify `v1.0.0-build-week` and the GitHub Release.
 
 ## Remaining human submission work
 
 - [ ] Record, edit, and publicly upload the under-three-minute YouTube demo.
 - [ ] Obtain or confirm the Builder Session ID using `/feedback`.
-- [ ] Replace all final URL and Session-ID placeholders.
+- [ ] Replace the YouTube and Devpost Session-ID placeholders.
 - [ ] Complete and submit Devpost.
 - [ ] Perform a final incognito check of repository, release, video, and judge instructions.
 
