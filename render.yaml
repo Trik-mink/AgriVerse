@@ -1,0 +1,48 @@
+previews:
+  generation: off
+
+services:
+  - type: web
+    runtime: node
+    name: agriverse-judge-api
+    repo: https://github.com/Trik-mink/AgriVerse
+    region: ohio
+    plan: starter
+    branch: main
+    numInstances: 1
+    previews:
+      generation: off
+    autoDeployTrigger: commit
+    buildCommand: npm ci && npm run build:server
+    startCommand: npm start
+    healthCheckPath: /health
+    disk:
+      name: agriverse-budget-ledger
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - fromGroup: agriverse-judge-secrets
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_MODEL
+        value: gpt-5.6
+      - key: OPENAI_TIMEOUT_MS
+        value: "150000"
+      - key: OPENAI_INTERNAL_BUDGET_USD
+        value: "9"
+      - key: BUDGET_LEDGER_PATH
+        value: /var/data/agriverse-openai-budget.json
+      - key: BUDGET_LEDGER_BOOTSTRAP_UNTIL
+        value: 2026-07-21T00:00:00Z
+      - key: JUDGE_ACCESS_EXPIRES_AT
+        value: 2026-08-07T00:00:00Z
+      - key: MODEL_GLOBAL_CONCURRENCY
+        value: "2"
+      - key: MODEL_SESSION_CONCURRENCY
+        value: "1"
+      - key: HTTP_MODEL_GLOBAL_CONCURRENCY
+        value: "2"
+      - key: HTTP_MODEL_SESSION_CONCURRENCY
+        value: "1"
+      - key: CORS_ALLOWED_ORIGINS
+        value: ""

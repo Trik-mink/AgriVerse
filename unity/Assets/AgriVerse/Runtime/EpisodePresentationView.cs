@@ -16,6 +16,7 @@ namespace AgriVerse.Client
         private GameObject certificate;
         private Button glossaryButton;
         private Button judgeButton;
+        private Button judgeTechnicalButton;
         private Button certificateButton;
         private Text guideText;
         private Text glossaryText;
@@ -48,6 +49,7 @@ namespace AgriVerse.Client
         private Action dismissGuide;
         private Action toggleGlossary;
         private Action toggleJudge;
+        private Action toggleJudgeTechnical;
         private Action openCertificate;
         private Action<EpisodeEndingChoice> chooseEnding;
         private Action retryConnection;
@@ -102,6 +104,7 @@ namespace AgriVerse.Client
             Action onDismissGuide,
             Action onToggleGlossary,
             Action onToggleJudge,
+            Action onToggleJudgeTechnical,
             Action onOpenCertificate,
             Action<EpisodeEndingChoice> onChooseEnding,
             Action onRetryConnection)
@@ -110,6 +113,7 @@ namespace AgriVerse.Client
             dismissGuide = onDismissGuide;
             toggleGlossary = onToggleGlossary;
             toggleJudge = onToggleJudge;
+            toggleJudgeTechnical = onToggleJudgeTechnical;
             openCertificate = onOpenCertificate;
             chooseEnding = onChooseEnding;
             retryConnection = onRetryConnection;
@@ -146,6 +150,44 @@ namespace AgriVerse.Client
                 .SetCinematicMode(false);
             glossaryButton.gameObject.SetActive(true);
             judgeButton.gameObject.SetActive(false);
+        }
+
+        internal void ShowLandingForNewJourney(
+            ScenarioDto scenario)
+        {
+            NameInput?.DeactivateInputField();
+            if (NameInput != null)
+            {
+                NameInput.text = string.Empty;
+            }
+            guide.SetActive(false);
+            glossary.SetActive(false);
+            judge.SetActive(false);
+            certificate.SetActive(false);
+            glossaryButton.gameObject.SetActive(false);
+            judgeButton.gameObject.SetActive(false);
+            certificateButton.gameObject.SetActive(false);
+            if (judgeTechnicalButton != null)
+            {
+                SetJudgeTechnicalVisible(false);
+            }
+            ConfigureFieldNetwork(
+                scenario,
+                FieldNetworkConnectionState.Ready);
+            ClearFieldLocationSelection();
+            landing.SetActive(true);
+            globeRenderer?.SetVisible(true);
+            RuntimePanelManager.GetOrCreate()
+                .SetCinematicMode(true);
+            if (arrivalVeil != null)
+            {
+                arrivalVeil.alpha = EpisodeAccessibility.ReducedMotion
+                    ? 0f
+                    : 1f;
+                arrivalVeil.gameObject.SetActive(
+                    arrivalVeil.alpha > 0f);
+                arrivalStartedAt = Time.unscaledTime;
+            }
         }
 
         internal void ShowLandingError(string value)
@@ -303,6 +345,23 @@ namespace AgriVerse.Client
             if (visible)
             {
                 judgeButton.gameObject.SetActive(false);
+            }
+            else if (judgeTechnicalButton != null)
+            {
+                SetJudgeTechnicalVisible(false);
+            }
+        }
+
+        internal void SetJudgeTechnicalVisible(bool visible)
+        {
+            if (judgeTechnicalButton == null) return;
+            Text label =
+                judgeTechnicalButton.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.text = visible
+                    ? "HIDE TECHNICAL JSON"
+                    : "TECHNICAL JSON";
             }
         }
 
@@ -1027,6 +1086,18 @@ namespace AgriVerse.Client
                 new Vector2(.82f, .915f),
                 new Vector2(.95f, .98f));
             close.onClick.AddListener(() => toggleJudge?.Invoke());
+            judgeTechnicalButton = EpisodeUiFactory.Button(
+                drawer.transform,
+                "JudgeTechnicalDisclosure",
+                "TECHNICAL JSON",
+                EpisodeButtonStyle.Secondary,
+                12);
+            EpisodeUiFactory.Stretch(
+                judgeTechnicalButton.GetComponent<RectTransform>(),
+                new Vector2(.62f, .915f),
+                new Vector2(.80f, .98f));
+            judgeTechnicalButton.onClick.AddListener(
+                () => toggleJudgeTechnical?.Invoke());
             judgeText = RuntimeScrollableContent.Create(
                 drawer.transform,
                 "JudgeViewContent",
@@ -1135,7 +1206,7 @@ namespace AgriVerse.Client
             Button home = EpisodeUiFactory.Button(
                 card.transform,
                 "ReturnHome",
-                SaltLineNarrative.ReturnHome,
+                "RETURN TO FIELD NETWORK",
                 EpisodeButtonStyle.Secondary,
                 14);
             EpisodeUiFactory.Stretch(

@@ -358,3 +358,13 @@ Format per entry:
   approval.
 - GPT-5.6 technique used: Ran one live completion regression across all four runtime systems and
   used contract-valid recorded responses for repeated visual capture to conserve API budget.
+
+### 2026-07-20 - Judge View and return-to-network release UX
+- What Codex did: Replaced raw-JSON-first Judge View output with a human-readable validated record plus optional technical disclosure, and added a clean certificate-to-globe reset that supports a fresh name and mission.
+- Human decision: Limited the final release UX correction to Judge View readability and an unambiguous Return to Field Network action without redesigning approved systems.
+- GPT-5.6 technique used: Preserved the exact simulator, grader, policy-brief, evidence, and citation documents while changing only their presentation and reset lifecycle.
+
+### 2026-07-20 - Public judge backend safety controls
+- What Codex did: Added strict HTTP validation, bounded sessions/rates/concurrency, sanitized observability, judge-window expiration, and an atomic persistent US$9 model-budget ledger with conservative pre-call reservations.
+- Human decision: Authorized one secure temporary judge backend with an absolute US$10 OpenAI ceiling, a US$9 application cap, and no client-side secret or fabricated AI fallback.
+- GPT-5.6 technique used: Kept Responses API calls, versioned prompts, grounded inputs, strict structured outputs, and citation validation intact while bounding every paid request.

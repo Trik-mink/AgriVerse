@@ -22,7 +22,7 @@ export const StakeholderMessageInputSchema = z
 
 export const SimulationInputSchema = z
   .object({
-    target_site_id: z.string().min(1),
+    target_site_id: z.string().min(1).max(80),
     proposal: StudentProposalSchema,
   })
   .strict();
@@ -32,7 +32,7 @@ export const GraderInputSchema = SimulationInputSchema.extend({ simulation: z.un
 export const PolicyBriefInputSchema = SimulationInputSchema.extend({
   simulation: z.unknown(),
   stakeholder_concerns: z
-    .array(z.object({ stakeholder_id: z.string().min(1), concern: z.string().trim().min(1).max(1200) }).strict())
+    .array(z.object({ stakeholder_id: z.string().min(1).max(80), concern: z.string().trim().min(1).max(1200) }).strict())
     .max(12),
 }).strict();
 

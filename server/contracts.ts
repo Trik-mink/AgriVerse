@@ -8,12 +8,45 @@ export const CONTRACT_VERSION = '1.0';
 
 export const StudentProposalSchema = z
   .object({
-    intervention_ids: z.array(z.string().min(1)).min(1),
-    parameters: z.record(z.unknown()).default({}),
-    support_measures: z.array(z.string().min(1)).default([]),
+    intervention_ids: z.array(z.string().min(1).max(80)).min(1).max(8),
+    parameters: z
+      .record(z.unknown())
+      .refine((value) => Object.keys(value).length <= 32, 'Too many proposal parameters.')
+      .refine((value) => hasSafeParameterShape(value), 'Proposal parameters are too deeply nested or complex.')
+      .refine((value) => Buffer.byteLength(JSON.stringify(value), 'utf8') <= 8_192, 'Proposal parameters are too large.')
+      .default({}),
+    support_measures: z.array(z.string().min(1).max(80)).max(16).default([]),
     rationale: z.string().trim().min(1).max(4000),
   })
   .strict();
+
+function hasSafeParameterShape(value: unknown, depth = 0): boolean {
+  if (value === null || typeof value === 'boolean') {
+    return true;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+  if (typeof value === 'string') {
+    return value.length <= 4_000;
+  }
+  if (depth >= 4) {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.length <= 32 && value.every((item) => hasSafeParameterShape(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value);
+    return (
+      entries.length <= 32 &&
+      entries.every(
+        ([key, item]) => key.length <= 80 && hasSafeParameterShape(item, depth + 1),
+      )
+    );
+  }
+  return false;
+}
 
 export type StudentProposal = z.infer<typeof StudentProposalSchema>;
 

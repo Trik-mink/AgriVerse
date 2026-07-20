@@ -68,5 +68,6 @@ describe('Unity HTTP boundary', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe(allowedOrigin);
     expect(response.headers.get('access-control-allow-methods')).toContain('POST');
     expect(response.headers.get('access-control-allow-headers')?.toLowerCase()).toContain('content-type');
+    expect(response.headers.get('access-control-allow-headers')?.toLowerCase()).toContain('x-agriverse-session');
   });
 });

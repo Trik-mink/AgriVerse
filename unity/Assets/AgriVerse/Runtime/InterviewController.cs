@@ -248,6 +248,7 @@ namespace AgriVerse.Client
                 request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
+                JudgeRequestSession.Apply(request);
                 yield return request.SendWebRequest();
                 busy = false;
                 if (request.result != UnityWebRequest.Result.Success)
@@ -423,7 +424,8 @@ namespace AgriVerse.Client
             SetStatus("Choose a stakeholder perspective.");
             Refresh();
         }
-        private static string ReadableError(UnityWebRequest request) => request.responseCode > 0 ? $"server returned {request.responseCode}" : request.error;
+        private static string ReadableError(UnityWebRequest request) =>
+            JudgeRequestSession.ReadableError(request);
         private void SetStatus(string message) { statusMessage = message; RuntimePanelManager.GetOrCreate().SetInstruction(message); }
         private void Fail(string userMessage, string diagnostic) { LoadState = InvestigationLoadState.Failed; SetStatus(userMessage); Debug.LogError(diagnostic, this); }
         private static bool IsWebBuild

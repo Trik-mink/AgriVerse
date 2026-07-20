@@ -25,6 +25,18 @@ namespace AgriVerse.Client.Tests
             {
                 Object.DestroyImmediate(manager.gameObject);
             }
+            foreach (EvidenceNotebookSession session in
+                     Object.FindObjectsByType<EvidenceNotebookSession>(
+                         FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(session.gameObject);
+            }
+            foreach (InterviewNotebookSession session in
+                     Object.FindObjectsByType<InterviewNotebookSession>(
+                         FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(session.gameObject);
+            }
         }
 
         [Test]
@@ -257,6 +269,107 @@ namespace AgriVerse.Client.Tests
             Assert.That(
                 EpisodeSession.GetOrCreate().Progress.EndingChoice,
                 Is.EqualTo(EpisodeEndingChoice.StayAnotherSeason));
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
+        public void ReturnToFieldNetworkClearsJourneySurfacesAndAllowsANewName()
+        {
+            GameObject root = new GameObject("EpisodePresentationTest");
+            EpisodePresentationController controller =
+                root.AddComponent<EpisodePresentationController>();
+            ScenarioDto scenario = new ScenarioDto
+            {
+                id = "scenario-1",
+                title = "Scenario title",
+                location = new LocationDto
+                {
+                    country = "Vietnam",
+                    region = "Mekong Delta"
+                },
+                test_sites = new[]
+                {
+                    new TestSiteDto
+                    {
+                        id = "site-1",
+                        label = "Site one",
+                        measurement_grounding =
+                            new MeasurementGroundingDto
+                            {
+                                source_ids = new[] { "S1" }
+                            }
+                    }
+                },
+                stakeholders = new[]
+                {
+                    new StakeholderDto
+                    {
+                        id = "farmer",
+                        name = "Farmer"
+                    }
+                }
+            };
+            controller.BuildForTesting(scenario);
+            Assert.That(
+                controller.SelectFieldLocationForTesting(scenario.id),
+                Is.True);
+            Assert.That(
+                controller.BeginMissionForTesting("Lan", string.Empty),
+                Is.True);
+
+            EvidenceNotebookSession.GetOrCreate()
+                .ConfigureScenario(scenario.id);
+            EvidenceNotebookSession.GetOrCreate()
+                .Notebook.Record(scenario.test_sites[0]);
+            InterviewNotebookSession.GetOrCreate()
+                .ConfigureScenario(scenario.id);
+            InterviewNotebookSession.GetOrCreate()
+                .Notebook.AddReply("farmer", "Recorded reply");
+            PlanSession plan = PlanSession.GetOrCreate();
+            plan.ConfigureScenario(scenario.id);
+            plan.StorePolicyBriefResult("{\"title\":\"Brief\"}");
+            controller.RefreshForTesting();
+            controller.OpenCertificate();
+            Assert.That(controller.CertificateVisible, Is.True);
+
+            RuntimePanelManager manager =
+                RuntimePanelManager.GetOrCreate();
+            GameObject briefPanel = new GameObject("BriefPanel");
+            manager.Register(RuntimeActivityStage.Brief, briefPanel);
+            manager.Show(RuntimeActivityStage.Brief);
+
+            controller.ReturnToFieldNetworkForTesting();
+
+            Assert.That(controller.LandingVisible, Is.True);
+            Assert.That(controller.CertificateVisible, Is.False);
+            Assert.That(controller.GuideVisible, Is.False);
+            Assert.That(controller.GlossaryVisible, Is.False);
+            Assert.That(manager.ActivePanelCount, Is.Zero);
+            Assert.That(
+                EpisodeSession.GetOrCreate().Progress.HasIdentity,
+                Is.False);
+            Assert.That(
+                EvidenceNotebookSession.GetOrCreate()
+                    .Notebook.RecordedReadings,
+                Is.Empty);
+            Assert.That(
+                InterviewNotebookSession.GetOrCreate()
+                    .Notebook.Conversations,
+                Is.Empty);
+            Assert.That(
+                PlanSession.GetOrCreate().PolicyBriefResultJson,
+                Is.Empty);
+            Assert.That(
+                controller.SelectFieldLocationForTesting(scenario.id),
+                Is.True);
+            Assert.That(
+                controller.BeginMissionForTesting("Minh", string.Empty),
+                Is.True);
+            Assert.That(
+                EpisodeSession.GetOrCreate().Progress.PlayerName,
+                Is.EqualTo("Minh"));
+
+            Object.DestroyImmediate(briefPanel);
             Object.DestroyImmediate(root);
         }
 

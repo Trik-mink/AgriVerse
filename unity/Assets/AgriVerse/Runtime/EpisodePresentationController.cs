@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 namespace AgriVerse.Client
 {
@@ -22,6 +24,7 @@ namespace AgriVerse.Client
         private bool missionStarted;
         private string activeGuideCue = string.Empty;
         private bool guideSuspended;
+        private bool judgeTechnicalVisible;
         private Coroutine connectionAttempt;
         [SerializeField] private bool showArrivalGuideCues = true;
 
@@ -321,6 +324,11 @@ namespace AgriVerse.Client
             ChooseEnding(choice);
         }
 
+        public void ReturnToFieldNetworkForTesting()
+        {
+            PrepareReturnToFieldNetwork();
+        }
+
         private void EnsureView()
         {
             if (view != null) return;
@@ -332,6 +340,7 @@ namespace AgriVerse.Client
                 DismissGuide,
                 ToggleGlossary,
                 ToggleJudge,
+                ToggleJudgeTechnical,
                 OpenCertificate,
                 ChooseEnding,
                 RetryConnection);
@@ -498,6 +507,7 @@ namespace AgriVerse.Client
                 return false;
             }
 
+            JudgeRequestSession.BeginNew();
             missionStarted = true;
             view.HideLanding();
             RefreshPresentationState();
@@ -585,9 +595,32 @@ namespace AgriVerse.Client
             {
                 view.SetGlossaryVisible(false);
                 view.HideCertificate(CertificateAvailable);
+                judgeTechnicalVisible = false;
+                view.SetJudgeTechnicalVisible(false);
                 view.SetJudgeText(BuildJudgeText());
             }
             view.SetJudgeVisible(show);
+        }
+
+        private void ToggleJudgeTechnical()
+        {
+            if (view == null ||
+                !missionStarted ||
+                !view.JudgeVisible)
+            {
+                return;
+            }
+            judgeTechnicalVisible = !judgeTechnicalVisible;
+            view.SetJudgeTechnicalVisible(
+                judgeTechnicalVisible);
+            view.SetJudgeText(
+                judgeTechnicalVisible
+                    ? BuildJudgeText() +
+                      "\n\n" +
+                      JudgeViewFormatter
+                          .FormatTechnicalDisclosure(
+                              PlanSession.GetOrCreate())
+                    : BuildJudgeText());
         }
 
         private void RefreshPresentationState()
@@ -683,9 +716,7 @@ namespace AgriVerse.Client
             view.HideCertificate(CertificateAvailable);
             if (choice == EpisodeEndingChoice.ReturnHome)
             {
-                QueueCue(
-                    "return-home",
-                    SaltLineNarrative.Ending(session.Progress.PlayerName));
+                ReturnToFieldNetwork();
             }
             else
             {
@@ -701,6 +732,66 @@ namespace AgriVerse.Client
                     SaltLineNarrative.Ending(
                         session.Progress.PlayerName));
             }
+        }
+
+        private void ReturnToFieldNetwork()
+        {
+            PrepareReturnToFieldNetwork();
+            if (Application.isPlaying)
+            {
+                Scene activeScene =
+                    SceneManager.GetActiveScene();
+                SceneManager.LoadScene(
+                    activeScene.buildIndex);
+            }
+        }
+
+        private void PrepareReturnToFieldNetwork()
+        {
+            if (view == null || scenario == null)
+            {
+                return;
+            }
+
+            RuntimePanelManager.GetOrCreate().Clear();
+            FirstPersonWalker walker =
+                FindFirstObjectByType<FirstPersonWalker>();
+            walker?.SetMovementEnabled(false);
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+
+            string scenarioId = scenario.id;
+            ResetScenarioSession(
+                EpisodeSession.GetOrCreate().ConfigureScenario,
+                scenarioId);
+            ResetScenarioSession(
+                EvidenceNotebookSession.GetOrCreate().ConfigureScenario,
+                scenarioId);
+            ResetScenarioSession(
+                InterviewNotebookSession.GetOrCreate().ConfigureScenario,
+                scenarioId);
+            ResetScenarioSession(
+                PlanSession.GetOrCreate().ConfigureScenario,
+                scenarioId);
+
+            guideQueue.Clear();
+            queuedCueIds.Clear();
+            activeGuideCue = string.Empty;
+            guideSuspended = false;
+            judgeTechnicalVisible = false;
+            CertificateAvailable = false;
+            missionStarted = false;
+            view.ShowLandingForNewJourney(scenario);
+        }
+
+        private static void ResetScenarioSession(
+            Action<string> configure,
+            string scenarioId)
+        {
+            configure(string.Empty);
+            configure(scenarioId);
         }
 
         private static string JoinNonEmpty(string first, string second)

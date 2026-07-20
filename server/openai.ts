@@ -3,8 +3,11 @@ import { zodTextFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 
 import { ApiError } from './api-error.js';
+import { runProtectedModelCall } from './model-access.js';
 
 const MAX_STRUCTURED_ATTEMPTS = 3;
+const TEXT_MAX_OUTPUT_TOKENS = 700;
+const STRUCTURED_MAX_OUTPUT_TOKENS = 3200;
 
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -13,7 +16,12 @@ function getOpenAIClient() {
     throw new ApiError(503, 'OPENAI_NOT_CONFIGURED', 'Add OPENAI_API_KEY to .env before using AI features.');
   }
 
-  return new OpenAI({ apiKey });
+  const timeout = Number(process.env.OPENAI_TIMEOUT_MS ?? 150_000);
+  if (!Number.isInteger(timeout) || timeout < 10_000 || timeout > 180_000) {
+    throw new ApiError(503, 'OPENAI_NOT_CONFIGURED', 'The server AI timeout configuration is invalid.');
+  }
+
+  return new OpenAI({ apiKey, maxRetries: 0, timeout });
 }
 
 function getModelName() {
@@ -38,14 +46,24 @@ function isProviderError(error: unknown): boolean {
 }
 
 export async function runTextResponse(systemPrompt: string, input: unknown): Promise<string> {
+  const model = getModelName();
+  const requestInput = [
+    { role: 'system' as const, content: systemPrompt },
+    { role: 'user' as const, content: JSON.stringify(input) },
+  ];
+
   try {
-    const response = await getOpenAIClient().responses.create({
-      model: getModelName(),
-      input: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: JSON.stringify(input) },
-      ],
-      max_output_tokens: 700,
+    const response = await runProtectedModelCall({
+      reservationInput: { model, input: requestInput },
+      maxOutputTokens: TEXT_MAX_OUTPUT_TOKENS,
+      call: async () => {
+        const value = await getOpenAIClient().responses.create({
+          model,
+          input: requestInput,
+          max_output_tokens: TEXT_MAX_OUTPUT_TOKENS,
+        });
+        return { value, usage: value.usage };
+      },
     });
 
     const text = response.output_text.trim();
@@ -77,20 +95,34 @@ export async function runStructuredResponse<Schema extends z.ZodTypeAny>(options
 
   for (let attempt = 1; attempt <= MAX_STRUCTURED_ATTEMPTS; attempt += 1) {
     try {
-      const response = await client.responses.parse({
-        model,
-        input: [
-          { role: 'system', content: options.systemPrompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              request: options.input,
-              validation_retry: attempt === 1 ? undefined : `Attempt ${attempt}: return the complete response matching the supplied schema exactly.`,
-            }),
-          },
-        ],
-        max_output_tokens: 3200,
-        text: { format: zodTextFormat(options.schema, options.schemaName) },
+      const requestInput = [
+        { role: 'system' as const, content: options.systemPrompt },
+        {
+          role: 'user' as const,
+          content: JSON.stringify({
+            request: options.input,
+            validation_retry: attempt === 1 ? undefined : `Attempt ${attempt}: return the complete response matching the supplied schema exactly.`,
+          }),
+        },
+      ];
+      const textFormat =
+        zodTextFormat(options.schema, options.schemaName);
+      const response = await runProtectedModelCall({
+        reservationInput: {
+          model,
+          input: requestInput,
+          text: { format: textFormat },
+        },
+        maxOutputTokens: STRUCTURED_MAX_OUTPUT_TOKENS,
+        call: async () => {
+          const value = await client.responses.parse({
+            model,
+            input: requestInput,
+            max_output_tokens: STRUCTURED_MAX_OUTPUT_TOKENS,
+            text: { format: textFormat },
+          });
+          return { value, usage: value.usage };
+        },
       });
 
       if (response.output_parsed === null) {
@@ -100,6 +132,9 @@ export async function runStructuredResponse<Schema extends z.ZodTypeAny>(options
 
       return options.schema.parse(response.output_parsed);
     } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
       if (isModelConfigurationError(error)) {
         throw new ApiError(502, 'MODEL_CONFIGURATION_ERROR', 'The configured OPENAI_MODEL was not accepted by the API. Update .env and retry.');
       }

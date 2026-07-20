@@ -103,6 +103,7 @@ namespace AgriVerse.Client
                 request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestJson));
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
+                JudgeRequestSession.Apply(request);
                 yield return request.SendWebRequest();
                 busy = false;
                 if (request.result != UnityWebRequest.Result.Success)
@@ -333,7 +334,8 @@ namespace AgriVerse.Client
         }
 
         private void SetStatus(string value){RuntimePanelManager.GetOrCreate().SetInstruction(value);}
-        private static string ReadableError(UnityWebRequest request) => request.responseCode > 0 ? "server returned " + request.responseCode : request.error;
+        private static string ReadableError(UnityWebRequest request) =>
+            JudgeRequestSession.ReadableError(request);
         private static string Join(IReadOnlyList<CanonicalJsonValue> values){var text=new StringBuilder();for(int i=0;i<values.Count;i++){if(i>0)text.Append(", ");text.Append(values[i].Text);}return text.ToString();}
         private static Button Button(Transform parent,string name,string label,EpisodeButtonStyle style)=>EpisodeUiFactory.Button(parent,name,label,style,14);
         private static void Stretch(RectTransform rect,Vector2 min,Vector2 max){rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;}

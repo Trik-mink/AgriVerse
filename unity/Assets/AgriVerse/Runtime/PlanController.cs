@@ -91,9 +91,9 @@ namespace AgriVerse.Client
             string url = (IsWebBuild ? webApiBaseUrl : editorApiBaseUrl).TrimEnd('/') + "/api/simulations";
             using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
             {
-                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(body))); request.downloadHandler = new DownloadHandlerBuffer(); request.SetRequestHeader("Content-Type", "application/json");
+                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(body))); request.downloadHandler = new DownloadHandlerBuffer(); request.SetRequestHeader("Content-Type", "application/json"); JudgeRequestSession.Apply(request);
                 yield return request.SendWebRequest(); busy = false;
-                if (request.result != UnityWebRequest.Result.Success) { retryAvailable = true; SetStatus($"Simulation failed: {(request.responseCode > 0 ? "server returned " + request.responseCode : request.error)}. Retry is available."); RefreshButtons(); yield break; }
+                if (request.result != UnityWebRequest.Result.Success) { retryAvailable = true; SetStatus($"Simulation failed: {JudgeRequestSession.ReadableError(request)}. Retry is available."); RefreshButtons(); yield break; }
                 SimulatorResultSummaryDto result;
                 try { result = JsonUtility.FromJson<SimulatorResultSummaryDto>(request.downloadHandler.text); }
                 catch (ArgumentException error) { retryAvailable = true; SetStatus("Simulation response was invalid: " + error.Message); RefreshButtons(); yield break; }

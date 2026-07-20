@@ -8,9 +8,14 @@
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
     "build": "tsc --noEmit -p tsconfig.server.json && tsc -b && vite build",
+    "build:server": "tsc -p tsconfig.server-build.json",
+    "start": "node dist-server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "tsc --noEmit -p tsconfig.server.json && tsc -b"
+  },
+  "engines": {
+    "node": ">=24.14.1 <25"
   },
   "dependencies": {
     "cors": "^2.8.6",

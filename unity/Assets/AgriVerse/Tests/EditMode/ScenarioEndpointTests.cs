@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using UnityEngine.Networking;
 
 namespace AgriVerse.Client.Tests
 {
@@ -36,6 +37,42 @@ namespace AgriVerse.Client.Tests
                     isWebBuild: false,
                     editorApiBaseUrl: apiBaseUrl,
                     webApiBaseUrl: "https://api.example.test"));
+        }
+
+        [Test]
+        public void JudgeRequestSessionAddsAnOpaqueNonSecretHeader()
+        {
+            JudgeRequestSession.BeginNew();
+            using (var request = UnityWebRequest.Get(
+                       "https://api.example.test/api/scenario"))
+            {
+                JudgeRequestSession.Apply(request);
+                string session = request.GetRequestHeader(
+                    JudgeRequestSession.HeaderName);
+
+                Assert.That(session, Has.Length.EqualTo(32));
+                Assert.That(
+                    Guid.TryParseExact(session, "N", out _),
+                    Is.True);
+            }
+        }
+
+        [Test]
+        public void JudgeRequestErrorsUseTheSafeServerMessage()
+        {
+            const string body =
+                "{\"error\":{\"code\":\"BUDGET_EXHAUSTED\"," +
+                "\"message\":\"The hosted judge AI budget is exhausted. " +
+                "No OpenAI request was made.\"}}";
+
+            Assert.That(
+                JudgeRequestSession.ReadableError(
+                    503,
+                    "HTTP/1.1 503 Service Unavailable",
+                    body),
+                Is.EqualTo(
+                    "The hosted judge AI budget is exhausted. " +
+                    "No OpenAI request was made."));
         }
     }
 }

@@ -1,11 +1,16 @@
 import type { GraderResult, PolicyBriefResult, Proposal, Scenario, SimulatorResult } from '../types';
 
 type ApiErrorBody = { error?: { message?: string } };
+const judgeSessionId = crypto.randomUUID();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-AgriVerse-Session': judgeSessionId,
+      ...(options?.headers ?? {}),
+    },
   });
 
   if (!response.ok) {
