@@ -5,10 +5,12 @@ baseline through the release candidate. Update it at every checkpoint.
 
 ## Current phase
 
-Human Gate C - the complete premium standalone journey is built and verified from globe and
-name entry through the revised future, policy brief, named certificate, and ending choice.
-The universal fullscreen macOS release candidate, screenshots, performance evidence,
-attribution audit, and final human-verification script are ready for approval.
+OpenAI Build Week publication gate. The complete premium standalone journey is built and
+verified from globe and name entry through the revised future, policy brief, named
+certificate, and ending choice. Source, assets, dependencies, secrets, LFS, release
+configuration, public documentation, and the extracted universal macOS archive have been
+audited locally. No push, tag, visibility change, release upload, or backend deployment is
+authorized.
 
 ## Completed tasks
 
@@ -72,8 +74,20 @@ attribution audit, and final human-verification script are ready for approval.
 
 ## Current blockers
 
-- None. The existing portrait, procedural-world, and globe fallbacks remain available if an
-  optional premium presentation asset fails at runtime.
+- No GitHub owner/repository or public visibility action is authorized.
+- No code license has been selected for AgriVerse's original source.
+- The judge client still targets `localhost:8787`; external access requires an approved secure,
+  server-side hosted or time-limited endpoint plan.
+- Historical commits and three historical LFS objects retain old absolute workstation paths.
+  Current files are clean, no credential was found, and history rewriting is not authorized.
+- Publication still requires the owner's final asset-provenance confirmation or exclusions.
+
+## Release checkpoint commits
+
+- `c2cafbf` — approved Human Gate C field network, Living Field Atlas presentation,
+  offline/retry behavior, and stable world-asset wrappers.
+- `2979855` — repository hygiene, provenance privacy cleanup, deterministic release
+  configuration, release regressions, and reproducible archive verification scripts.
 
 ## External asset manifest
 
@@ -217,6 +231,26 @@ footstep rows remain documented below without blocking the current build.
   states but require the existing backend and are not replaced by fabricated offline scores.
 - Isolation: `Assets/Scenes/SampleScene.unity`, backend behavior, prompts, scenario data,
   API contracts, ProjectSettings, and tags remained unchanged.
+
+### OpenAI Build Week release preparation
+
+- Node 24.16.0: reproducible `npm ci`, production type/build checks, 22/22 backend tests, and
+  zero `npm audit` findings.
+- Unity EditMode: 126 passed, 0 failed, 1 intentionally ignored connectivity test.
+- Focused non-GPT PlayMode: 5 passed across the 3D episode, first-person movement/collision,
+  globe offline recovery, and input behavior.
+- Live complete loop: passed in 156.1 seconds against Express/OpenAI, including all three
+  stakeholder agents, two simulations, two grounded feedback calls, revision, and policy brief.
+- Fresh release: `unity/Builds/Release/AgriVerse.app`, one executable, identifier
+  `org.agriverse.episode1`, universal `arm64`/`x86_64`, valid ad-hoc signature, only
+  `Episode3DAlpha`, no credential-shaped value, and no bundled `.env`.
+- Metal player: clean 1280x720 capture at 179.5 average FPS on Apple M4; no runtime, shader,
+  missing-reference, timeout, or magenta-material errors in the 61-line Player log.
+- Archive: `AgriVerse-macOS-Universal.zip`, 165,386,151 bytes,
+  SHA-256 `b74ffd7c7b0bb19d4c8d6cfb7d806aa3d73df87a29ce14c10e2873b0d389aca5`;
+  the extracted app passed identity, architecture, signature, scene, and credential checks.
+- Asset integrity: all 23 documented Tripo source FBXs, the premium manifest, the globe
+  manifest, and Git LFS fsck passed.
 
 ### Cinematic stakeholder interview checkpoint
 

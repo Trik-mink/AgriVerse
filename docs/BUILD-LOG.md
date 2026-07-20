@@ -337,3 +337,24 @@ Format per entry:
 - What Codex did: Completed the live arrival-to-brief regression, universal fullscreen Metal build, 1280x720 and 1920x1080 visual checks, performance/error scan, asset-hash/LFS/attribution audit, and native AgriVerse bundle identity.
 - Human decision: Required one complete release candidate after the full loop, with no avatar body or voice pipeline and no intermediate visual gates.
 - GPT-5.6 technique used: Verified all four real runtime systems live once for completion while using deterministic tests for repeated contract, citation, fallback, and presentation checks.
+
+### 2026-07-19 - Interactive Field Network and Living Field Atlas reliability
+- What Codex did: Added the data-driven five-location orbital network, offline packaged-scenario
+  recovery, complete keyboard pin navigation, clean landing/world handoff, Living Field Atlas
+  presentation, and stable derived wrappers for characters and station props.
+- Human decision: Approved the globe, field network, world layout, upright assets, and full
+  learning loop; required the atlas identity, then discovered the silent-offline globe and
+  contaminated mixed-executable build that became release regressions.
+- GPT-5.6 technique used: Preserved every live prompt, structured contract, citation, and
+  validated outcome while keeping offline behavior limited to scenario discovery and explicit
+  connection-required states.
+
+### 2026-07-19 - OpenAI Build Week release preparation
+- What Codex did: Audited current files, history, LFS, secrets, privacy, dependencies, assets,
+  licenses, and source hashes; hardened a fresh universal macOS release pipeline; created public
+  documentation and notices; and verified the signed archive after extraction.
+- Human decision: Required a publication gate with no push, tag, visibility change, release
+  upload, backend deployment, code-license assumption, or secret exposure before explicit
+  approval.
+- GPT-5.6 technique used: Ran one live completion regression across all four runtime systems and
+  used contract-valid recorded responses for repeated visual capture to conserve API budget.
